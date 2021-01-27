@@ -1,4 +1,6 @@
 (ns metafacture-playground.db)
 
 (def default-db
-  {:name "re-frame"})
+  {:fields {:data ""
+            :flux ""
+            :fix  ""}})

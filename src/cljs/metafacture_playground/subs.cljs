@@ -3,6 +3,6 @@
    [re-frame.core :as re-frame]))
 
 (re-frame/reg-sub
- ::name
- (fn [db]
-   (:name db)))
+  ::field-value
+  (fn [db [_ path-to-field]]
+    (get-in db path-to-field)))
