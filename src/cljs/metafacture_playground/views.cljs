@@ -5,7 +5,7 @@
    [clojure.string :as clj-str]))
 
 (defn control-panel []
-  [:div
+  [:div.row
    [:input {:type "button"
             :value "Load sample"
             :on-click #(re-frame/dispatch [:load-sample])}]
@@ -16,7 +16,7 @@
 (defn field-row [field-name]
   (let [field-value(re-frame/subscribe [::subs/field-value [:fields field-name]])]
     (fn [field-name]
-      [:div (str (-> field-name name clj-str/capitalize) ": ")
+      [:div.row (str (-> field-name name clj-str/capitalize) ": ")
        [:input {:type "text"
                 :id (name field-name)
                 :value @field-value
@@ -25,15 +25,22 @@
 (defn editor []
   (let [fix  (re-frame/subscribe [::subs/field-value [:fields :fix]])]
     (fn []
-      [:div "Fix:"
+      [:div.col "Fix:"
        [:textarea {:id "fix"
                    :value @fix
                    :on-change #(re-frame/dispatch [:edit [:fields :fix] (-> % .-target .-value)])}]])))
 
+(defn result-panel []
+  [:div.col
+   [:input {:id "result"
+            :value "This could be your result"}]])
+
 (defn main-panel []
-  [:div
+  [:div.container
    [:h1 "Metafacture Playground"]
    [control-panel]
    [field-row :data]
    [field-row :flux]
-   [editor]])
+   [:div.row
+    [editor]
+    [result-panel]]])
