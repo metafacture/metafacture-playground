@@ -4,6 +4,15 @@
    [metafacture-playground.subs :as subs]
    [clojure.string :as clj-str]))
 
+(defn control-panel []
+  [:div
+   [:input {:type "button"
+            :value "Load sample"
+            :on-click #(re-frame/dispatch [:load-sample])}]
+   [:input {:type "button"
+            :value "Clear all"
+            :on-click #(re-frame/dispatch [:clear-all])}]])
+
 (defn field-row [field-name]
   (let [field-value(re-frame/subscribe [::subs/field-value [:fields field-name]])]
     (fn [field-name]
@@ -20,15 +29,6 @@
        [:textarea {:id "fix"
                    :value @fix
                    :on-change #(re-frame/dispatch [:edit [:fields :fix] (-> % .-target .-value)])}]])))
-
-(defn control-panel []
-  [:div
-   [:input {:type "button"
-            :value "Load sample"
-            :on-click #(re-frame/dispatch [:load-sample])}]
-   [:input {:type "button"
-            :value "Clear all"
-            :on-click #(re-frame/dispatch [:clear-all])}]])
 
 (defn main-panel []
   [:div
