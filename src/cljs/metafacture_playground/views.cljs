@@ -4,6 +4,11 @@
    [metafacture-playground.subs :as subs]
    [clojure.string :as clj-str]))
 
+(defn header []
+  [:div.row
+   [:div.col
+    [:h1.header  "Metafacture Playground"]]])
+
 (defn control-panel []
   [:div.row
    [:div.col
@@ -44,9 +49,7 @@
 
 (defn main-panel []
   [:div.container
-   [:div.row
-    [:div.col
-     [:h1.header  "Metafacture Playground"]]]
+   [header]
    [control-panel]
    [field-row :data]
    [field-row :flux]
