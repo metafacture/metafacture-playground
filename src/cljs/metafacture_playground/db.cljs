@@ -8,4 +8,5 @@
 (def default-db
   {:fields {:data ""
             :flux ""
-            :fix  ""}})
+            :fix  ""
+            :result "No result"}})

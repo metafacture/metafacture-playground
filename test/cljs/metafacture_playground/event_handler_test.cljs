@@ -26,7 +26,9 @@
   (testing "Test editing values."
     (let [new-value "I am a new value"
           path [:fields :fix]
-          db' (events/edit-value empty-db [:edit path new-value])]
+          db' (-> empty-db 
+                  (events/edit-value [:edit path new-value])
+                  (update :fields dissoc :result))]
       (is (and (not= db' empty-db)
                (= (get-in db' path)
                   new-value))))))
@@ -34,15 +36,21 @@
 
 (deftest load-sample-test
   (testing "Test loading sample with all fields empty."
-    (let [db'    (events/load-sample empty-db :load-sample)]
+    (let [db'    (-> empty-db
+                     (events/load-sample :load-sample)
+                     (update :fields dissoc :result))]
       (is db' db-with-sample)))
 
   (testing "Test loading sample with part of fields not empty."
-    (let [db'    (events/load-sample db1 :load-sample)]
+    (let [db'    (-> db1
+                     (events/load-sample :load-sample)
+                     (update :fields dissoc :result))]
       (is (= db' db-with-sample))))
 
   (testing "Test loading sample with all fields not empty."
-    (let [db' (events/load-sample db2 :load-sample)]
+    (let [db' (-> db2
+                  (events/load-sample :load-sample)
+                  (update :fields dissoc :result))]
       (is (= db' db-with-sample)))))
 
 

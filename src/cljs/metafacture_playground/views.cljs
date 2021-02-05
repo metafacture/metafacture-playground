@@ -42,10 +42,14 @@
                    :on-change #(re-frame/dispatch [:edit [:fields :fix] (-> % .-target .-value)])}]])))
 
 (defn result-panel []
-  [:div.col
-   [:textarea {:id "result"
-               :rows 25
-               :cols 40}]])
+  (let [result (re-frame/subscribe [::subs/field-value [:fields :result]])]
+    (fn []
+      [:div.col
+       [:textarea {:id "result"
+                   :value @result
+                   :rows 25
+                   :cols 40
+                   :readOnly true}]])))
 
 (defn main-panel []
   [:div.container

@@ -13,9 +13,11 @@
 
 (defn load-sample
   [db _]
-  (assoc db
-         :fields
-         db/sample-fields))
+  (reduce
+   (fn [db [k sample-v]]
+     (assoc-in db [:fields k] sample-v))
+   db
+   db/sample-fields))
 
 (re-frame/reg-event-db
   :load-sample
@@ -23,9 +25,12 @@
 
 (defn clear-all
   [db _]
-  (assoc db :fields {:data ""
-                     :flux ""
-                     :fix  ""}))
+  (let [fields [:data :flux :fix]]
+    (reduce
+     (fn [db field-to-empty]
+       (assoc-in db [:fields field-to-empty] ""))
+     db
+     fields)))
 
 (re-frame/reg-event-db
  :clear-all
