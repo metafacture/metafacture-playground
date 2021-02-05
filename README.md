@@ -14,10 +14,52 @@ $ git clone https://github.com/metafacture/metafacture-playground.git
 $ cd metafacture-playground
 ```
 
-Start the application:
-```bash
-$ lein watch
+### Start the application:
+
+```
+lein watch
 ```
 
 Wait a bit, perhaps 20 seconds, keeping an eye out for a sign the compile has finished, then browse to http://localhost:8280.
 
+### Run tests
+
+Install karma and headless chrome
+
+```
+npm install -g karma-cli
+```
+
+And then run your tests
+
+```
+lein watch
+```
+
+And in another terminal:
+
+```
+karma start
+```
+
+### Production Build
+
+To compile clojurescript to javascript:
+
+```
+lein release
+```
+
+Create uberjar
+
+```
+lein clean
+lein uberjar
+```
+
+The jar startet with
+
+```
+java -jar metafacture-playground.jar
+```
+runs under http://localhost:3000
