@@ -7,7 +7,10 @@
                                org.clojure/google-closure-library-third-party]]
                  [thheller/shadow-cljs "2.11.7"]
                  [reagent "0.10.0"]
-                 [re-frame "1.1.2"]]
+                 [re-frame "1.1.2"]
+                 [compojure "1.6.2"]
+                 [yogthos/config "1.1.7"]
+                 [ring "1.8.2"]]
 
   :plugins [[lein-shadow "0.3.1"]
             
@@ -33,6 +36,7 @@
 
                                :devtools {:http-root "resources/public"
                                           :http-port 8280
+                                          :http-handler metafacture-playground.handler/dev-handler
                                           }}
                          :browser-test
                          {:target :browser-test
@@ -83,7 +87,12 @@
     :source-paths ["dev"]}
 
    :prod {}
-   
-}
+
+   :uberjar {:source-paths ["env/prod/clj"]
+             :omit-source  true
+             :main         metafacture-playground.server
+             :aot          [metafacture-playground.server]
+             :uberjar-name "metafacture-playground.jar"
+             :prep-tasks   ["compile" ["release"]]}}
 
   :prep-tasks [])
