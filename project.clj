@@ -81,6 +81,8 @@
                             ["shadow" "compile" "karma-test"]
                             ["shell" "karma" "start" "--single-run" "--reporters" "junit,dots"]]}
 
+  :main metafacture-playground.server
+
   :profiles
   {:dev
    {:dependencies [[binaryage/devtools "1.0.2"]]
