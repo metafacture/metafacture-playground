@@ -10,10 +10,17 @@
                  [re-frame "1.1.2"]
                  [compojure "1.6.2"]
                  [yogthos/config "1.1.7"]
-                 [ring "1.8.2"]]
+                 [ring "1.8.2"]
+                 [org.metafacture/metafacture-commons "feature-oersi-SNAPSHOT"]
+                 [org.metafacture/metafacture-formeta "feature-oersi-SNAPSHOT"]
+                 [org.metafacture/metafacture-mangling "feature-oersi-SNAPSHOT"]
+                 [org.metafacture/metafacture-runner "feature-oersi-SNAPSHOT"]
+                 [org.metafacture/metafacture-xml "feature-oersi-SNAPSHOT"]
+                 [org.eclipse.xtext/xtext-dev-bom "2.17.0" :extension "pom"]
+                 [org.metafacture.fix/org.metafacture.fix "1.0.0-SNAPSHOT" :exclusions [[org.eclipse.xtext/xtext-dev-bom]]]]
 
   :plugins [[lein-shadow "0.3.1"]
-            
+
             [lein-shell "0.5.0"]]
 
   :min-lein-version "2.9.0"
@@ -27,7 +34,7 @@
 
 
   :shadow-cljs {:nrepl {:port 8777}
-                
+
                 :builds {:app {:target :browser
                                :output-dir "resources/public/js/compiled"
                                :asset-path "/js/compiled"
@@ -36,8 +43,7 @@
 
                                :devtools {:http-root "resources/public"
                                           :http-port 8280
-                                          :http-handler metafacture-playground.handler/dev-handler
-                                          }}
+                                          :http-handler metafacture-playground.handler/dev-handler}}
                          :browser-test
                          {:target :browser-test
                           :ns-regexp "-test$"
@@ -50,14 +56,14 @@
                          {:target :karma
                           :ns-regexp "-test$"
                           :output-to "target/karma-test.js"}}}
-  
+
   :shell {:commands {"karma" {:windows         ["cmd" "/c" "karma"]
                               :default-command "karma"}
                      "open"  {:windows         ["cmd" "/c" "start"]
                               :macosx          "open"
                               :linux           "xdg-open"}}}
 
-  :aliases {"dev"          ["do" 
+  :aliases {"dev"          ["do"
                             ["shell" "echo" "\"DEPRECATED: Please use lein watch instead.\""]
                             ["watch"]]
             "watch"        ["with-profile" "dev" "do"

@@ -5,7 +5,39 @@ This project is inititially created using the [leiningen re-frame template](http
 
 ## Installation
 
-Before starting yo need to install [Leiningen](https://leiningen.org/) and a JDK.
+Before starting yo need to install [Leiningen](https://leiningen.org/) and a JDK (minimum Java 8).
+This project depends on [metafacture-core](https://github.com/metafacture/metafacture-core) and [metafacture-fix](https://github.com/metafacture/metafacture-fix). Clone and install both repositories (branch oersi).
+
+Clone and install metafacture-fix:
+```bash
+$ git clone --branch oersi https://github.com/metafacture/metafacture-fix.git
+$ cd metafacture-fix
+```
+
+Unix:
+```bash
+$ ./gradlew install
+```
+
+Windows:
+```bash
+$ .\gradlew.bat install
+```
+Clone and install metafacture-core:
+```bash
+$ git clone --branch oersi https://github.com/metafacture/metafacture-core.git
+$ cd metafacture-core
+```
+
+Unix:
+```bash
+$ ./gradlew install
+```
+
+Windows:
+```bash
+$ .\gradlew.bat install
+```
 
 Clone the metafacture-playground project
 
@@ -14,13 +46,30 @@ $ git clone https://github.com/metafacture/metafacture-playground.git
 $ cd metafacture-playground
 ```
 
-### Start the application:
+### Start the application (only frontend):
 
 ```
 lein watch
 ```
 
 Wait a bit, perhaps 20 seconds, keeping an eye out for a sign the compile has finished, then browse to http://localhost:8280.
+
+### Start the application (frontend + backend)
+To compile and build the frontend run:
+
+```
+lein release
+```
+Then start the server with:
+
+```
+lein run
+```
+Browse to http://localhost:3000.
+
+Run workflows on the web server, passing `data`, `flux`, and `fix`:
+
+[http://localhost:8080/xtext-service/run?data='1'{'a': '5', 'z': 10}&flux=as-lines|decode-formeta|fix|encode-formeta(style="multiline")&fix=map(a,b) map(_else)](http://localhost:8080/xtext-service/run?data=%271%27{%27a%27:%20%275%27,%20%27z%27:%2010}&flux=as-lines|decode-formeta|fix|encode-formeta(style=%22multiline%22)&fix=map(a,c)%20map(_else))
 
 ### Run tests
 
@@ -62,4 +111,7 @@ The jar startet with
 ```
 java -jar metafacture-playground.jar
 ```
-runs under http://localhost:3000
+runs under http://localhost:3000.
+Run workflows on the web server, passing `data`, `flux`, and `fix`:
+
+[http://localhost:8080/xtext-service/run?data='1'{'a': '5', 'z': 10}&flux=as-lines|decode-formeta|fix|encode-formeta(style="multiline")&fix=map(a,b) map(_else)](http://localhost:8080/xtext-service/run?data=%271%27{%27a%27:%20%275%27,%20%27z%27:%2010}&flux=as-lines|decode-formeta|fix|encode-formeta(style=%22multiline%22)&fix=map(a,c)%20map(_else))

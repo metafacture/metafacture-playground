@@ -6,4 +6,5 @@
 
  (defn -main [& _args]
    (let [port (or (env :port) 3000)]
+     (println "Start server with port " port)
      (run-jetty handler {:port port :join? false})))

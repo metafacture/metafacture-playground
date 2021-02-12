@@ -1,16 +1,21 @@
 (ns metafacture-playground.handler
   (:require
-    [compojure.core :refer [GET defroutes]]
-    [compojure.route :refer [resources not-found]]
-    [ring.util.response :refer [resource-response]]
-    [ring.middleware.reload :refer [wrap-reload]]
-    [shadow.http.push-state :as push-state]))
+   [compojure.core :refer [GET defroutes]]
+   [compojure.route :refer [resources not-found]]
+   [compojure.handler :refer [api] :rename {api compojure-api}]
+   [metafacture-playground.process :refer [process]]
+   [ring.util.response :refer [resource-response]]
+   [ring.middleware.reload :refer [wrap-reload]]
+   [ring.middleware.params :refer [wrap-params]]
+   [shadow.http.push-state :as push-state]))
 
 (defroutes routes
   (GET "/" [] (resource-response "index.html" {:root "public"}))
+  (GET "/process" [data flux fix]
+     (str (process data flux fix)))
   (resources "/")
   (not-found "Page not found"))
 
 (def dev-handler (-> #'routes wrap-reload push-state/handle))
 
-(def handler routes)
+(def handler (wrap-params routes))
