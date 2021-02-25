@@ -46,7 +46,7 @@ $ git clone https://github.com/metafacture/metafacture-playground.git
 $ cd metafacture-playground
 ```
 
-### Start the application (only frontend):
+### Start the application
 
 ```
 lein watch
@@ -54,7 +54,7 @@ lein watch
 
 Wait a bit, perhaps 20 seconds, keeping an eye out for a sign the compile has finished, then browse to http://localhost:8280.
 
-### Start the application (frontend + backend)
+### Start the server
 To compile and build the frontend run:
 
 ```
@@ -73,6 +73,7 @@ Run workflows on the web server, passing `data`, `flux`, and `fix`:
 
 ### Run tests
 
+### clj tests
 Install karma and headless chrome
 
 ```
@@ -89,6 +90,13 @@ And in another terminal:
 
 ```
 karma start
+```
+
+### clj tests
+
+Run
+```
+lein test
 ```
 
 ### Production Build

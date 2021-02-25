@@ -6,7 +6,8 @@
    :fix  "map(_id, id)\nmap(a,title)\nmap(b.n,author)\n/*map(_else)*/\n"})
 
 (def default-db
-  {:fields {:data ""
-            :flux ""
-            :fix  ""
-            :result "No result"}})
+  {:input-fields {:data ""
+                  :flux ""
+                  :fix  ""}
+   :result {:loading? false
+            :content "No result"}})

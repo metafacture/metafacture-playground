@@ -11,6 +11,7 @@
                  [compojure "1.6.2"]
                  [yogthos/config "1.1.7"]
                  [ring "1.8.2"]
+                 [day8.re-frame/http-fx "0.2.2"]
                  [org.metafacture/metafacture-commons "feature-oersi-SNAPSHOT"]
                  [org.metafacture/metafacture-formeta "feature-oersi-SNAPSHOT"]
                  [org.metafacture/metafacture-mangling "feature-oersi-SNAPSHOT"]
@@ -27,7 +28,7 @@
 
   :source-paths ["src/clj" "src/cljs"]
 
-  :test-paths   ["test/cljs"]
+  :test-paths   ["test/cljs" "test/clj"]
 
   :clean-targets ^{:protect false} ["resources/public/js/compiled" "target"
                                     "test/js"]
