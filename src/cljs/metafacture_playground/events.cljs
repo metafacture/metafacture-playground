@@ -65,7 +65,7 @@
 (defn process
   [{:keys [db]} [_ data flux fix]]
   {:http-xhrio {:method          :get
-                :uri             "http://localhost:3000/process"
+                :uri             "process"
                 :params {:data data
                          :flux flux
                          :fix fix}
