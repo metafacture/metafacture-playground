@@ -126,29 +126,8 @@ Run
 lein test
 ```
 
-### Production Build
+## Run workflows on the web server
 
-To compile clojurescript to javascript:
-
-```
-lein release
-```
-
-Create uberjar
-
-```
-lein clean
-lein uberjar
-```
-
-The jar started with
-
-```
-java -jar target/metafacture-playground.jar
-```
-
-runs under http://localhost:3000.
-
-Run workflows on the web server, passing `data`, `flux`, and `fix`:
+Run workflows on the web server, passing `data`, `flux`, and `fix` as GET-Parameter:
 
 [http://localhost:3000/process?data='1'{'a': '5', 'z': 10}&flux=as-lines|decode-formeta|fix|encode-formeta(style="multiline")&fix=map(a,b) map(_else)](http://localhost:3000/process?data=%271%27{%27a%27:%20%275%27,%20%27z%27:%2010}&flux=as-lines|decode-formeta|fix|encode-formeta(style=%22multiline%22)&fix=map(a,c)%20map(_else))
