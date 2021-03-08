@@ -69,7 +69,7 @@
  (deftest process-button-test
    (testing "Test status after processing response"
      (let [db' (-> empty-db
-                   (events/load-sample))
+                   (events/load-sample db/sample-fields))
            {:keys [fix flux data]} (get db' :input-fields)
-           db'' (:db (events/process {:db db'} data flux fix))]
+           db'' (:db (events/process {:db db'} [:process data flux fix]))]
        (is (get-in db'' [:result  :loading?])))))
