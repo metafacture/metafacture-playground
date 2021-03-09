@@ -23,10 +23,10 @@ chmod a+x ~/bin/lein
 
 This project depends on [metafacture-core](https://github.com/metafacture/metafacture-core) and [metafacture-fix](https://github.com/metafacture/metafacture-fix). Clone and install both repositories (branch oersi).
 
-Clone and install metafacture-fix:
+Clone and install metafacture-core:
 ```bash
-$ git clone --branch oersi https://github.com/metafacture/metafacture-fix.git
-$ cd metafacture-fix
+$ git clone --branch oersi https://github.com/metafacture/metafacture-core.git
+$ cd metafacture-core
 ```
 
 Unix:
@@ -39,10 +39,10 @@ Windows:
 $ .\gradlew.bat install
 ```
 
-Clone and install metafacture-core:
+Clone and install metafacture-fix:
 ```bash
-$ git clone --branch oersi https://github.com/metafacture/metafacture-core.git
-$ cd metafacture-core
+$ git clone --branch oersi https://github.com/metafacture/metafacture-fix.git
+$ cd metafacture-fix
 ```
 
 Unix:
@@ -62,7 +62,7 @@ $ git clone https://github.com/metafacture/metafacture-playground.git
 $ cd metafacture-playground
 ```
 
-### Start the application
+### Start the frontend in development mode
 
 ```
 lein watch
@@ -70,7 +70,7 @@ lein watch
 
 Wait a bit, perhaps 20 seconds, keeping an eye out for a sign the compile has finished, then browse to http://localhost:8280.
 
-### Start the server
+### Start the frontend and backend server
 
 To compile and build the frontend run:
 
