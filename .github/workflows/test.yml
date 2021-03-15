@@ -1,0 +1,47 @@
+name: Clojure/Clojurescript Tests
+
+on:
+  push
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout metafacture-core
+      uses: actions/checkout@v2
+      with:
+        path: metafacture-core
+        repository: metafacture/metafacture-core
+        ref: oersi
+    - name: Install metafacture-core
+      run: |
+        cd metafacture-core
+        ./gradlew install
+    - name: Checkout metafacture-fix
+      uses: actions/checkout@v2
+      with:
+        path: metafacture-fix
+        repository: metafacture/metafacture-fix
+        ref: oersi
+    - name: Install metafacture-fix
+      run: |
+        cd metafacture-fix
+        ./gradlew install
+    - name: Set up Node.js
+      uses: actions/setup-node@v1
+    - name: Install karma and headless chrome
+      run: |
+        npm install -g karma-cli
+        export CHROME_BIN='/usr/bin/chromium-browser'
+    - uses: actions/checkout@v2
+    - name: Install dependencies
+      run: lein deps
+
+    - name: Run clojure tests
+      run: lein test
+
+    - name: Run clojurescript tests
+      run: |
+        lein shadow release karma-test
+        karma start --single-run
