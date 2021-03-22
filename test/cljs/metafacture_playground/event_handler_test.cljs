@@ -9,14 +9,14 @@
 
 ; db with one input-field not empty
 (def db1
-  (events/edit-value empty-db [:edit-input-value :data "1{a: Faust, b {n: Goethe, v: JW}, c: Weimar}"]))
+  (events/edit-value empty-db [:edit-value :data "1{a: Faust, b {n: Goethe, v: JW}, c: Weimar}"]))
 
 ; db with no empty input-fields
 (def db2
   (-> empty-db
-      (events/edit-value [:edit-input-value :data "1{a: Faust, b {n: Goethe, v: JW}, c: Weimar}"])
-      (events/edit-value [:edit-input-value :flux "as-lines|decode-formeta|fix|stream-to-xml(rootTag=\"collection\")"])
-      (events/edit-value [:edit-input-value :fix "map(_id, id)\nmap(a,title)\nmap(b.n,author)"])))
+      (events/edit-value [:edit-value :data "1{a: Faust, b {n: Goethe, v: JW}, c: Weimar}"])
+      (events/edit-value [:edit-value :flux "as-lines|decode-formeta|fix|stream-to-xml(rootTag=\"collection\")"])
+      (events/edit-value [:edit-value :fix "map(_id, id)\nmap(a,title)\nmap(b.n,author)"])))
 
 (def db-with-sample
   {:input-fields db/sample-fields})
@@ -29,7 +29,7 @@
                   (events/edit-value [:edit-input-value :fix new-value])
                   (update :fields dissoc :result))]
       (is (and (not= db' empty-db)
-               (= (get-in db' [:input-fields :fix])
+               (= (get-in db' [:input-fields :fix :content])
                   new-value))))))
 
 
@@ -66,10 +66,25 @@
     (let [db' (events/clear-all db2 :clear-all)]
       (is (= db' empty-db)))))
 
- (deftest process-button-test
-   (testing "Test status after processing response"
-     (let [db' (-> empty-db
-                   (events/load-sample db/sample-fields))
-           {:keys [fix flux data]} (get db' :input-fields)
-           db'' (:db (events/process {:db db'} [:process data flux fix]))]
-       (is (get-in db'' [:result  :loading?])))))
+(deftest process-button-test
+  (testing "Test status after processing response"
+    (let [db' (-> empty-db
+                  (events/load-sample db/sample-fields))
+          {:keys [fix flux data]} (get db' :input-fields)
+          db'' (:db (events/process {:db db'} [:process data flux fix]))]
+      (is (get-in db'' [:result :loading?])))))
+
+(deftest collapse-panel-test
+  (testing "Test collapse behaviour"
+    (let [db' (-> empty-db
+                  (events/collapse-panel [:collapse-panel [:input-fields :flux] false]))]
+      (is (and (get-in db' [:input-fields :flux :collapsed?])
+               (not (get-in db' [:input-fields :fix :collapsed?]))
+               (not (get-in db' [:input-fields :data :collapsed?]))
+               (not (get-in db' [:result :collapsed?]))))))
+  
+  (testing "Test collapsing and expanding a panel"
+    (let [db' (-> empty-db
+                  (events/collapse-panel [:collapse-panel [:input-fields :flux] false])
+                  (events/collapse-panel [:collapse-panel [:input-fields :flux] true]))]
+      (is (not (get-in db' [:input-fields :flux :collapsed?]))))))

@@ -30,6 +30,7 @@
 
 (defn- flux->flux-content [flux fix]
   (-> flux
+      (clj-str/replace "\n|" "|")
       (clj-str/replace "\\s?\\|\\s?" "|")
       (clj-str/replace "|fix|" fix)))
 

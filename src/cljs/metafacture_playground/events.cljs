@@ -5,11 +5,23 @@
    [ajax.core :as ajax]
    [metafacture-playground.db :as db]))
 
-;; Editing input fields
+;;; Collapsing panels
+
+(defn collapse-panel
+  [db [_ path status]]
+  (assoc-in db
+            (conj path :collapsed?)
+            (not status)))
+
+  (re-frame/reg-event-db
+   :collapse-panel
+   collapse-panel)
+
+;;; Editing input fields
 
 (defn edit-value
   [db [_ field-name new-value]]
-  (assoc-in db [:input-fields field-name] new-value))
+  (assoc-in db [:input-fields field-name :content] new-value))
 
 (re-frame/reg-event-db
  :edit-input-value
@@ -32,7 +44,7 @@
   (let [fields [:data :flux :fix]]
     (reduce
      (fn [db field-to-empty]
-       (assoc-in db [:input-fields field-to-empty] ""))
+       (assoc-in db [:input-fields field-to-empty :content] ""))
      db
      fields)))
 
@@ -40,7 +52,35 @@
  :clear-all
  clear-all)
 
-;; Processing
+;;; Processing
+
+;; Fake process for developing the frontend
+
+(re-frame/reg-event-db
+ :fake-response
+ (fn [db _]
+   (-> db
+       (assoc-in [:result :loading?] false)
+       (assoc-in [:result :content] (str "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                                         "\n<collection>"
+                                         "\n"
+                                         "\n	<record>"
+                                         "\n		<id>1</id>"
+                                         "\n		<title>Faust</title>"
+                                         "\n		<author>Goethe</author>"
+                                         "\n	</record>"
+                                         "\n"
+                                         "\n	<record>"
+                                         "\n		<id>2</id>"
+                                         "\n		<title>Räuber</title>"
+                                         "\n		<author>Schiller</author>"
+                                         "\n	</record>"
+                                         "\n"
+                                         "\n</collection>\n")))))
+
+(defn fake-process [{:keys [db]} [_ _ _ _]]
+  {:db (assoc-in db [:result :loading?] true)
+   :fx [[:dispatch-later {:ms 4000 :dispatch [:fake-response]}]]})
 
 (defn process-response
   [db [_ response]]
@@ -79,7 +119,7 @@
  :process
  process)
 
-;; Initialize-db
+;;; Initialize-db
 
 (defn initialize-db
   [_ _]
