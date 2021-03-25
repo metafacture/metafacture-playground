@@ -18,6 +18,11 @@
    (get-in db [:result :content])))
 
 (re-frame/reg-sub
+ ::link
+ (fn [db [_ type]]
+   (get-in db [:result :links type])))
+
+(re-frame/reg-sub
  ::result-loading?
  (fn [db _]
    (get-in db [:result :loading?])))

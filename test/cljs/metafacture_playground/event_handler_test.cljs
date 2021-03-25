@@ -1,7 +1,11 @@
 (ns metafacture-playground.event-handler-test
   (:require [cljs.test :refer-macros [deftest testing is]]
+            [clojure.core :as clj]
             [metafacture-playground.db :as db]
-            [metafacture-playground.events :as events]))
+            [metafacture-playground.events :as events]
+            [goog.uri.utils :as goog-uri])
+  #_(:import (org.apache.commons.validator.routines UrlValidator))
+  )
 
 ; Initilized db = empty db
 (def empty-db
@@ -66,6 +70,7 @@
     (let [db' (events/clear-all db2 :clear-all)]
       (is (= db' empty-db)))))
 
+
 (deftest process-button-test
   (testing "Test status after processing response"
     (let [db' (-> empty-db
@@ -88,3 +93,20 @@
                   (events/collapse-panel [:collapse-panel [:input-fields :flux] false])
                   (events/collapse-panel [:collapse-panel [:input-fields :flux] true]))]
       (is (not (get-in db' [:input-fields :flux :collapsed?]))))))
+
+(deftest generate-links-test
+  (testing "Test generating share links"
+    (let [db' (-> empty-db
+                  (events/load-sample db/sample-fields))
+          data (get-in db' [:input-fields :data :content])
+          fix (get-in db' [:input-fields :fix :content])
+          flux (get-in db' [:input-fields :flux :content])
+          db'' (events/generate-links db' [:generate-links data flux fix])
+          api-call-link (get-in db'' [:result :links :api-call])
+          get-link-param (fn [key-name]
+                           (-> api-call-link
+                               (goog-uri/getParamValue key-name)))]
+         (and (is api-call-link)
+              (is (= (get-link-param "data") data))
+              (is (= (get-link-param "flux") flux))
+              (is (= (get-link-param "fix") fix))))))

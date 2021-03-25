@@ -1,5 +1,6 @@
 (ns metafacture-playground.views
   (:require
+   [reagent.core :as reagent]
    [re-frame.core :as re-frame]
    [metafacture-playground.subs :as subs]
    [clojure.string :as clj-str]
@@ -33,6 +34,8 @@
 (def icon (component "Icon"))
 (def divider (component "Divider"))
 (def image (component "Image"))
+(def input (component "Input"))
+(def popup (component "Popup"))
 
 ;;; Color and Theming
 
@@ -91,11 +94,13 @@
            :for for}
    (clj-str/capitalize name)])
 
-(defn button [content on-click-fn & icon-name]
+(defn button [{:keys [content dispatch-fn icon-name]}]
   [:> semantic-ui-button
-   {:basic basic-buttons?
-    :color color
-    :onClick #(re-frame/dispatch on-click-fn)}
+   (merge {:id (-> content (clj-str/replace " " "-") (str "-button"))
+           :basic basic-buttons?
+           :color color}
+          (when dispatch-fn
+            {:onClick #(re-frame/dispatch dispatch-fn)}))
    (when icon-name
      [:> icon {:name icon-name}])
    content])
@@ -115,13 +120,40 @@
         flux (re-frame/subscribe [::subs/field-value :flux])
         fix  (re-frame/subscribe [::subs/field-value :fix])]
     (fn []
-      [button "Process" [:process @data @flux @fix] "play"])))
+      [button {:content "Process"
+               :dispatch-fn [:process @data @flux @fix]
+               :icon-name "play"}])))
+
+(defn share-links []
+  (let [api-call-link (re-frame/subscribe [::subs/link :api-call])]
+    (fn []
+      [:> input
+       {:id "api-call-link-input"
+        :action {:color color
+                 :icon "copy"
+                 :on-click #(re-frame/dispatch [:copy-link @api-call-link])
+                 :content "Copy"
+                 :labelPosition "right"}
+        :placeholder (if-not @api-call-link "Nothing to share..." "")
+        :default-value (or @api-call-link "")
+        :disabled (not @api-call-link)
+        :label "API call link"
+        :readOnly true}])))
+
+(defn share-button []
+  [:> popup
+   {:content (reagent/as-element [share-links])
+    :on "click"
+    :position "right center"
+    :flowing true
+    :trigger (reagent/as-element (button {:content "Share" :icon-name "share alternate"}))}])
 
 (defn control-panel []
   [:> segment {:raised true}
-   [button "Load sample" [:load-sample] "code"]
-   [button "Clear all"  [:clear-all] "erase"]
-   [process-button]])
+   [button {:content "Load sample" :dispatch-fn [:load-sample] :icon-name "code"}]
+   [button {:content "Clear all" :dispatch-fn [:clear-all] :icon-name "erase"}]
+   [process-button]
+   [share-button]])
 
 ;;; Input fields
 
@@ -132,9 +164,9 @@
        [screenreader-label name (str name "-editor")]
        ^{:key @value} [:> textarea
                        {:id (str name "-editor")
-                        :default-value @value
                         :style {:padding 0
                                 :border "none"}
+                        :default-value (or @value "")
                         :fluid "true"
                         :rows rows
                         :on-blur #(re-frame/dispatch [:edit-input-value (keyword name) (-> % .-target .-value)])}]])))
@@ -168,7 +200,7 @@
            [screenreader-label "Result" "result-panel"]
            [:> textarea {:id "result-panel"
                          :placeholder "No result"
-                         :value @content
+                         :value (or @content "")
                          :rows (count (clj-str/split-lines @content))
                          :fluid "true"
                          :style {:border "none"}
@@ -187,7 +219,7 @@
 (defn main-panel []
   [:> container
    [:> segment
-    
+
     [page-header]
 
     [control-panel]
