@@ -41,12 +41,12 @@
 
 (defn clear-all
   [db _]
-  (let [fields [:data :flux :fix]]
+  (let [paths [[:input-fields :data] [:input-fields :flux] [:input-fields :fix] [:result]]]
     (reduce
-     (fn [db field-to-empty]
-       (assoc-in db [:input-fields field-to-empty :content] ""))
+     (fn [db path]
+       (assoc-in db (conj path :content) ""))
      db
-     fields)))
+     paths)))
 
 (re-frame/reg-event-db
  :clear-all
