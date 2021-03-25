@@ -105,7 +105,7 @@
 (defn page-header []
   [:> header  {:as "h1"}
    [:> image {:alt "Metafacture Ant"
-              :src "/images/metafacture-logo.png"}]
+              :src "images/metafacture-logo.png"}]
    "Metafacture Playground"])
 
 ;;; Control Panel
