@@ -118,7 +118,7 @@
       [button "Process" [:process @data @flux @fix] "play"])))
 
 (defn control-panel []
-  [:> segment
+  [:> segment {:raised true}
    [button "Load sample" [:load-sample] "code"]
    [button "Clear all"  [:clear-all] "erase"]
    [process-button]])
@@ -133,7 +133,8 @@
        ^{:key @value} [:> textarea
                        {:id (str name "-editor")
                         :default-value @value
-                        :style {:padding 0}
+                        :style {:padding 0
+                                :border "none"}
                         :fluid "true"
                         :rows rows
                         :on-blur #(re-frame/dispatch [:edit-input-value (keyword name) (-> % .-target .-value)])}]])))
@@ -143,7 +144,7 @@
         collapsed? (re-frame/subscribe [::subs/collapsed? path])]
     (fn [config]
       [:> grid-column {:width (:width config)}
-       [:> segment
+       [:> segment {:raised true}
         [title-label (:name config)]
         [collapse-label path]
         [:> divider {:style {:margin "1.5rem 0 0.5rem 0"}}]
@@ -170,11 +171,12 @@
                          :value @content
                          :rows (count (clj-str/split-lines @content))
                          :fluid "true"
+                         :style {:border "none"}
                          :readOnly true}]])))))
 
 (defn result-panel [width]
   [:> grid-column {:width width}
-   [:> segment
+   [:> segment {:raised true}
     [title-label "Result"]
     [collapse-label [:result]]
     [:> divider {:style {:margin "1.5rem 0"}}]
