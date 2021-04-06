@@ -74,11 +74,11 @@
 
 (defn generate-links
   [db [_ data flux fix]]
-  (let [base-url (-> js/window .-location .-origin)]
+  (let [url (-> js/window .-location .-href)]
     (assoc-in db
               [:result :links :api-call]
               (goog-uri/appendParamsFromMap
-               (str base-url "/process")
+               (str url "process")
                #js {:data data
                     :flux flux
                     :fix fix}))))
