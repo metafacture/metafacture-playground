@@ -132,12 +132,11 @@
         :action {:color color
                  :icon "copy"
                  :on-click #(re-frame/dispatch [:copy-link @api-call-link])
-                 :content "Copy"
-                 :labelPosition "right"}
+                 :alt "Copy"}
         :placeholder (if-not @api-call-link "Nothing to share..." "")
         :default-value (or @api-call-link "")
         :disabled (not @api-call-link)
-        :label "API call link"
+        :label "Result call"
         :readOnly true}])))
 
 (defn share-button []
