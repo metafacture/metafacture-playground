@@ -3,7 +3,8 @@
    [re-frame.core :as re-frame]
    [day8.re-frame.http-fx]
    [ajax.core :as ajax]
-   [metafacture-playground.db :as db]))
+   [metafacture-playground.db :as db]
+   [metafacture-playground.config :as config]))
 
 ;;; Collapsing panels
 
@@ -117,7 +118,7 @@
 
 (re-frame/reg-event-fx
  :process
- process)
+ (if config/debug? fake-process process))
 
 ;;; Initialize-db
 
