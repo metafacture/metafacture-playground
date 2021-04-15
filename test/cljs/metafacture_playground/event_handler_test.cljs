@@ -1,15 +1,16 @@
 (ns metafacture-playground.event-handler-test
   (:require [cljs.test :refer-macros [deftest testing is]]
-            [clojure.core :as clj]
             [metafacture-playground.db :as db]
             [metafacture-playground.events :as events]
-            [goog.uri.utils :as goog-uri])
-  #_(:import (org.apache.commons.validator.routines UrlValidator))
-  )
+            [lambdaisland.uri :refer [uri query-string->map]]))
 
 ; Initilized db = empty db
 (def empty-db
-  (events/initialize-db {} [::events/initialize-db]))
+  (:db (events/initialize-db {} [::events/initialize-db])))
+
+; Href with query params (data, flux and fix, without processing)
+(def href
+  "http://metafacture-playground.com/test/?data=1%7Ba%3A%20Faust%2C%20b%20%7Bn%3A%20Goethe%2C%20v%3A%20JW%7D%2C%20c%3A%20Weimar%7D%0A%202%7Ba%3A%20R%C3%A4uber%2C%20b%20%7Bn%3A%20Schiller%2C%20v%3A%20F%7D%2C%20c%3A%20Weimar%7D&fix=map(_id%2C%20id)%0Amap(a%2Ctitle)%0Amap(b.n%2Cauthor)%0A%2F*map(_else)*%2F%0A&flux=as-lines%0A%7Cdecode-formeta%0A%7Cfix%0A%7Cstream-to-xml(rootTag%3D%22collection%22)")
 
 ; db with one input-field not empty
 (def db1
@@ -25,6 +26,19 @@
 (def db-with-sample
   {:input-fields db/sample-fields})
 
+(deftest initialize-db
+  (testing "Test initializing of db without values"
+    (is (= empty-db db/default-db)))
+
+  (testing "Test initializing of db with values and no processing"
+    (let [initialized-db (:db (events/initialize-db {} [::events/initialize-db href]))]
+      (is (and (get-in initialized-db [:input-fields :data :content])
+               (get-in initialized-db [:input-fields :flux :content])
+               (get-in initialized-db [:input-fields :fix :content])
+               (not (get-in initialized-db [:result :content]))
+               (not (get-in initialized-db [:result :links :api-call]))
+               (not (get-in initialized-db [:result :links :workflow]))
+               (not (get-in initialized-db [:result :links :processed-workflow])))))))
 
 (deftest edit-value-test
   (testing "Test editing values."
@@ -101,12 +115,19 @@
           data (get-in db' [:input-fields :data :content])
           fix (get-in db' [:input-fields :fix :content])
           flux (get-in db' [:input-fields :flux :content])
-          db'' (events/generate-links db' [:generate-links data flux fix])
-          api-call-link (get-in db'' [:result :links :api-call])
-          get-link-param (fn [key-name]
-                           (-> api-call-link
-                               (goog-uri/getParamValue key-name)))]
-         (and (is api-call-link)
-              (is (= (get-link-param "data") data))
-              (is (= (get-link-param "flux") flux))
-              (is (= (get-link-param "fix") fix))))))
+          test-url "https://metafacture-playground.com/test/"
+          db'' (events/generate-links db' [:generate-links test-url {:data data :flux flux :fix fix}])
+          api-call-link (uri (get-in db'' [:result :links :api-call]))
+          workflow-link (uri (get-in db'' [:result :links :workflow]))
+          processed-workflow-link (uri (get-in db'' [:result :links :processed-workflow]))]
+      (and (is (= (-> api-call-link :query query-string->map :data) data))
+           (is (= (-> api-call-link :query query-string->map :flux) flux))
+           (is (= (-> api-call-link :query query-string->map :fix) fix))
+           (is (= (:path api-call-link "/test/process")))
+           (is (= (-> workflow-link :query query-string->map :data) data))
+           (is (= (-> workflow-link :query query-string->map :flux) flux))
+           (is (= (-> workflow-link :query query-string->map :fix) fix))
+           (is (= (:path workflow-link) (:path processed-workflow-link) "/test/"))
+           (is (= (-> processed-workflow-link :query query-string->map :data) data))
+           (is (= (-> processed-workflow-link :query query-string->map :flux) flux))
+           (is (= (-> processed-workflow-link :query query-string->map :fix) fix))))))

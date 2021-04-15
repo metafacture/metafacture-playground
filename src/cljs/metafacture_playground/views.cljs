@@ -4,6 +4,7 @@
    [re-frame.core :as re-frame]
    [metafacture-playground.subs :as subs]
    [clojure.string :as clj-str]
+   [lambdaisland.uri :refer [uri]]
    [cljsjs.semantic-ui-react]
    [goog.object]))
 
@@ -28,6 +29,7 @@
 (def grid (component "Grid"))
 (def grid-column (component "Grid" "Column"))
 (def form (component "Form"))
+(def form-field (component "Form" "Field"))
 (def loader (component "Loader"))
 (def textarea (component "Form" "TextArea"))
 (def label (component "Label"))
@@ -120,31 +122,42 @@
         flux (re-frame/subscribe [::subs/field-value :flux])
         fix  (re-frame/subscribe [::subs/field-value :fix])]
     (fn []
-      [button {:content "Process"
-               :dispatch-fn [:process @data @flux @fix]
-               :icon-name "play"}])))
+      (let [uri (-> js/window .-location .-href uri (assoc :query nil))]
+        [button {:content "Process"
+                 :dispatch-fn [:process uri @data @flux @fix]
+                 :icon-name "play"}]))))
+
+(defn share-link [link-type label-text]
+  (let [link (re-frame/subscribe [::subs/link link-type])]
+    (fn [link-type label-text]
+      [:> form-field
+       [:> label
+        {:id (str link-type "link-label")
+         :color color
+         :content label-text}]
+       [:> input
+        {:id (str link-type "-link-input")
+         :action {:color color
+                  :icon "copy"
+                  :on-click #(re-frame/dispatch [:copy-link @link])
+                  :alt "Copy link"}
+         :placeholder (if-not @link "Nothing to share..." "")
+         :default-value (or @link "")
+         :disabled (not @link)
+         :readOnly true}]])))
 
 (defn share-links []
-  (let [api-call-link (re-frame/subscribe [::subs/link :api-call])]
-    (fn []
-      [:> input
-       {:id "api-call-link-input"
-        :action {:color color
-                 :icon "copy"
-                 :on-click #(re-frame/dispatch [:copy-link @api-call-link])
-                 :alt "Copy"}
-        :placeholder (if-not @api-call-link "Nothing to share..." "")
-        :default-value (or @api-call-link "")
-        :disabled (not @api-call-link)
-        :label "Result call"
-        :readOnly true}])))
+  [:> form
+   [share-link :api-call "Result call"]
+   [share-link :workflow "Workflow"]
+   [share-link :processed-workflow "Processed workflow"]])
 
 (defn share-button []
   [:> popup
-   {:content (reagent/as-element [share-links])
+   {:children (reagent/as-element [share-links])
     :on "click"
-    :position "right center"
-    :flowing true
+    :position "bottom left"
+    :wide "very"
     :trigger (reagent/as-element (button {:content "Share" :icon-name "share alternate"}))}])
 
 (defn control-panel []

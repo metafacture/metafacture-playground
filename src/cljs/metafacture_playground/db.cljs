@@ -18,4 +18,6 @@
    :result {:loading? false
             :collapsed? false
             :content nil
-            :links {:api-call nil}}})
+            :links {:api-call nil
+                    :workflow nil
+                    :processed-workflow nil}}})
