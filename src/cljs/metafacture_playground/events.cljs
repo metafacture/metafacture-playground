@@ -113,9 +113,10 @@
                                          "\n"
                                          "\n</collection>\n")))))
 
-(defn fake-process [{:keys [db]} [_ _ _ _]]
+(defn fake-process [{:keys [db]} [_ data flux fix]]
   {:db (assoc-in db [:result :loading?] true)
-   :fx [[:dispatch-later {:ms 4000 :dispatch [:fake-response]}]]})
+   :fx [[:dispatch-later {:ms 4000 :dispatch [:fake-response]}]
+        [:dispatch-later {:ms 4000 :dispatch [:generate-links data flux fix]}]]})
 
 (defn process-response
   [db [_ response]]
