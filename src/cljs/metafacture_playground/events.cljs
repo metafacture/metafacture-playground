@@ -140,17 +140,17 @@
 
 (defn process
   [{:keys [db]} [_ data flux fix]]
-  {:http-xhrio {:method          :get
-                :uri             "process"
-                :params {:data data
-                         :flux flux
-                         :fix fix}
-                :format (ajax/json-request-format)
-                :response-format (ajax/text-response-format)
-                :on-success      [:process-response]
-                :on-failure      [:bad-response]}
-   :dispatch [:generate-links data flux fix]
-   :db  (assoc-in db [:result :loading?] true)})
+  {:db  (assoc-in db [:result :loading?] true)
+   :fx [[:http-xhrio {:method          :get
+                      :uri             "process"
+                      :params {:data data
+                               :flux flux
+                               :fix fix}
+                      :format (ajax/json-request-format)
+                      :response-format (ajax/text-response-format)
+                      :on-success      [:process-response]
+                      :on-failure      [:bad-response]}]
+        [:dispatch [:generate-links data flux fix]]]})
 
 (re-frame/reg-event-fx
  :process
