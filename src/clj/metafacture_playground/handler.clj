@@ -5,8 +5,7 @@
    [metafacture-playground.process :refer [process]]
    [ring.util.response :refer [resource-response header response]]
    [ring.middleware.reload :refer [wrap-reload]]
-   [ring.middleware.params :refer [wrap-params]]
-   [shadow.http.push-state :as push-state]))
+   [ring.middleware.params :refer [wrap-params]]))
 
 (defroutes routes
   (GET "/" [] (resource-response "index.html" {:root "public"}))
@@ -17,6 +16,6 @@
   (resources "/")
   (not-found "Page not found"))
 
-(def dev-handler (-> #'routes wrap-reload push-state/handle))
+(def dev-handler (-> routes wrap-params wrap-reload))
 
 (def handler (wrap-params routes))

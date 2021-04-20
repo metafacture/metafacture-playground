@@ -5,7 +5,6 @@
    [ajax.core :as ajax]
    [goog.uri.utils :as goog-uri]
    [metafacture-playground.db :as db]
-   [metafacture-playground.config :as config]
    [metafacture-playground.effects]))
 
 ;;; Collapsing panels
@@ -89,35 +88,6 @@
 
 ;;; Processing
 
-
-;; Fake process for developing the frontend
-(re-frame/reg-event-db
- :fake-response
- (fn [db _]
-   (-> db
-       (assoc-in [:result :loading?] false)
-       (assoc-in [:result :content] (str "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                                         "\n<collection>"
-                                         "\n"
-                                         "\n	<record>"
-                                         "\n		<id>1</id>"
-                                         "\n		<title>Faust</title>"
-                                         "\n		<author>Goethe</author>"
-                                         "\n	</record>"
-                                         "\n"
-                                         "\n	<record>"
-                                         "\n		<id>2</id>"
-                                         "\n		<title>Räuber</title>"
-                                         "\n		<author>Schiller</author>"
-                                         "\n	</record>"
-                                         "\n"
-                                         "\n</collection>\n")))))
-
-(defn fake-process [{:keys [db]} [_ data flux fix]]
-  {:db (assoc-in db [:result :loading?] true)
-   :fx [[:dispatch-later {:ms 4000 :dispatch [:fake-response]}]
-        [:dispatch-later {:ms 4000 :dispatch [:generate-links data flux fix]}]]})
-
 (defn process-response
   [db [_ response]]
   (-> db
@@ -154,7 +124,7 @@
 
 (re-frame/reg-event-fx
  :process
- (if config/debug? fake-process process))
+ process)
 
 ;;; Initialize-db
 
