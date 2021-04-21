@@ -62,7 +62,9 @@ $ git clone https://github.com/metafacture/metafacture-playground.git
 $ cd metafacture-playground
 ```
 
-### Start the frontend in development mode
+### Start in development mode
+
+When using development mode you don't have to restart when changing files. They will be reloaded automatically.
 
 ```
 lein watch
@@ -70,7 +72,7 @@ lein watch
 
 Wait a bit, perhaps 20 seconds, keeping an eye out for a sign the compile has finished, then browse to http://localhost:8280.
 
-### Start the frontend and backend server
+### Start in production mode
 
 To compile and build the frontend run:
 

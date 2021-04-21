@@ -3,8 +3,9 @@
    [re-frame.core :as re-frame]
    [day8.re-frame.http-fx]
    [ajax.core :as ajax]
+   [goog.uri.utils :as goog-uri]
    [metafacture-playground.db :as db]
-   [metafacture-playground.config :as config]))
+   [metafacture-playground.effects]))
 
 ;;; Collapsing panels
 
@@ -42,10 +43,14 @@
 
 (defn clear-all
   [db _]
-  (let [paths [[:input-fields :data] [:input-fields :flux] [:input-fields :fix] [:result]]]
+  (let [paths [[:input-fields :data :content]
+               [:input-fields :flux :content]
+               [:input-fields :fix :content]
+               [:result :content]
+               [:result :links :api-call]]]
     (reduce
      (fn [db path]
-       (assoc-in db (conj path :content) ""))
+       (assoc-in db path nil))
      db
      paths)))
 
@@ -53,35 +58,35 @@
  :clear-all
  clear-all)
 
-;;; Processing
+;;; Copy to clipboard
 
-;; Fake process for developing the frontend
+(defn copy-link
+  [{:keys [db]} [_ val]]
+  {:db db
+   :copy-to-clipboard val})
+
+(re-frame/reg-event-fx
+ :copy-link
+ copy-link)
+
+;;; Share links
+
+(defn generate-links
+  [db [_ data flux fix]]
+  (let [url (-> js/window .-location .-href)]
+    (assoc-in db
+              [:result :links :api-call]
+              (goog-uri/appendParamsFromMap
+               (str url "process")
+               #js {:data data
+                    :flux flux
+                    :fix fix}))))
 
 (re-frame/reg-event-db
- :fake-response
- (fn [db _]
-   (-> db
-       (assoc-in [:result :loading?] false)
-       (assoc-in [:result :content] (str "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                                         "\n<collection>"
-                                         "\n"
-                                         "\n	<record>"
-                                         "\n		<id>1</id>"
-                                         "\n		<title>Faust</title>"
-                                         "\n		<author>Goethe</author>"
-                                         "\n	</record>"
-                                         "\n"
-                                         "\n	<record>"
-                                         "\n		<id>2</id>"
-                                         "\n		<title>Räuber</title>"
-                                         "\n		<author>Schiller</author>"
-                                         "\n	</record>"
-                                         "\n"
-                                         "\n</collection>\n")))))
+ :generate-links
+ generate-links)
 
-(defn fake-process [{:keys [db]} [_ _ _ _]]
-  {:db (assoc-in db [:result :loading?] true)
-   :fx [[:dispatch-later {:ms 4000 :dispatch [:fake-response]}]]})
+;;; Processing
 
 (defn process-response
   [db [_ response]]
@@ -105,20 +110,21 @@
 
 (defn process
   [{:keys [db]} [_ data flux fix]]
-  {:http-xhrio {:method          :get
-                :uri             "process"
-                :params {:data data
-                         :flux flux
-                         :fix fix}
-                :format (ajax/json-request-format)
-                :response-format (ajax/text-response-format)
-                :on-success      [:process-response]
-                :on-failure      [:bad-response]}
-   :db  (assoc-in db [:result :loading?] true)})
+  {:db  (assoc-in db [:result :loading?] true)
+   :fx [[:http-xhrio {:method          :get
+                      :uri             "process"
+                      :params {:data data
+                               :flux flux
+                               :fix fix}
+                      :format (ajax/json-request-format)
+                      :response-format (ajax/text-response-format)
+                      :on-success      [:process-response]
+                      :on-failure      [:bad-response]}]
+        [:dispatch [:generate-links data flux fix]]]})
 
 (re-frame/reg-event-fx
  :process
- (if config/debug? fake-process process))
+ process)
 
 ;;; Initialize-db
 

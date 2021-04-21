@@ -9,12 +9,13 @@
           :collapsed? false}})
 
 (def default-db
-  {:input-fields {:data {:content ""
+  {:input-fields {:data {:content nil
                          :collapsed? false}
-                  :flux {:content ""
+                  :flux {:content nil
                          :collapsed? false}
-                  :fix  {:content ""
+                  :fix  {:content nil
                          :collapsed? false}}
    :result {:loading? false
             :collapsed? false
-            :content ""}})
+            :content nil
+            :links {:api-call nil}}})
