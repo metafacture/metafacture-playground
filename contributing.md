@@ -3,7 +3,7 @@
 Welcome! Thank you for contributing to Metafacture Playground.
 
 The following is a set of guidelines for contributing to Metafacture Playground and how to work together in an efficient and goal-oriented way.
-We use the simple GitHub workflow: the main branch in always the version that is actually deployed to production, new features are developed in feature branches, which are merged into the main after review in pull requests. See details on the [GitHub flow](https://guides.github.com/introduction/flow/).
+We use the simple GitHub workflow: the main branch is always the version that is actually deployed to production. New features are developed in feature branches which are merged into the main after review in pull requests. See details on the [GitHub flow](https://guides.github.com/introduction/flow/).
 The agile methods we use are inspired by the [Scrum Guide](https://www.scrum.org/resources/scrum-guide).
 
 **Table of Contents**
@@ -32,40 +32,39 @@ Here is described when tickets are ready and what stages to pass to make a ticke
 
 We track the progress of the Metafacture Playground issues in the [Metafacture Fix and Playground Board](https://github.com/orgs/metafacture/projects/2). Issues move from left to right. We use the folllowing columns:
 
-*Backlog*
+*Backlog*  
 Here are all issues that are planned but not ready, have open questions and/or dependencies on other issues or on an external resource. We don't want to write down every idea about the playground so our backlog keeps manageable. We are convinced that important issues that can't be implemented now will pop up again so we don't need to write down everything that's important but not feasible now.
 
-*Ready*
+*Ready*  
 An issue is ready if it’s possible to start working on it, i.e. there are no blocking dependencies and requirements are clear enough to start working. Dependencies are expressed through simple referencing of the blocking issue (e.g. dependes on #111), see details on referencing. Prioritized items (like bugs) are moved to the top of the ready column.
 The assignee must verify the readiness with the [Definition of Ready](#definition-of-ready).
 
-*Working*
+*Working*  
 When we start working on an issue, we move it to the working column. Ideally, every person should only work on one issue at a time. That way the working column provides an overview of who is currently working on what. Issues are only moved into or out of the working column by the person who is assigned. Issues in working are only reassigned by the person who is currently assigned.
 For every issue we open a feature branch that contains the corresponding issue number and additional info for convenience (using camelCaseFormatting, e.g. 111-featureDesciption).
 We include references to the corresponding issue in the commit messages.
 If the assignee thinks the issue is ready for review he/she moves it to review column and assigns a user for functional review.
 We add instructions and links for testing the changed behavior on the test system in the issue.
 
-*Review*
-Functional Review
-If the reviewers find problems or have comments during the review, they describe the issues, providing links that show the behavior, and reassign the team member that submitted the issue for review, leaving the issue in the review column.
+*Review*  
+There are two kinds of Review:  
+a) Functional Review  
+If the reviewers find problems or have comments during the review, they describe the issues, providing links that show the behavior, and reassign the team member that submitted the issue, leaving the issue in the review column.
+If everything works as expected, the reviewers post a +1 comment on the issue and unassign themselves as reviewer.
 
-If everything works as expected, the reviewers post a +1 comment on the issue, unassign the issue.
+b) Code Review  
+To start a code review the person who worked on the issue assigns the corresponding pull request for code review.The pull request should be linked to the issue.
+Changes during the review process are created in additional commits which are pushed to the feature branch. They are added to the existing pull request automatically.
+At the end of the code review, the reviewer approves the pull request and reassigns the pull request to its original creator.
 
-Code Review
-To start code review the person who worked on the issue assigns the corresponding pull request for code review.The pull request should be linked to the issue.
-Changes during the review process are created in additional commits, which are pushed to the feature branch. They are added to the existing pull request automatically.
-
-At the end of the code review, the reviewer approves the pull request, reassigns the pull request to its original creator.
-
-*Done*
+*Done*  
 The creator of the pull request merges the pull request after checking the [definiton of done](#definition-of-done). After the merge the issue and the linked pull request move automatically to the done column. We delete feature branches after merging.
 
 ### Definition of Ready
 The Definition of Ready describes a list of criteria which tickets have to meet to move from column 'Backlog' to 'Ready':
 
 - The person who implements the ticket is assigned and has every information to work on this ticket. Only the assignee can move the ticket to Ready.
-- The implementation of the ticket is planned for the next two (?) weeks and all participants have sufficient ressources for the ticket.
+- The implementation of the ticket is planned for the next two (?) weeks and all participants have sufficient resources for the ticket.
 - choose reviewers already in grooming?
 
 ### Definition of Done
@@ -73,7 +72,7 @@ The Definition of Done describes a list of criteria which tickets have to meet t
 
 - ci passed (ci contains tests)
 - code reviewed
-- approved ui by user/product owner
+- function reviewed (approved ui by user/product owner)
 
 
 ## How can I contribute?
@@ -105,7 +104,7 @@ This section guides you through submitting an enhancement suggestion for the Met
 
 Before creating enhancement suggestions, please **perform a [cursory search](https://github.com/search?q=is%3Aissue+repo%3Ametafacture%2Fmetafacture-playground)** to see if the enhancement has already been suggested. If it has, add a comment to the existing issue instead of opening a new one. When you are creating an enhancement suggestion, please include as many details as possible:
 
-#### How Do I Submit A Enhancement Suggestion?
+#### How Do I Submit An Enhancement Suggestion?
 
 Enhancement suggestions are tracked as [GitHub issues](https://guides.github.com/features/issues/). Create an issue on the repository and provide the following information:
 
@@ -129,7 +128,7 @@ The reviewer(s) may ask you to complete additional design work, tests, or other 
 ## Conventions
 
 ### Git
-Git commits should be as granular as possible. When working on a fix for issue X, we try not to add other things we notice (typos, formatting, refactorings, etc.) to the same commit. We don’t use the GitHub shortcuts for closing issues from commits (like fixes #111), since in our process, the issue is not solved by the commit, but by the reviewed change, after it’s deployed to production.
+Git commits should be as granular as possible. When working on a fix for issue X, we try not to add other things we notice (typos, formatting, refactorings, etc.) to the same commit. We don’t use the GitHub shortcuts for closing issues from commits (like fixes #111), since in our process the issue is not solved by the commit but by the reviewed change after it’s deployed to production.
 
 ### Commit Messages
 
