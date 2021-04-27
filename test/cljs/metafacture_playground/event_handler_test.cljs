@@ -30,44 +30,49 @@
   (testing "Test initializing of db without values"
     (is (= empty-db db/default-db)))
 
-  (testing "Test initializing of db with values and no processing"
+  (testing "Test initializing of db with values"
     (let [initialized-db (:db (events/initialize-db {} [::events/initialize-db href]))]
       (is (and (get-in initialized-db [:input-fields :data :content])
                (get-in initialized-db [:input-fields :flux :content])
                (get-in initialized-db [:input-fields :fix :content])
                (not (get-in initialized-db [:result :content]))
-               (not (get-in initialized-db [:result :links :api-call]))
-               (not (get-in initialized-db [:result :links :workflow]))
-               (not (get-in initialized-db [:result :links :processed-workflow])))))))
+               (not (get-in initialized-db [:links :api-call]))
+               (not (get-in initialized-db [:links :workflow]))
+               (not (get-in initialized-db [:links :processed-workflow])))))))
 
 (deftest edit-value-test
   (testing "Test editing values."
     (let [new-value "I am a new value"
-          db' (-> empty-db 
+          db' (-> empty-db
                   (events/edit-value [:edit-input-value :fix new-value])
                   (update :fields dissoc :result))]
       (is (and (not= db' empty-db)
                (= (get-in db' [:input-fields :fix :content])
                   new-value))))))
 
+(deftest update-cursor-position-test
+  (testing "Test updating cursor positions."))
 
 (deftest load-sample-test
   (testing "Test loading sample with all fields empty."
     (let [db' (-> empty-db
                   (events/load-sample :load-sample)
-                  (dissoc :result))]
-         (is db' db-with-sample)))
+                  (dissoc :result)
+                  (dissoc :links))]
+      (is db' db-with-sample)))
 
   (testing "Test loading sample with part of fields not empty."
     (let [db' (-> db1
                   (events/load-sample :load-sample)
-                  (dissoc :result))]
+                  (dissoc :result)
+                  (dissoc :links))]
       (is (= db' db-with-sample))))
 
   (testing "Test loading sample with all fields not empty."
     (let [db' (-> db2
                   (events/load-sample :load-sample)
-                  (dissoc :result))]
+                  (dissoc :result)
+                  (dissoc :links))]
       (is (= db' db-with-sample)))))
 
 
@@ -101,7 +106,7 @@
                (not (get-in db' [:input-fields :fix :collapsed?]))
                (not (get-in db' [:input-fields :data :collapsed?]))
                (not (get-in db' [:result :collapsed?]))))))
-  
+
   (testing "Test collapsing and expanding a panel"
     (let [db' (-> empty-db
                   (events/collapse-panel [:collapse-panel [:input-fields :flux] false])
@@ -116,10 +121,9 @@
           fix (get-in db' [:input-fields :fix :content])
           flux (get-in db' [:input-fields :flux :content])
           test-url "https://metafacture-playground.com/test/"
-          db'' (events/generate-links db' [:generate-links test-url {:data data :flux flux :fix fix}])
-          api-call-link (uri (get-in db'' [:result :links :api-call]))
-          workflow-link (uri (get-in db'' [:result :links :workflow]))
-          processed-workflow-link (uri (get-in db'' [:result :links :processed-workflow]))]
+          db'' (events/generate-links db' [:generate-links test-url data flux fix])
+          api-call-link (uri (get-in db'' [:links :api-call]))
+          workflow-link (uri (get-in db'' [:links :workflow]))]
       (and (is (= (-> api-call-link :query query-string->map :data) data))
            (is (= (-> api-call-link :query query-string->map :flux) flux))
            (is (= (-> api-call-link :query query-string->map :fix) fix))
@@ -127,7 +131,4 @@
            (is (= (-> workflow-link :query query-string->map :data) data))
            (is (= (-> workflow-link :query query-string->map :flux) flux))
            (is (= (-> workflow-link :query query-string->map :fix) fix))
-           (is (= (:path workflow-link) (:path processed-workflow-link) "/test/"))
-           (is (= (-> processed-workflow-link :query query-string->map :data) data))
-           (is (= (-> processed-workflow-link :query query-string->map :flux) flux))
-           (is (= (-> processed-workflow-link :query query-string->map :fix) fix))))))
+           (is (= (:path workflow-link) "/test/"))))))

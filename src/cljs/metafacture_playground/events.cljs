@@ -29,6 +29,14 @@
  :edit-input-value
  edit-value)
 
+(defn update-cursor-position
+  [db [_ field-name cursor-position]]
+  (assoc-in db [:input-fields field-name :cursor-position] cursor-position))
+
+(re-frame/reg-event-db
+ :update-cursor-position
+ update-cursor-position)
+
 (defn load-sample
   [db _]
   (reduce
@@ -47,9 +55,8 @@
                [:input-fields :flux :content]
                [:input-fields :fix :content]
                [:result :content]
-               [:result :links :api-call]
-               [:result :links :workflow]
-               [:result :links :processed-workflow]]]
+               [:links :api-call]
+               [:links :workflow]]]
     (reduce
      (fn [db path]
        (assoc-in db path nil))
@@ -80,11 +87,16 @@
       str))
 
 (defn generate-links
-  [db [_ url base-params]]
-  (-> db
-      (assoc-in [:result :links :api-call] (generate-link url "./process" base-params))
-      (assoc-in [:result :links :workflow] (generate-link url "" base-params))
-      (assoc-in [:result :links :processed-workflow] (generate-link url "" (merge base-params {:process true})))))
+  [db [_ url data flux fix]]
+  (if-let [query-params (merge (when data {:data data})
+                               (when flux {:flux flux})
+                               (when fix {:fix fix}))]
+    (-> db
+        (assoc-in [:links :api-call] (generate-link url "./process" query-params))
+        (assoc-in [:links :workflow] (generate-link url "" query-params)))
+    (-> db
+        (assoc-in [:links :api-call] nil)
+        (assoc-in [:links :workflow] nil))))
 
 (re-frame/reg-event-db
  :generate-links
@@ -113,18 +125,17 @@
  bad-response)
 
 (defn process
-  [{:keys [db]} [_ url data flux fix]]
-  {:fx [[:http-xhrio {:method          :get
-                      :uri             "process"
-                      :params {:data data
-                               :flux flux
-                               :fix fix}
-                      :format (ajax/json-request-format)
-                      :response-format (ajax/text-response-format)
-                      :on-success      [:process-response]
-                      :on-failure      [:bad-response]}]
-        [:dispatch [:generate-links url {:data data :flux flux :fix fix}]]]
-   :db  (assoc-in db [:result :loading?] true)})
+  [{:keys [db]} [_ data flux fix]]
+  {:http-xhrio {:method          :get
+                :uri             "process"
+                :params {:data data
+                         :flux flux
+                         :fix fix}
+                :format (ajax/json-request-format)
+                :response-format (ajax/text-response-format)
+                :on-success      [:process-response]
+                :on-failure      [:bad-response]}
+   :db (assoc-in db [:result :loading?] true)})
 
 (re-frame/reg-event-fx
  :process

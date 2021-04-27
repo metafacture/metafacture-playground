@@ -8,6 +8,11 @@
     (get-in db [:input-fields field-name :content])))
 
 (re-frame/reg-sub
+ ::cursor-position
+ (fn [db [_ field-name]]
+   (get-in db [:input-fields field-name :cursor-position])))
+
+(re-frame/reg-sub
  ::collapsed?
  (fn [db [_ path]]
    (get-in db (conj path :collapsed?))))
@@ -20,7 +25,7 @@
 (re-frame/reg-sub
  ::link
  (fn [db [_ type]]
-   (get-in db [:result :links type])))
+   (get-in db [:links type])))
 
 (re-frame/reg-sub
  ::result-loading?
