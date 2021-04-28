@@ -31,11 +31,11 @@ Here is described when tickets are ready and what stages to pass to make a ticke
 
 ### From Backlog to Done
 
-We track the progress of the Metafacture Playground issues in the [Metafacture Fix and Playground Board](https://github.com/orgs/metafacture/projects/2). Issues move from left to right. We use the folllowing columns:
+We track the progress of the Metafacture Playground issues in the [Metafacture Fix and Playground Board](https://github.com/orgs/metafacture/projects/2). Issues move from left to right. We use the following columns:
 
 #### Backlog
 
-Here are all issues that are planned but not ready, have open questions and/or dependencies on other issues or on an external resource. We don't want to write down every idea about the playground so our backlog keeps manageable. We are convinced that important issues that can't be implemented now will pop up again so we don't need to write down everything that's important but not feasible now.
+Here are all issues that are planned but not ready, have open questions and/or dependencies on other issues or on an external resource. We don't want to write down every idea about the playground so our backlog remains manageable. We are convinced that important issues that can't be implemented now will pop up again so we don't need to write down everything that's important but not feasible now.
 
 #### Ready
 
@@ -43,7 +43,7 @@ An issue is ready if it’s possible to start working on it, i.e. there are no b
 
 #### Working
 
-When we start working on an issue, we move it to the working column. Ideally, every person should only work on one issue at a time. That way the working column provides an overview of who is currently working on what. Issues are only moved into or out of the working column by the person who is assigned. Issues in working are only reassigned by the person who is currently assigned. For every issue we open a feature branch that contains the corresponding issue number and additional info for convenience (using camelCaseFormatting, e.g. 111-featureDesciption). We include references to the corresponding issue in the commit messages. If the assignee thinks the issue is ready for review he/she moves it to the *Review* column and assigns a user for functional review. We add instructions and links for testing the changed behavior on the test system in the issue.
+When we start working on an issue, we move it to the working column. Ideally, every person should only work on one issue at a time. That way the working column provides an overview of who is currently working on what. Issues are only moved into or out of the working column by the person who is assigned. Issues in working are only reassigned by the person who is currently assigned. For every issue we open a feature branch that contains the corresponding issue number and additional info for convenience (using camelCaseFormatting, e.g. 111-featureDesciption). We include references to the corresponding issue in the commit messages. If the assignee thinks the issue is ready for review they move it to the *Review* column and assign a user for functional review. We add instructions and links for testing the changed behavior on the test system in the issue.
 
 #### Review
 
@@ -51,7 +51,7 @@ There are two kinds of reviews:
 
 ##### Functional Review
 
-In functional review, the actual behavior of the bugfix or the new feature is reviewed. If the reviewers find problems or have comments during the review, they describe the issues, providing links that show the behavior, and reassign the team member that submitted the issue, leaving the issue in the review column. If everything works as expected, the reviewers post a +1 comment on the issue and unassign themselves as reviewer.
+In functional review, the actual behavior of the bugfix or the new feature is reviewed. If the reviewers find problems or have comments during the review, they describe the issues providing links or screenshots that show the behavior, and reassign the team member that submitted the issue, leaving the issue in the review column. If everything works as expected, the reviewers post a +1 comment on the issue and unassign themselves as reviewer.
 
 ##### Code Review
 
@@ -94,7 +94,7 @@ Bugs are tracked as [GitHub issues](https://guides.github.com/features/issues/).
 Explain the problem and include additional details to help maintainers reproduce the problem:
 
 * **Use a clear and descriptive title** for the issue to identify the problem.
-* **Describe the exact steps which reproduce the problem** in as many details as possible. For example, start by explaining which browser you used to visit the playground. When listing steps, **don't just say what you did, but explain how you did it**. For example, if you moved the cursor to the end of a line, explain if you used the mouse or a keyboard shortcut?
+* **Describe the exact steps which reproduce the problem** in as many details as possible. For example, start by explaining which browser you used to visit the playground. When listing steps, **don't just say what you did, but explain how you did it**. For example, if you moved the cursor to the end of a line, explain if you used the mouse or a keyboard shortcut.
 * **Provide specific examples to demonstrate the steps**. Include links to files or GitHub projects, or copy/pasteable snippets, which you use in those examples. If you're providing snippets in the issue, use [Markdown code blocks](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet#code).
 * **Describe the behavior you observed after following the steps** and point out what exactly is the problem with that behavior.
 * **Explain which behavior you expected to see instead and why.**
@@ -104,7 +104,7 @@ Explain the problem and include additional details to help maintainers reproduce
 
 This section guides you through submitting an enhancement suggestion for the Metafacture Playground, including completely new features and minor improvements to existing functionality. Following these guidelines helps maintainers and the community understand your suggestion and find related suggestions.
 
-Before creating enhancement suggestions, please **perform a [cursory search](https://github.com/search?q=is%3Aissue+repo%3Ametafacture%2Fmetafacture-playground)** to see if the enhancement has already been suggested. If it has, add a comment to the existing issue instead of opening a new one. When you are creating an enhancement suggestion, please include as many details as possible:
+Before creating enhancement suggestions, please **perform a [cursory search](https://github.com/search?q=is%3Aissue+repo%3Ametafacture%2Fmetafacture-playground)** to see if the enhancement has already been suggested. If it has, add a :+1: to the existing issue instead of opening a new one. When you are creating an enhancement suggestion, please include as many details as possible:
 
 #### How Do I Submit An Enhancement Suggestion?
 
