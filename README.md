@@ -19,25 +19,9 @@ wget -O ~/bin/lein https://raw.githubusercontent.com/technomancy/leiningen/stabl
 chmod a+x ~/bin/lein
 ```
 
-### Install Metafacture
+### Install Metafacture Fix
 
-This project depends on [metafacture-core](https://github.com/metafacture/metafacture-core) and [metafacture-fix](https://github.com/metafacture/metafacture-fix). Clone and install both repositories (branch oersi).
-
-Clone and install metafacture-core:
-```bash
-$ git clone --branch oersi https://github.com/metafacture/metafacture-core.git
-$ cd metafacture-core
-```
-
-Unix:
-```bash
-$ ./gradlew install
-```
-
-Windows:
-```bash
-$ .\gradlew.bat install
-```
+This project depends on [metafacture-fix](https://github.com/metafacture/metafacture-fix), which is work in progress.
 
 Clone and install metafacture-fix:
 ```bash
