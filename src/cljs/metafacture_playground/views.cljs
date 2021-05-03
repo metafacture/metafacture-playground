@@ -6,7 +6,8 @@
    [clojure.string :as clj-str]
    [lambdaisland.uri :refer [uri]]
    [cljsjs.semantic-ui-react]
-   [goog.object]))
+   [goog.object]
+   [re-pressed.core :as rp]))
 
 ;;; Using semantic ui react components
 
@@ -107,6 +108,19 @@
      [:> icon {:name icon-name}])
    content])
 
+;;; Register keydown rules
+
+(defn register-keydown-rules []
+  (let [data (re-frame/subscribe [::subs/field-value :data])
+        flux (re-frame/subscribe [::subs/field-value :flux])
+        fix (re-frame/subscribe [::subs/field-value :fix])]
+    (re-frame/dispatch
+     [::rp/set-keydown-rules {:event-keys [[[:process @data @flux @fix]
+                                            [{:ctrlKey true
+                                              :keyCode 13}]]]
+                              :always-listen-keys [{:ctrlKey true
+                                                    :keyCode 13}]}])))
+
 ;;; Page Header
 
 (defn page-header []
@@ -122,9 +136,15 @@
         flux (re-frame/subscribe [::subs/field-value :flux])
         fix  (re-frame/subscribe [::subs/field-value :fix])]
     (fn []
-      (simple-button {:content "Process"
-                      :dispatch-fn [:process @data @flux @fix]
-                      :icon-name "play"}))))
+      [:> popup
+       {:content (reagent/as-element [:div
+                                      "Shortcut: "
+                                      [:> label {:size "tiny"} "Ctrl + Enter"]])
+        :on "hover"
+        :trigger (reagent/as-element (simple-button {:content "Process"
+                                                     :dispatch-fn [:process @data @flux @fix]
+                                                     :icon-name "play"}))
+        :position "bottom left"}])))
 
 (defn share-link [link-type label-text]
   (let [link (re-frame/subscribe [::subs/link link-type])]
@@ -244,6 +264,9 @@
 ;;; Main panel
 
 (defn main-panel []
+
+  (register-keydown-rules)
+
   [:> container
    [:> segment
 
