@@ -1,7 +1,7 @@
 (ns metafacture-playground.db)
 
 (def sample-fields
-  {:data {:content "1{a: Faust, b {n: Goethe, v: JW}, c: Weimar}\n 2{a: Räuber, b {n: Schiller, v: F}, c: Weimar}"
+  {:data {:content "1{a: Faust, b {n: Goethe, v: JW}, c: Weimar}\n2{a: Räuber, b {n: Schiller, v: F}, c: Weimar}"
           :collapsed? false
           :cursor-position 0}
    :flux {:content "as-lines\n|decode-formeta\n|fix\n|stream-to-xml(rootTag=\"collection\")"
