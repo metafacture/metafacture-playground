@@ -2,7 +2,7 @@
   (:require [re-frame.core :as re-frame]))
 
 (re-frame/reg-fx
- :copy-to-clipboard
+ ::copy-to-clipboard
  (fn [val]
    (let [el (js/document.createElement "textarea")]
      (set! (.-value el) val)

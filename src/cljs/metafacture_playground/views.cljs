@@ -3,6 +3,7 @@
    [reagent.core :as reagent]
    [re-frame.core :as re-frame]
    [metafacture-playground.subs :as subs]
+   [metafacture-playground.events :as events]
    [clojure.string :as clj-str]
    [lambdaisland.uri :refer [uri]]
    [cljsjs.semantic-ui-react]
@@ -78,7 +79,7 @@
   (let [collapsed? (re-frame/subscribe [::subs/collapsed? panel-path])]
     [:> label
      {:attached "top right"
-      :on-click #(re-frame/dispatch [:collapse-panel panel-path @collapsed?])}
+      :on-click #(re-frame/dispatch [::events/collapse-panel panel-path @collapsed?])}
      [:> icon
       {:name
        (if @collapsed?
@@ -121,7 +122,7 @@
         flux (re-frame/subscribe [::subs/field-value :flux])
         fix  (re-frame/subscribe [::subs/field-value :fix])]
     [simple-button {:content "Process"
-                    :dispatch-fn [:process @data @flux @fix]
+                    :dispatch-fn [::events/process @data @flux @fix]
                     :icon-name "play"}]))
 
 (defn share-link [link-type label-text]
@@ -135,7 +136,7 @@
       {:id (str link-type "-link-input")
        :action {:color color
                 :icon "copy"
-                :on-click #(re-frame/dispatch [:copy-link @link])
+                :on-click #(re-frame/dispatch [::events/copy-link @link])
                 :alt "Copy link"
                 :disabled (not @link)}
        :placeholder (if-not @link "Nothing to share..." "")
@@ -157,12 +158,12 @@
       :on "click"
       :position "bottom left"
       :wide "very"
-      :trigger (reagent/as-element (simple-button {:content "Share" :icon-name "share alternate" :dispatch-fn [:generate-links uri @data @flux @fix]}))}]))
+      :trigger (reagent/as-element (simple-button {:content "Share" :icon-name "share alternate" :dispatch-fn [::events/generate-links uri @data @flux @fix]}))}]))
 
 (defn control-panel []
   [:> segment {:raised true}
-   [simple-button {:content "Load sample" :dispatch-fn [:load-sample] :icon-name "code"}]
-   [simple-button {:content "Clear all" :dispatch-fn [:clear-all] :icon-name "erase"}]
+   [simple-button {:content "Load sample" :dispatch-fn [::events/load-sample] :icon-name "code"}]
+   [simple-button {:content "Clear all" :dispatch-fn [::events/clear-all] :icon-name "erase"}]
    [process-button]
    [share-button]])
 
@@ -189,8 +190,8 @@
            :fluid "true"
            :rows rows
            :on-change #(do
-                         (re-frame/dispatch-sync [:edit-input-value (keyword name) (-> % .-target .-value)])
-                         (re-frame/dispatch-sync [:update-cursor-position
+                         (re-frame/dispatch-sync [::events/edit-input-value (keyword name) (-> % .-target .-value)])
+                         (re-frame/dispatch-sync [::events/update-cursor-position
                                                   (keyword name)
                                                   (-> % .-target .-selectionStart)]))}]])})))
 
