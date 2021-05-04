@@ -145,8 +145,7 @@
 
 (defn initialize-db
   [_ [_ href]]
-  (let [url (assoc (uri href) :query nil)
-        {:keys [data flux fix process]} (-> href uri :query query-string->map)]
+  (let [{:keys [data flux fix process]} (-> href uri :query query-string->map)]
     (merge
      {:db (cond-> db/default-db
             data (assoc-in [:input-fields :data :content] data)
