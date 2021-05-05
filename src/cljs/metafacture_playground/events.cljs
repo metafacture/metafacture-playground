@@ -16,7 +16,7 @@
             (not status)))
 
   (re-frame/reg-event-db
-   :collapse-panel
+   ::collapse-panel
    collapse-panel)
 
 ;;; Editing input fields
