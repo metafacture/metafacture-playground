@@ -3,7 +3,7 @@
    [re-frame.core :as re-frame]
    [day8.re-frame.http-fx]
    [ajax.core :as ajax]
-   [goog.uri.utils :as goog-uri]
+   [lambdaisland.uri :refer [uri join assoc-query* query-string->map]]
    [metafacture-playground.db :as db]
    [metafacture-playground.effects]))
 
@@ -29,6 +29,14 @@
  :edit-input-value
  edit-value)
 
+(defn update-cursor-position
+  [db [_ field-name cursor-position]]
+  (assoc-in db [:input-fields field-name :cursor-position] cursor-position))
+
+(re-frame/reg-event-db
+ :update-cursor-position
+ update-cursor-position)
+
 (defn load-sample
   [db _]
   (reduce
@@ -47,7 +55,8 @@
                [:input-fields :flux :content]
                [:input-fields :fix :content]
                [:result :content]
-               [:result :links :api-call]]]
+               [:links :api-call]
+               [:links :workflow]]]
     (reduce
      (fn [db path]
        (assoc-in db path nil))
@@ -71,16 +80,23 @@
 
 ;;; Share links
 
+(defn generate-link [url path query-params]
+  (-> (uri url)
+      (join path)
+      (assoc-query* query-params)
+      str))
+
 (defn generate-links
-  [db [_ data flux fix]]
-  (let [url (-> js/window .-location .-href)]
-    (assoc-in db
-              [:result :links :api-call]
-              (goog-uri/appendParamsFromMap
-               (str url "process")
-               #js {:data data
-                    :flux flux
-                    :fix fix}))))
+  [db [_ url data flux fix]]
+  (if-let [query-params (merge (when data {:data data})
+                               (when flux {:flux flux})
+                               (when fix {:fix fix}))]
+    (-> db
+        (assoc-in [:links :api-call] (generate-link url "./process" query-params))
+        (assoc-in [:links :workflow] (generate-link url "" query-params)))
+    (-> db
+        (assoc-in [:links :api-call] nil)
+        (assoc-in [:links :workflow] nil))))
 
 (re-frame/reg-event-db
  :generate-links
@@ -110,17 +126,16 @@
 
 (defn process
   [{:keys [db]} [_ data flux fix]]
-  {:db  (assoc-in db [:result :loading?] true)
-   :fx [[:http-xhrio {:method          :get
-                      :uri             "process"
-                      :params {:data data
-                               :flux flux
-                               :fix fix}
-                      :format (ajax/json-request-format)
-                      :response-format (ajax/text-response-format)
-                      :on-success      [:process-response]
-                      :on-failure      [:bad-response]}]
-        [:dispatch [:generate-links data flux fix]]]})
+  {:http-xhrio {:method          :get
+                :uri             "process"
+                :params {:data data
+                         :flux flux
+                         :fix fix}
+                :format (ajax/json-request-format)
+                :response-format (ajax/text-response-format)
+                :on-success      [:process-response]
+                :on-failure      [:bad-response]}
+   :db (assoc-in db [:result :loading?] true)})
 
 (re-frame/reg-event-fx
  :process
@@ -129,9 +144,16 @@
 ;;; Initialize-db
 
 (defn initialize-db
-  [_ _]
-  db/default-db)
+  [_ [_ href]]
+  (let [url (assoc (uri href) :query nil)
+        {:keys [data flux fix process]} (-> href uri :query query-string->map)]
+    (merge
+     {:db (cond-> db/default-db
+            data (assoc-in [:input-fields :data :content] data)
+            flux (assoc-in [:input-fields :flux :content] flux)
+            fix (assoc-in [:input-fields :fix :content] fix))}
+     (when process {:dispatch [:process url data flux fix]}))))
 
-(re-frame/reg-event-db
+(re-frame/reg-event-fx
  ::initialize-db
  initialize-db)

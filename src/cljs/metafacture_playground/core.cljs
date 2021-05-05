@@ -5,7 +5,7 @@
    [metafacture-playground.events :as events]
    [metafacture-playground.views :as views]
    [metafacture-playground.config :as config]
-   ))
+   [re-pressed.core :as rp]))
 
 
 (defn dev-setup []
@@ -19,6 +19,8 @@
     (rdom/render [views/main-panel] root-el)))
 
 (defn init []
-  (re-frame/dispatch-sync [::events/initialize-db])
+  (let [href (-> js/window .-location .-href)]
+    (re-frame/dispatch-sync [::events/initialize-db href]))
+  (re-frame/dispatch-sync [::rp/add-keyboard-event-listener "keydown"])
   (dev-setup)
   (mount-root))
