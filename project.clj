@@ -14,6 +14,7 @@
                  [ring "1.8.2"]
                  [lambdaisland/uri "1.4.54"]
                  [day8.re-frame/http-fx "0.2.2"]
+                 [re-pressed "0.3.1"]
                  [org.metafacture/metafacture-commons "feature-oersi-SNAPSHOT"]
                  [org.metafacture/metafacture-formeta "feature-oersi-SNAPSHOT"]
                  [org.metafacture/metafacture-mangling "feature-oersi-SNAPSHOT"]
