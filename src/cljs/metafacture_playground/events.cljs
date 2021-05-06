@@ -5,7 +5,7 @@
    [ajax.core :as ajax]
    [lambdaisland.uri :refer [uri join assoc-query* query-string->map]]
    [metafacture-playground.db :as db]
-   [metafacture-playground.effects]))
+   [metafacture-playground.effects :as effects]))
 
 ;;; Collapsing panels
 
@@ -16,7 +16,7 @@
             (not status)))
 
   (re-frame/reg-event-db
-   :collapse-panel
+   ::collapse-panel
    collapse-panel)
 
 ;;; Editing input fields
@@ -26,7 +26,7 @@
   (assoc-in db [:input-fields field-name :content] new-value))
 
 (re-frame/reg-event-db
- :edit-input-value
+ ::edit-input-value
  edit-value)
 
 (defn update-cursor-position
@@ -34,7 +34,7 @@
   (assoc-in db [:input-fields field-name :cursor-position] cursor-position))
 
 (re-frame/reg-event-db
- :update-cursor-position
+ ::update-cursor-position
  update-cursor-position)
 
 (defn load-sample
@@ -46,7 +46,7 @@
    db/sample-fields))
 
 (re-frame/reg-event-db
-  :load-sample
+  ::load-sample
   load-sample)
 
 (defn clear-all
@@ -64,7 +64,7 @@
      paths)))
 
 (re-frame/reg-event-db
- :clear-all
+ ::clear-all
  clear-all)
 
 ;;; Copy to clipboard
@@ -72,10 +72,10 @@
 (defn copy-link
   [{:keys [db]} [_ val]]
   {:db db
-   :copy-to-clipboard val})
+   ::effects/copy-to-clipboard val})
 
 (re-frame/reg-event-fx
- :copy-link
+ ::copy-link
  copy-link)
 
 ;;; Share links
@@ -99,7 +99,7 @@
         (assoc-in [:links :workflow] nil))))
 
 (re-frame/reg-event-db
- :generate-links
+ ::generate-links
  generate-links)
 
 ;;; Processing
@@ -111,7 +111,7 @@
       (assoc-in [:result :content] response)))
 
 (re-frame/reg-event-db                   
- :process-response             
+ ::process-response
   process-response)
 
 (defn bad-response
@@ -121,7 +121,7 @@
       (assoc-in [:result :content] "Bad response")))
 
 (re-frame/reg-event-db
- :bad-response
+ ::bad-response
  bad-response)
 
 (defn process
@@ -133,26 +133,25 @@
                          :fix fix}
                 :format (ajax/json-request-format)
                 :response-format (ajax/text-response-format)
-                :on-success      [:process-response]
-                :on-failure      [:bad-response]}
+                :on-success      [::process-response]
+                :on-failure      [::bad-response]}
    :db (assoc-in db [:result :loading?] true)})
 
 (re-frame/reg-event-fx
- :process
+ ::process
  process)
 
 ;;; Initialize-db
 
 (defn initialize-db
   [_ [_ href]]
-  (let [url (assoc (uri href) :query nil)
-        {:keys [data flux fix process]} (-> href uri :query query-string->map)]
+  (let [{:keys [data flux fix process]} (-> href uri :query query-string->map)]
     (merge
      {:db (cond-> db/default-db
             data (assoc-in [:input-fields :data :content] data)
             flux (assoc-in [:input-fields :flux :content] flux)
             fix (assoc-in [:input-fields :fix :content] fix))}
-     (when process {:dispatch [:process url data flux fix]}))))
+     (when process {:dispatch [::process data flux fix]}))))
 
 (re-frame/reg-event-fx
  ::initialize-db

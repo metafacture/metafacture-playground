@@ -3,6 +3,7 @@
    [reagent.core :as reagent]
    [re-frame.core :as re-frame]
    [metafacture-playground.subs :as subs]
+   [metafacture-playground.events :as events]
    [clojure.string :as clj-str]
    [lambdaisland.uri :refer [uri]]
    [cljsjs.semantic-ui-react]
@@ -77,17 +78,16 @@
 
 (defn collapse-label [panel-path]
   (let [collapsed? (re-frame/subscribe [::subs/collapsed? panel-path])]
-    (fn [_]
-      [:> label
-       {:attached "top right"
-        :on-click #(re-frame/dispatch [:collapse-panel panel-path @collapsed?])}
-       [:> icon
-        {:name
-         (if @collapsed?
-           "chevron down"
-           "chevron up")
-         :style {:margin 0}
-         :size "large"}]])))
+    [:> label
+     {:attached "top right"
+      :on-click #(re-frame/dispatch [::events/collapse-panel panel-path @collapsed?])}
+     [:> icon
+      {:name
+       (if @collapsed?
+         "chevron down"
+         "chevron up")
+       :style {:margin 0}
+       :size "large"}]]))
 
 (defn screenreader-label [name for]
   [:label {:style {:position "absolute"
@@ -115,7 +115,7 @@
         flux (re-frame/subscribe [::subs/field-value :flux])
         fix (re-frame/subscribe [::subs/field-value :fix])]
     (re-frame/dispatch
-     [::rp/set-keydown-rules {:event-keys [[[:process @data @flux @fix]
+     [::rp/set-keydown-rules {:event-keys [[[::events/process @data @flux @fix]
                                             [{:ctrlKey true
                                               :keyCode 13}]]]
                               :always-listen-keys [{:ctrlKey true
@@ -142,28 +142,27 @@
                                       [:> label {:size "tiny"} "Ctrl + Enter"]])
         :on "hover"
         :trigger (reagent/as-element (simple-button {:content "Process"
-                                                     :dispatch-fn [:process @data @flux @fix]
+                                                     :dispatch-fn [::events/process @data @flux @fix]
                                                      :icon-name "play"}))
         :position "bottom left"}])))
 
 (defn share-link [link-type label-text]
   (let [link (re-frame/subscribe [::subs/link link-type])]
-    (fn [link-type label-text]
-      [:> form-field
-       [:> label
-        {:id (str link-type "link-label")
-         :color color
-         :content label-text}]
-       [:> input
-        {:id (str link-type "-link-input")
-         :action {:color color
-                  :icon "copy"
-                  :on-click #(re-frame/dispatch [:copy-link @link])
-                  :alt "Copy link"
-                  :disabled (not @link)}
-         :placeholder (if-not @link "Nothing to share..." "")
-         :default-value (or @link "")
-         :readOnly true}]])))
+    [:> form-field
+     [:> label
+      {:id (str link-type "link-label")
+       :color color
+       :content label-text}]
+     [:> input
+      {:id (str link-type "-link-input")
+       :action {:color color
+                :icon "copy"
+                :on-click #(re-frame/dispatch [::events/copy-link @link])
+                :alt "Copy link"
+                :disabled (not @link)}
+       :placeholder (if-not @link "Nothing to share..." "")
+       :default-value (or @link "")
+       :readOnly true}]]))
 
 (defn share-links []
   [:> form
@@ -175,18 +174,17 @@
         data (re-frame/subscribe [::subs/field-value :data])
         flux (re-frame/subscribe [::subs/field-value :flux])
         fix (re-frame/subscribe [::subs/field-value :fix])]
-    (fn []
-      [:> popup
-       {:children (reagent/as-element [share-links])
-        :on "click"
-        :position "bottom left"
-        :wide "very"
-        :trigger (reagent/as-element (simple-button {:content "Share" :icon-name "share alternate" :dispatch-fn [:generate-links uri @data @flux @fix]}))}])))
+    [:> popup
+     {:children (reagent/as-element [share-links])
+      :on "click"
+      :position "bottom left"
+      :wide "very"
+      :trigger (reagent/as-element (simple-button {:content "Share" :icon-name "share alternate" :dispatch-fn [::events/generate-links uri @data @flux @fix]}))}]))
 
 (defn control-panel []
   [:> segment {:raised true}
-   [simple-button {:content "Load sample" :dispatch-fn [:load-sample] :icon-name "code"}]
-   [simple-button {:content "Clear all" :dispatch-fn [:clear-all] :icon-name "erase"}]
+   [simple-button {:content "Load sample" :dispatch-fn [::events/load-sample] :icon-name "code"}]
+   [simple-button {:content "Clear all" :dispatch-fn [::events/clear-all] :icon-name "erase"}]
    [process-button]
    [share-button]])
 
@@ -213,22 +211,21 @@
            :fluid "true"
            :rows rows
            :on-change #(do
-                         (re-frame/dispatch-sync [:edit-input-value (keyword name) (-> % .-target .-value)])
-                         (re-frame/dispatch-sync [:update-cursor-position
+                         (re-frame/dispatch-sync [::events/edit-input-value (keyword name) (-> % .-target .-value)])
+                         (re-frame/dispatch-sync [::events/update-cursor-position
                                                   (keyword name)
                                                   (-> % .-target .-selectionStart)]))}]])})))
 
 (defn editor-panel [config]
   (let [path [:input-fields (-> config :name keyword)]
         collapsed? (re-frame/subscribe [::subs/collapsed? path])]
-    (fn [config]
-      [:> grid-column {:width (:width config)}
-       [:> segment {:raised true}
-        [title-label (:name config)]
-        [collapse-label path]
-        [:> divider {:style {:margin "1.5rem 0 0.5rem 0"}}]
-        (when-not @collapsed?
-          [editor config])]])))
+    [:> grid-column {:width (:width config)}
+     [:> segment {:raised true}
+      [title-label (:name config)]
+      [collapse-label path]
+      [:> divider {:style {:margin "1.5rem 0 0.5rem 0"}}]
+      (when-not @collapsed?
+        [editor config])]]))
 
 ;;; Result field
 
@@ -236,22 +233,21 @@
   (let [content (re-frame/subscribe [::subs/process-result])
         loading? (re-frame/subscribe [::subs/result-loading?])
         collapsed? (re-frame/subscribe [::subs/collapsed? [:result]])]
-    (fn []
-      (when-not @collapsed?
-        (if @loading?
-          [:> segment {:basic true}
-           [:> loader {:active true
-                       :style {:padding "1.5rem"}}]]
+    (when-not @collapsed?
+      (if @loading?
+        [:> segment {:basic true}
+         [:> loader {:active true
+                     :style {:padding "1.5rem"}}]]
 
-          [:> form
-           [screenreader-label "Result" "result-panel"]
-           [:> textarea {:id "result-panel"
-                         :placeholder "No result"
-                         :value (or @content "")
-                         :rows (count (clj-str/split-lines @content))
-                         :fluid "true"
-                         :style {:border "none"}
-                         :readOnly true}]])))))
+        [:> form
+         [screenreader-label "Result" "result-panel"]
+         [:> textarea {:id "result-panel"
+                       :placeholder "No result"
+                       :value (or @content "")
+                       :rows (count (clj-str/split-lines @content))
+                       :fluid "true"
+                       :style {:border "none"}
+                       :readOnly true}]]))))
 
 (defn result-panel [width]
   [:> grid-column {:width width}
