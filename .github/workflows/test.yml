@@ -8,22 +8,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout metafacture-core
-      uses: actions/checkout@v2
-      with:
-        path: metafacture-core
-        repository: metafacture/metafacture-core
-        ref: oersi
-    - name: Install metafacture-core
-      run: |
-        cd metafacture-core
-        ./gradlew install
     - name: Checkout metafacture-fix
       uses: actions/checkout@v2
       with:
         path: metafacture-fix
         repository: metafacture/metafacture-fix
-        ref: oersi
+        ref: master
     - name: Install metafacture-fix
       run: |
         cd metafacture-fix
