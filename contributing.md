@@ -133,7 +133,7 @@ The creator of the pull request merges the pull request after checking the [defi
 The *Definition of Ready* describes a list of criteria which tickets have to meet to move from column 'Backlog' to 'Ready':
 
 - The person who implements the ticket is assigned and has every information to work on this ticket. Only the assignee can move the ticket to Ready.
-- It should be noted in the ticket by whom the ticket will be reviewed.
+- It should be noted in the ticket by whom the ticket will be reviewed (e.g. add a comment like "will be reviewed by ...")
 
 ### Definition of Done
 
