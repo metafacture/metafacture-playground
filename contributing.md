@@ -46,7 +46,7 @@ Explain the problem and include additional details to help maintainers reproduce
 
 This section guides you through submitting an enhancement suggestion for the Metafacture Playground, including completely new features and minor improvements to existing functionality. Following these guidelines helps maintainers and the community understand your suggestion and find related suggestions.
 
-Before creating enhancement suggestions, please **perform a [cursory search](https://github.com/search?q=is%3Aissue+repo%3Ametafacture%2Fmetafacture-playground)** to see if the enhancement has already been suggested. If it has, add a :+1: to the existing issue instead of opening a new one. When you are creating an enhancement suggestion, please include as many details as possible:
+Before creating enhancement suggestions, please **perform a [cursory search](https://github.com/search?q=is%3Aissue+repo%3Ametafacture%2Fmetafacture-playground)** to see if the enhancement has already been suggested. If it has, add a comment to the existing issue instead of opening a new one. When you are creating an enhancement suggestion, please include as many details as possible:
 
 #### How Do I Submit An Enhancement Suggestion?
 
@@ -64,7 +64,7 @@ Enhancement suggestions are tracked as [GitHub issues](https://guides.github.com
 
 Please follow these steps to [propose contributions to the project](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/proposing-changes-to-your-work-with-pull-requests).
 
-When submitting a pull request use a meaningful title and use closing keywords to reference to the issue it resolves in the pull request description.
+When submitting a pull request use a meaningful title and use [closing keywords](https://docs.github.com/en/github/managing-your-work-on-github/linking-a-pull-request-to-an-issue#linking-a-pull-request-to-an-issue-using-a-keyword) to reference the issue it resolves in the pull request description.
 After you submit your pull request, verify that all [GitHub Actions](https://docs.github.com/en/actions) are passing. If an action is failing, and you believe that the failure is unrelated to your change, please leave a comment on the pull request explaining why you believe the failure is unrelated. If the failure was a false positive, we will open an issue to track that problem with the GitHub Actions.
 
 The reviewer(s) may ask you to complete additional design work, tests, or other changes before your pull request can be ultimately accepted.
