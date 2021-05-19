@@ -142,3 +142,4 @@ The *Definition of Done* describes a list of criteria which tickets have to meet
 - CI passed (CI contains tests)
 - Code reviewed
 - Functionality reviewed (approved by user/product owner)
+- Documentation (extern documentation must be linked)
