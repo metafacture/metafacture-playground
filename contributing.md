@@ -13,7 +13,7 @@ The following is a set of guidelines for contributing to Metafacture Playground 
 * [Conventions](#conventions)
 
 [Maintainer Guidelines](#maintainer-guidelines)
-* [Board and Tickets](#board-and-tickets)
+* [Board and Issues](#board-and-issues)
 * [From Backlog to Done](#from-backlog-to-done)
 * [Definition of Ready](#definition-of-ready)
 * [Definition of Done](#definition-of-done)
@@ -73,7 +73,7 @@ The reviewer(s) may ask you to complete additional design work, tests, or other 
 
 #### Git
 
-Git commits should be as granular as possible. When working on a fix for issue X, we try not to add other things we notice (typos, formatting, refactorings, etc.) to the same commit. Those things should be placed in an own commit to the same branch. If it is necessary for understanding, add something like "Discovered while working on #14" to the commit message.
+Git commits should be as granular as possible. When working on a fix for issue X, we try not to add other things we notice (formatting, refactorings, etc.) to the same commit. Those things should be placed in an own commit to the same branch. If it is necessary for understanding, add something like "Discovered while working on #14" to the commit message.
 We don’t use the GitHub shortcuts for closing issues from commits (like fixes #111), since in our process the issue is not solved by the commit but by the reviewed change after it’s deployed to production.
 
 #### Commit Messages
@@ -92,13 +92,13 @@ As a general rule, we don't change public commit history, i.e. we don’t use ``
 
 ## Maintainer Guidelines
 
-### Board and Tickets
+### Board and Issues
 
-We use this [board](https://github.com/orgs/metafacture/projects/2) to track the progress of tickets of the Metafacture playground. In the following is described when tickets are ready and what stages to pass to make a ticket done.
+We use the [Metafacture Fix and Playground Board](https://github.com/orgs/metafacture/projects/2) to track the progress of issues of the Metafacture Playground. In the following we describe when issues are ready and what stages to pass to make a issue done.
 
 ### From Backlog to Done
 
-We track the progress of the Metafacture Playground issues in the [Metafacture Fix and Playground Board](https://github.com/orgs/metafacture/projects/2). Issues move from left to right. We use the following columns:
+Issues move from left to right. We use the following columns:
 
 #### Backlog
 
@@ -106,40 +106,42 @@ Here are all issues that are planned but not ready, have open questions and/or d
 
 #### Ready
 
-An issue is ready if it’s possible to start working on it, i.e. there are no blocking dependencies and requirements are clear enough to start working. Dependencies are expressed through simple referencing of the blocking issue (e.g. depends on #111), see details on [autolinked references and URLs](https://docs.github.com/en/github/writing-on-github/autolinked-references-and-urls). Prioritized items (like bugs) are moved to the top of the *Ready* column. The assignee must verify the readiness with the [Definition of Ready](#definition-of-ready) when moving the item from *Ready* to *Working*, especially when an item has been in the 'Ready'-column for a long time.
+An issue is ready if it’s possible to start working on it according to the [Definition of Ready](#definition-of-ready). Prioritized items (like bugs) are moved to the top of the *Ready* column. The assignee must re-verify the readiness when moving the item from *Ready* to *Working*, especially when an item has been in the 'Ready'-column for a long time.
 
 #### Working
 
-When we start working on an issue, we move it to the working column. Ideally, every person should only work on one issue at a time. That way the working column provides an overview of who is currently working on what. Issues are only moved into or out of the working column by the person who is assigned. Issues in working are only reassigned by the person who is currently assigned. For every issue we open a feature branch that contains the corresponding issue number and additional info for convenience (using camelCaseFormatting, e.g. 111-featureDesciption). We include references to the corresponding issue in the commit messages. If the assignee thinks the issue is ready for review they move it to the *Review* column and assign a user for functional review. We add instructions and links for testing the changed behavior on the test system in the issue.
+When we start working on an issue, we move it to the working column. Ideally, every person should only work on one issue at a time. That way the working column provides an overview of who is currently working on what. Issues are only moved into or out of the working column by the person who is assigned. Issues in working are only reassigned by the person who is currently assigned. For every issue we open a feature branch that contains the corresponding issue number and additional info for convenience (using camelCaseFormatting, e.g. '111-featureDesciption'). If the assignee thinks the issue is ready for review they add instructions and links for testing the changed behavior on the test system in the issue, move it to the *Review* column, assign the previously announced functional reviewer (see [Definition of Ready](#definition-of-ready)), and open an unassigned pull request for the feature branch, with a suggestion for a code reviewer (e.g. add a comment like "could be reviewed by ...").
 
 #### Review
 
-There are two kinds of reviews:
+There are two kinds of reviews: first, a functional review (which happens on the issue) and second, a code review (which happens on the pull request).
 
 ##### Functional Review
 
-In functional review, the actual behavior of the bugfix or the new feature is reviewed. If the reviewers find problems or have comments during the review, they describe the issues providing links or screenshots that show the behavior, and reassign the team member that submitted the issue, leaving the issue in the review column. If everything works as expected, the reviewers post a +1 comment on the issue and unassign themselves as reviewer.
+In functional review, the actual behavior of the bugfix or the new feature is reviewed. If the reviewer finds problems or has comments during the review, they describe the issues providing links or screenshots that show the behavior, and reassign the team member that submitted the issue, leaving the issue in the review column. If everything works as expected, the reviewer post a +1 comment on the issue, unassigns themself, and assign the linked pull request to the code reviewer suggested in the pull request.
 
 ##### Code Review
 
-In code review, the technical implementation of the bugfix or the new feature is reviewed. To start a code review the person who worked on the issue assigns the corresponding pull request for code review. The pull request should be linked to the issue. Changes during the review process are created in additional commits which are pushed to the feature branch. They are added to the existing pull request automatically. At the end of the code review, the reviewer approves the pull request and reassigns the pull request to its original creator.
+In code review, the technical implementation of the bugfix or the new feature is reviewed. Changes during the review process are created in additional commits which are pushed to the feature branch. They are added to the existing pull request automatically. At the end of the code review, the reviewer approves the pull request and reassigns the pull request to its original creator.
 
 #### Done
 
-The creator of the pull request merges the pull request after checking the [definiton of done](#definition-of-done). After the merge, the issue and the linked pull request move to the done column automatically. We delete feature branches after merging.
+The creator of the pull request merges the pull request after checking the [Definiton of Done](#definition-of-done). After the merge, the issue and the linked pull request are closed and moved to the *Done* column automatically (due to the [closing keywords](https://docs.github.com/en/github/managing-your-work-on-github/linking-a-pull-request-to-an-issue#linking-a-pull-request-to-an-issue-using-a-keyword) used in the pull request description). We delete feature branches after merging.
 
 ### Definition of Ready
 
-The *Definition of Ready* describes a list of criteria which tickets have to meet to move from column 'Backlog' to 'Ready':
+The *Definition of Ready* describes a list of criteria which issues have to meet to move from column 'Backlog' to 'Ready':
 
-- The person who implements the ticket is assigned and has every information to work on this ticket. Only the assignee can move the ticket to Ready.
-- It should be noted in the ticket by whom the ticket will be reviewed (e.g. add a comment like "will be reviewed by ...")
+- The person who will implement the issue is assigned and has every information to work on this issue. Only the assignee can move the issue to Ready.
+- The person who will review the issue is mentioned (e.g. add a comment like "could be reviewed by ...")
+- There are no blocking dependencies. Dependencies are expressed through simple referencing of the blocking issue (e.g. depends on #111), see details on [autolinked references and URLs](https://docs.github.com/en/github/writing-on-github/autolinked-references-and-urls)
 
 ### Definition of Done
 
-The *Definition of Done* describes a list of criteria which tickets have to meet to be called 'Done':
+The *Definition of Done* describes a list of criteria which issues have to meet to be called 'Done':
 
-- CI passed (CI contains tests)
-- Code reviewed
 - Functionality reviewed (approved by user/product owner)
-- Documentation (extern documentation must be linked)
+- Documentation exists (external documentation must be linked)
+- GitHub Actions / CI passed (contains tests)
+- Pull request is reviewed and approved
+- Functionality is merged into the main branch and deployed to production
