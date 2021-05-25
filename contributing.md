@@ -110,7 +110,7 @@ An issue is ready if it’s possible to start working on it according to the [De
 
 #### Working
 
-When we start working on an issue, we move it to the working column. Ideally, every person should only work on one issue at a time. That way the working column provides an overview of who is currently working on what. Issues are only moved into or out of the working column by the person who is assigned. Issues in working are only reassigned by the person who is currently assigned. For every issue we open a feature branch that contains the corresponding issue number and additional info for convenience (using camelCaseFormatting, e.g. '111-featureDesciption'). If the assignee thinks the issue is ready for review they add instructions and links for testing the changed behavior on the test system in the issue, move it to the *Review* column, assign the previously announced functional reviewer (see [Definition of Ready](#definition-of-ready)), and open an unassigned pull request for the feature branch, with a suggestion for a code reviewer (e.g. add a comment like "could be reviewed by ...").
+When we start working on an issue, we move it to the working column. Ideally, every person should only work on one issue at a time. That way the working column provides an overview of who is currently working on what. Issues are only moved into or out of the working column by the person who is assigned. Issues in working are only reassigned by the person who is currently assigned. For every issue we open a feature branch that contains the corresponding issue number and additional info for convenience (using camelCaseFormatting, e.g. '111-featureDesciption'). If the assignee thinks the issue is ready for review they add instructions and links for testing the changed behavior on the test system in the issue, move it to the *Review* column, assign the previously announced functional reviewer (see [Definition of Ready](#definition-of-ready)), and open an unassigned pull request for the feature branch.
 
 #### Review
 
@@ -118,7 +118,7 @@ There are two kinds of reviews: first, a functional review (which happens on the
 
 ##### Functional Review
 
-In functional review, the actual behavior of the bugfix or the new feature is reviewed. If the reviewer finds problems or has comments during the review, they describe the issues providing links or screenshots that show the behavior, and reassign the team member that submitted the issue, leaving the issue in the review column. If everything works as expected, the reviewer post a +1 comment on the issue, unassigns themself, and assign the linked pull request to the code reviewer suggested in the pull request.
+In functional review, the actual behavior of the bugfix or the new feature is reviewed. If the reviewer finds problems or has comments during the review, they describe the issues providing links or screenshots that show the behavior, and reassign the team member that submitted the issue, leaving the issue in the review column. If everything works as expected, the reviewer post a +1 comment on the issue, unassigns themself, and assign the linked pull request to the code reviewer suggested in the issue.
 
 ##### Code Review
 
@@ -126,14 +126,15 @@ In code review, the technical implementation of the bugfix or the new feature is
 
 #### Done
 
-The creator of the pull request merges the pull request after checking the [Definiton of Done](#definition-of-done). After the merge, the issue and the linked pull request are closed and moved to the *Done* column automatically (due to the [closing keywords](https://docs.github.com/en/github/managing-your-work-on-github/linking-a-pull-request-to-an-issue#linking-a-pull-request-to-an-issue-using-a-keyword) used in the pull request description). We delete feature branches after merging.
+The creator of the pull request merges the pull request after checking the [Definition of Done](#definition-of-done). After the merge, the issue and the linked pull request are closed and moved to the *Done* column automatically (due to the [closing keywords](https://docs.github.com/en/github/managing-your-work-on-github/linking-a-pull-request-to-an-issue#linking-a-pull-request-to-an-issue-using-a-keyword) used in the pull request description). We delete feature branches after merging.
 
 ### Definition of Ready
 
 The *Definition of Ready* describes a list of criteria which issues have to meet to move from column 'Backlog' to 'Ready':
 
 - The person who will implement the issue is assigned and has every information to work on this issue. Only the assignee can move the issue to Ready.
-- The person who will review the issue is mentioned (e.g. add a comment like "could be reviewed by ...")
+- The person who will do functional review is mentioned in the issue (e.g. add a comment like "could be reviewed by ...")
+- The person who will do code review is mentioned in the issue (e.g. add a comment like "could be reviewed by ...")
 - There are no blocking dependencies. Dependencies are expressed through simple referencing of the blocking issue (e.g. depends on #111), see details on [autolinked references and URLs](https://docs.github.com/en/github/writing-on-github/autolinked-references-and-urls)
 
 ### Definition of Done
