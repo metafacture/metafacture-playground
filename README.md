@@ -3,7 +3,9 @@
 This is an approach to provide a web application to play around with Metafactures languages Fix and Flux inspired by the [JSON-LD Playground](https://json-ld.org/playground/).
 This project is inititially created using the [leiningen re-frame template](https://github.com/day8/re-frame-template).
 
-The current test deployment is available at [http://test.lobid.org/playground/](http://test.lobid.org/playground/)
+The current test deployment is available at [http://test.lobid.org/playground/](http://test.lobid.org/playground/).
+
+[Here](contributing.md) you can read about contributing to Metafacture Playground.
 
 ## Installation
 
