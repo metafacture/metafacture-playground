@@ -145,4 +145,4 @@ The *Definition of Done* describes a list of criteria which issues have to meet 
 - Documentation exists (external documentation must be linked)
 - GitHub Actions / CI passed (contains tests)
 - Pull request is reviewed and approved
-- Functionality is merged into the main branch and deployed to production
+- Functionality is merged into the main branch
