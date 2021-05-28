@@ -136,14 +136,14 @@
         flux (re-frame/subscribe [::subs/field-value :flux])
         fix  (re-frame/subscribe [::subs/field-value :fix])]
     (fn []
-      [:> popup
-       {:content (reagent/as-element [:div
-                                      "Shortcut: "
-                                      [:> label {:size "tiny"} "Ctrl + Enter"]])
-        :on "hover"
-        :trigger (reagent/as-element (simple-button {:content "Process"
-                                                     :dispatch-fn [::events/process @data @flux @fix]
-                                                     :icon-name "play"}))
+    [:> popup
+     {:content (reagent/as-element [:div
+                                    "Shortcut: "
+                                    [:> label {:size "tiny"} "Ctrl + Enter"]])
+      :on "hover"
+      :trigger (reagent/as-element (simple-button {:content "Process"
+                                                   :dispatch-fn [::events/process @data @flux @fix]
+                                                   :icon-name "play"}))
         :position "bottom left"}])))
 
 (defn share-link [link-type label-text]
