@@ -29,14 +29,6 @@
  ::edit-input-value
  edit-value)
 
-(defn update-cursor-position
-  [db [_ field-name cursor-position]]
-  (assoc-in db [:input-fields field-name :cursor-position] cursor-position))
-
-(re-frame/reg-event-db
- ::update-cursor-position
- update-cursor-position)
-
 (defn load-sample
   [db _]
   (reduce
