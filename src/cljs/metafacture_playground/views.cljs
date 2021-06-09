@@ -7,7 +7,7 @@
    [clojure.string :as clj-str]
    [lambdaisland.uri :refer [uri]]
    [cljsjs.semantic-ui-react]
-   [goog.object]
+   [goog.object :as g]
    [re-pressed.core :as rp]
    ["@monaco-editor/react" :as monaco-react]))
 
@@ -22,7 +22,7 @@
     (component \"Menu\" \"Item\")"
   [k & ks]
   (if (seq ks)
-    (apply goog.object/getValueByKeys semantic-ui k ks)
+    (apply g/getValueByKeys semantic-ui k ks)
     (goog.object/get semantic-ui k)))
 
 (def button (component "Button"))
@@ -44,7 +44,7 @@
 
 ;;; Using monaco editor react component
 
-(def monaco-editor (goog.object/get monaco-react "default"))
+(def monaco-editor (g/get monaco-react "default"))
 
 ;;; Color and Theming
 
@@ -197,20 +197,21 @@
 
 ;;; Input fields
 
- (defn set-up-editor [^monaco-react/MonacoEditor editor ^monaco-react/Monaco monaco]
-   (let [lf 0
-         control-command (. ^monaco-react/Monaco.KeyMod  (.-KeyMod monaco) -CtrlCmd)
-         enter (-> monaco .-KeyCode .-Enter)
-         chord-fn (. ^monaco-react/Monaco.KeyMod (.-KeyMod monaco) -chord)]
-     (.setEOL ^monaco-react/MonacoEditor.ITextModel (.getModel editor) lf)
-     (-> editor (.addAction (clj->js {:id "process"
-                                      :label "Process Workflow"
-                                      :run  #(re-frame/dispatch [::events/process
-                                                                 @(re-frame/subscribe [::subs/field-value :data])
-                                                                 @(re-frame/subscribe [::subs/field-value :flux])
-                                                                 @(re-frame/subscribe [::subs/field-value :fix])])
-                                      :keybindings [(bit-or control-command enter)
-                                                    (chord-fn (bit-or control-command enter))]})))))
+(defn set-up-editor [editor monaco]
+  (let [lf 0
+        control-command (g/getValueByKeys monaco "KeyMod" "CtrlCmd")
+        enter (g/getValueByKeys monaco "KeyCode" "Enter")
+        chord-fn (g/getValueByKeys monaco "KeyMod" "chord")
+        model (js-invoke editor "getModel")]
+    (js-invoke model "setEOL" lf)
+    (js-invoke editor "addAction" (clj->js {:id "process"
+                                            :label "Process Workflow"
+                                            :run  #(re-frame/dispatch [::events/process
+                                                                       @(re-frame/subscribe [::subs/field-value :data])
+                                                                       @(re-frame/subscribe [::subs/field-value :flux])
+                                                                       @(re-frame/subscribe [::subs/field-value :fix])])
+                                            :keybindings [(bit-or control-command enter)
+                                                          (chord-fn (bit-or control-command enter))]}))))
 
 (defn editor [{:keys [name height language]}]
   (let [value (re-frame/subscribe [::subs/field-value (keyword name)])]
