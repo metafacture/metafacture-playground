@@ -199,22 +199,28 @@
 
 ;;; Input fields
 
-(defn set-up-editor [focus-on-load editor monaco]
-  (let [lf 0
-        control-command (g/getValueByKeys monaco "KeyMod" "CtrlCmd")
+(defn set-end-of-line [editor]
+  (let [lf 0]
+    (-> (js-invoke editor "getModel")
+        (js-invoke "setEOL" lf))))
+
+(defn add-keydown-rules [monaco editor]
+  (let [control-command (g/getValueByKeys monaco "KeyMod" "CtrlCmd")
         enter (g/getValueByKeys monaco "KeyCode" "Enter")
-        chord-fn (g/getValueByKeys monaco "KeyMod" "chord")
-        model (js-invoke editor "getModel")]
-    (js-invoke model "setEOL" lf)
+        chord-fn (g/getValueByKeys monaco "KeyMod" "chord")]
     (js-invoke editor "addAction" (clj->js {:id "process"
-                                            :label "Process Workflow"
-                                            :run  #(re-frame/dispatch [::events/process
-                                                                       @(re-frame/subscribe [::subs/field-value :data])
-                                                                       @(re-frame/subscribe [::subs/field-value :flux])
-                                                                       @(re-frame/subscribe [::subs/field-value :fix])])
-                                            :keybindings [(bit-or control-command enter)
-                                                          (chord-fn (bit-or control-command enter))]}))
-    (when focus-on-load (js-invoke editor "focus"))))
+                                          :label "Process Workflow"
+                                          :run  #(re-frame/dispatch [::events/process
+                                                                     @(re-frame/subscribe [::subs/field-value :data])
+                                                                     @(re-frame/subscribe [::subs/field-value :flux])
+                                                                     @(re-frame/subscribe [::subs/field-value :fix])])
+                                          :keybindings [(bit-or control-command enter)
+                                                        (chord-fn (bit-or control-command enter))]}))))
+
+(defn set-up-editor [focus-on-load editor monaco]
+  (set-end-of-line editor)
+  (add-keydown-rules monaco editor)
+  (when focus-on-load (js-invoke editor "focus")))
 
 (defn editor [{:keys [name height language]}]
   (let [value (re-frame/subscribe [::subs/field-value (keyword name)])]
