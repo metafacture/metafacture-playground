@@ -223,7 +223,8 @@
       :language language
       :height height
       :theme "light"
-      :options {:dragAndDrop true}
+      :options {:dragAndDrop true
+                :minimap {:enabled false}}
       :on-change #(re-frame/dispatch-sync [::events/edit-input-value (keyword name) %])}]))
 
 (defn editor-panel [config]
