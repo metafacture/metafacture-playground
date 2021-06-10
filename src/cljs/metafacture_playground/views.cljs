@@ -51,7 +51,9 @@
 (def color "blue")
 (def basic-buttons? true)
 
-; Sizes of input fields
+; Config of input fields
+
+(def focused-editor "data")
 
 (def data-config
   {:name "data"
@@ -197,7 +199,7 @@
 
 ;;; Input fields
 
-(defn set-up-editor [editor monaco]
+(defn set-up-editor [focus-on-load editor monaco]
   (let [lf 0
         control-command (g/getValueByKeys monaco "KeyMod" "CtrlCmd")
         enter (g/getValueByKeys monaco "KeyCode" "Enter")
@@ -211,7 +213,8 @@
                                                                        @(re-frame/subscribe [::subs/field-value :flux])
                                                                        @(re-frame/subscribe [::subs/field-value :fix])])
                                             :keybindings [(bit-or control-command enter)
-                                                          (chord-fn (bit-or control-command enter))]}))))
+                                                          (chord-fn (bit-or control-command enter))]}))
+    (when focus-on-load (js-invoke editor "focus"))))
 
 (defn editor [{:keys [name height language]}]
   (let [value (re-frame/subscribe [::subs/field-value (keyword name)])]
@@ -219,7 +222,7 @@
     [:> monaco-editor
      {:id (str name "-editor")
       :value (or @value "")
-      :on-mount set-up-editor
+      :on-mount (partial set-up-editor (= name focused-editor))
       :language language
       :height height
       :theme "light"
