@@ -4,6 +4,7 @@
    [re-frame.core :as re-frame]
    [metafacture-playground.subs :as subs]
    [metafacture-playground.events :as events]
+   [metafacture-playground.db :as db]
    [clojure.string :as clj-str]
    [lambdaisland.uri :refer [uri]]
    [cljsjs.semantic-ui-react]
@@ -192,7 +193,7 @@
 
 (defn control-panel []
   [:> segment {:raised true}
-   [simple-button {:content "Load sample" :dispatch-fn [::events/load-sample] :icon-name "code"}]
+   [simple-button {:content "Load sample" :dispatch-fn [::events/load-sample db/sample-fields] :icon-name "code"}]
    [simple-button {:content "Clear all" :dispatch-fn [::events/clear-all] :icon-name "erase"}]
    [process-button]
    [share-button]])

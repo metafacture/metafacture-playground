@@ -5,57 +5,114 @@
    [ajax.core :as ajax]
    [lambdaisland.uri :refer [uri join assoc-query* query-string->map]]
    [metafacture-playground.db :as db]
-   [metafacture-playground.effects :as effects]))
+   [metafacture-playground.effects :as effects]
+   [com.degel.re-frame.storage]
+   [clojure.string :as clj-str]))
+
+;;; Utils for web storage use
+
+(defn- ->storage-key [key]
+  (if (seq key)
+    (clj-str/join ">" key)
+    key))
+
+(defn- ->key [storage-key]
+  (if (clj-str/includes? storage-key ">")
+    (->> (clj-str/split storage-key #">")
+         (mapv #(clj-str/replace-first % #"\:" ""))
+         (mapv keyword))
+    storage-key))
+
+  (defn- generate-pairs [db]
+    (reduce
+     (fn [pairs [k rest-db]]
+       (concat pairs
+               (mapcat
+                (fn [sub-key]
+                  (mapv
+                   (fn [sub-sub-key]
+                     {:name (->storage-key [k sub-key sub-sub-key])
+                      :value (get-in db [k sub-key sub-sub-key])})
+                   (-> (get rest-db sub-key) keys)))
+                (keys rest-db))))
+     []
+     db))
+
+  (defn- restore-db [web-storage]
+    (reduce
+     (fn [result [key val]]
+       (let [restored-val (case val
+                            "true" true
+                            "false" false
+                            val)]
+         (assoc-in result (->key key) restored-val)))
+     {}
+     web-storage))
 
 ;;; Collapsing panels
 
-(defn collapse-panel
-  [db [_ path status]]
-  (assoc-in db
-            (conj path :collapsed?)
-            (not status)))
+  (defn collapse-panel
+    [{:keys [db]} [_ path status]]
+    (let [db-path (conj path :collapsed?)
+          new-value (not status)]
+      {:db (assoc-in db db-path new-value)
+       :storage/set {:session? true
+                     :name (->storage-key db-path) :value new-value}}))
 
-  (re-frame/reg-event-db
+  (re-frame/reg-event-fx
    ::collapse-panel
    collapse-panel)
 
 ;;; Editing input fields
 
 (defn edit-value
-  [db [_ field-name new-value]]
-  (assoc-in db [:input-fields field-name :content] new-value))
+  [{db :db} [_ field-name new-value]]
+  (let [db-path [:input-fields field-name :content]]
+    {:db (assoc-in db db-path new-value)
+     :storage/set {:session? true
+                   :name (->storage-key db-path) :value new-value}}))
 
-(re-frame/reg-event-db
+(re-frame/reg-event-fx
  ::edit-input-value
  edit-value)
 
-(defn load-sample
-  [db _]
+(defn- add-sample [db sample]
   (reduce
    (fn [db [k sample-v]]
      (assoc-in db [:input-fields k] sample-v))
    db
-   db/sample-fields))
+   sample))
 
-(re-frame/reg-event-db
+(defn load-sample
+  [{db :db} [_ sample]]
+  {:db (add-sample db sample)
+   :storage/set {:session? true
+                 :pairs (generate-pairs {:input-fields sample})}})
+
+(re-frame/reg-event-fx
   ::load-sample
   load-sample)
 
-(defn clear-all
-  [db _]
-  (let [paths [[:input-fields :data :content]
-               [:input-fields :flux :content]
-               [:input-fields :fix :content]
-               [:result :content]
-               [:links :api-call]
-               [:links :workflow]]]
-    (reduce
-     (fn [db path]
-       (assoc-in db path nil))
-     db
-     paths)))
+(defn- clear-db [db paths]
+  (reduce
+   (fn [db path]
+     (assoc-in db path nil))
+   db
+   paths))
 
-(re-frame/reg-event-db
+(defn clear-all
+  [{db :db} _]
+  (let [storage-paths [[:input-fields :data :content]
+                       [:input-fields :flux :content]
+                       [:input-fields :fix :content]]
+        other-paths [[:result :content]
+                     [:links :api-call]
+                     [:links :workflow]]]
+       {:db (clear-db db (concat storage-paths other-paths))
+        :storage/remove {:session? true
+                         :names (mapv ->storage-key storage-paths)}}))
+
+(re-frame/reg-event-fx
  ::clear-all
  clear-all)
 
@@ -79,45 +136,47 @@
       str))
 
 (defn generate-links
-  [db [_ url data flux fix]]
+  [{db :db} [_ url data flux fix]]
   (if-let [query-params (merge (when data {:data data})
                                (when flux {:flux flux})
                                (when fix {:fix fix}))]
-    (-> db
-        (assoc-in [:links :api-call] (generate-link url "./process" query-params))
-        (assoc-in [:links :workflow] (generate-link url "" query-params)))
-    (-> db
-        (assoc-in [:links :api-call] nil)
-        (assoc-in [:links :workflow] nil))))
+    {:db (-> db
+         (assoc-in [:links :api-call] (generate-link url "./process" query-params))
+         (assoc-in [:links :workflow] (generate-link url "" query-params)))}
+    {:db (-> db
+             (assoc-in [:links :api-call] nil)
+             (assoc-in [:links :workflow] nil))}))
 
-(re-frame/reg-event-db
+(re-frame/reg-event-fx
  ::generate-links
  generate-links)
 
 ;;; Processing
 
 (defn process-response
-  [db [_ response]]
-  (-> db
-      (assoc-in [:result :loading?] false)
-      (assoc-in [:result :content] response)))
+  [{db :db} [_ response]]
+  (println "pricess repsonse")
 
-(re-frame/reg-event-db                   
- ::process-response
-  process-response)
+  {:db (-> db
+           (assoc-in [:result :loading?] false)
+           (assoc-in [:result :content] response))})
+
+  (re-frame/reg-event-fx
+   ::process-response
+   process-response)
 
 (defn bad-response
-  [db [_ response]]
-  (-> db
-      (assoc-in [:result :loading?] false)
-      (assoc-in [:result :content] "Bad response")))
+  [{db :db} [_ response]]
+  {:db (-> db
+           (assoc-in [:result :loading?] false)
+           (assoc-in [:result :content] "Bad response"))})
 
-(re-frame/reg-event-db
+(re-frame/reg-event-fx
  ::bad-response
  bad-response)
 
 (defn process
-  [{:keys [db]} [_ data flux fix]]
+  [{db :db} [_ data flux fix]]
   {:http-xhrio {:method          :get
                 :uri             "process"
                 :params {:data data
@@ -135,16 +194,30 @@
 
 ;;; Initialize-db
 
+(defn deep-merge [a & maps]
+  (if (map? a)
+    (apply merge-with deep-merge a maps)
+    (apply merge-with deep-merge maps)))
+
+(defn- assoc-query-params [start-db {:keys [data flux fix]}]
+  (cond-> start-db
+    data (assoc-in [:input-fields :data :content] data)
+    flux (assoc-in [:input-fields :flux :content] flux)
+    fix (assoc-in [:input-fields :fix :content] fix)))
+
 (defn initialize-db
-  [_ [_ href]]
-  (let [{:keys [data flux fix process]} (-> href uri :query query-string->map)]
-    (merge
-     {:db (cond-> db/default-db
-            data (assoc-in [:input-fields :data :content] data)
-            flux (assoc-in [:input-fields :flux :content] flux)
-            fix (assoc-in [:input-fields :fix :content] fix))}
-     (when process {:dispatch [::process data flux fix]}))))
+  [{[_ href] :event
+    web-storage :storage/all}]
+  (let [query-params (-> href uri :query query-string->map)]
+    (if (empty? query-params)
+      {:db (deep-merge db/default-db (restore-db web-storage))}
+      {:db (assoc-query-params db/default-db query-params)
+       :storage/set {:session? true
+                     :pairs (-> (assoc-query-params {} query-params)
+                                generate-pairs)}
+       ::effects/unset-url-query-params href})))
 
 (re-frame/reg-event-fx
  ::initialize-db
+[(re-frame/inject-cofx :storage/all {:session? true})]
  initialize-db)

@@ -6,7 +6,8 @@
 
 ; Initilized db = empty db
 (def empty-db
-  (:db (events/initialize-db {} [::events/initialize-db])))
+  (events/initialize-db {:dbh {}
+                         :event [::events/initialize-db]}))
 
 ; Href with query params (data, flux and fix, without processing)
 (def href
@@ -24,30 +25,31 @@
       (events/edit-value [:edit-value :fix "map(_id, id)\nmap(a,title)\nmap(b.n,author)"])))
 
 (def db-with-sample
-  {:input-fields db/sample-fields})
+  {:db {:input-fields db/sample-fields}})
 
 (deftest initialize-db
   (testing "Test initializing of db without values"
-    (is (= empty-db db/default-db)))
+    (is (= empty-db {:db db/default-db})))
 
   (testing "Test initializing of db with values"
-    (let [initialized-db (:db (events/initialize-db {} [::events/initialize-db href]))]
-      (is (and (get-in initialized-db [:input-fields :data :content])
-               (get-in initialized-db [:input-fields :flux :content])
-               (get-in initialized-db [:input-fields :fix :content])
-               (not (get-in initialized-db [:result :content]))
-               (not (get-in initialized-db [:links :api-call]))
-               (not (get-in initialized-db [:links :workflow]))
-               (not (get-in initialized-db [:links :processed-workflow])))))))
+    (let [initialized-db (:db (events/initialize-db {:event [::events/initialize-db href]}))]
+      (and (is (get-in initialized-db [:input-fields :data :content]))
+           (is (get-in initialized-db [:input-fields :flux :content]))
+           (is (get-in initialized-db [:input-fields :fix :content]))
+           (is (not (get-in initialized-db [:result :content])))
+           (is (not (get-in initialized-db [:links :api-call])))
+           (is (not (get-in initialized-db [:links :workflow])))
+           (is (not (get-in initialized-db [:links :processed-workflow])))))))
 
 (deftest edit-value-test
   (testing "Test editing values."
     (let [new-value "I am a new value"
           db' (-> empty-db
                   (events/edit-value [:edit-input-value :fix new-value])
-                  (update :fields dissoc :result))]
-      (is (and (not= db' empty-db)
-               (= (get-in db' [:input-fields :fix :content])
+                  (update-in [:db :input-fields] dissoc :result)
+                  (dissoc :storage/set))]
+      (and (is (not= db' empty-db))
+           (is (= (get-in db' [:db :input-fields :fix :content])
                   new-value))))))
 
 (deftest update-cursor-position-test
@@ -56,78 +58,76 @@
 (deftest load-sample-test
   (testing "Test loading sample with all fields empty."
     (let [db' (-> empty-db
-                  (events/load-sample :load-sample)
-                  (dissoc :result)
-                  (dissoc :links))]
-      (is db' db-with-sample)))
+                  (events/load-sample [:load-sample db/sample-fields])
+                  (update :db dissoc :result :links))]
+      (is (:db db') (:db db-with-sample))))
 
   (testing "Test loading sample with part of fields not empty."
     (let [db' (-> db1
-                  (events/load-sample :load-sample)
-                  (dissoc :result)
-                  (dissoc :links))]
-      (is (= db' db-with-sample))))
+                  (events/load-sample [:load-sample db/sample-fields])
+                  (update :db dissoc :result :links :storage/set)
+                  (dissoc :storage/set))]
+      (is (= (:db db') (:db db-with-sample)))))
 
   (testing "Test loading sample with all fields not empty."
     (let [db' (-> db2
-                  (events/load-sample :load-sample)
-                  (dissoc :result)
-                  (dissoc :links))]
-      (is (= db' db-with-sample)))))
+                  (events/load-sample [:load-sample db/sample-fields])
+                  (update :db dissoc :result :links :storage/set))]
+      (is (= (:db db') (:db db-with-sample))))))
 
 
 (deftest clear-all-test
   (testing "Test clear all fields with all fields already empty."
     (let [db' (events/clear-all empty-db :clear-all)]
-      (is (= db' empty-db))))
+      (is (= (:db db') (:db empty-db)))))
 
   (testing "Test clear all fields with part of fields not empty."
     (let [db' (events/clear-all db1 :clear-all)]
-      (is (= db' empty-db))))
+      (is (= (:db db') (:db empty-db)))))
 
   (testing "Test clear all fields with all fields not empty."
     (let [db' (events/clear-all db2 :clear-all)]
-      (is (= db' empty-db)))))
+      (is (= (:db db') (:db empty-db))))))
 
 
 (deftest process-button-test
   (testing "Test status after processing response"
     (let [db' (-> empty-db
-                  (events/load-sample db/sample-fields))
-          {:keys [fix flux data]} (get db' :input-fields)
-          db'' (:db (events/process {:db db'} [:process data flux fix]))]
-      (is (get-in db'' [:result :loading?])))))
+                  (events/load-sample [:load-sample db/sample-fields]))
+          {:keys [fix flux data]} (get-in db' [:db :input-fields])
+          db'' (events/process db' [:process data flux fix])]
+      (is (get-in db'' [:db :result :loading?])))))
 
 (deftest collapse-panel-test
   (testing "Test collapse behaviour"
     (let [db' (-> empty-db
                   (events/collapse-panel [:collapse-panel [:input-fields :flux] false]))]
-      (is (and (get-in db' [:input-fields :flux :collapsed?])
-               (not (get-in db' [:input-fields :fix :collapsed?]))
-               (not (get-in db' [:input-fields :data :collapsed?]))
-               (not (get-in db' [:result :collapsed?]))))))
+      (and (is (get-in db' [:db :input-fields :flux :collapsed?]))
+           (is (not (get-in db' [:db :input-fields :fix :collapsed?])))
+           (is (not (get-in db' [:db :input-fields :data :collapsed?])))
+           (is (not (get-in db' [:db :result :collapsed?]))))))
 
   (testing "Test collapsing and expanding a panel"
     (let [db' (-> empty-db
                   (events/collapse-panel [:collapse-panel [:input-fields :flux] false])
                   (events/collapse-panel [:collapse-panel [:input-fields :flux] true]))]
-      (is (not (get-in db' [:input-fields :flux :collapsed?]))))))
+      (is (not (get-in db' [:db :input-fields :flux :collapsed?]))))))
 
 (deftest generate-links-test
   (testing "Test generating share links"
     (let [db' (-> empty-db
-                  (events/load-sample db/sample-fields))
-          data (get-in db' [:input-fields :data :content])
-          fix (get-in db' [:input-fields :fix :content])
-          flux (get-in db' [:input-fields :flux :content])
+                  (events/load-sample [:load-sample db/sample-fields]))
+          data (get-in db' [:db :input-fields :data :content])
+          fix (get-in db' [:db :input-fields :fix :content])
+          flux (get-in db' [:db :input-fields :flux :content])
           test-url "https://metafacture-playground.com/test/"
           db'' (events/generate-links db' [:generate-links test-url data flux fix])
-          api-call-link (uri (get-in db'' [:links :api-call]))
-          workflow-link (uri (get-in db'' [:links :workflow]))]
+          api-call-link (uri (get-in db'' [:db :links :api-call]))
+          workflow-link (uri (get-in db'' [:db :links :workflow]))]
       (and (is (= (-> api-call-link :query query-string->map :data) data))
            (is (= (-> api-call-link :query query-string->map :flux) flux))
            (is (= (-> api-call-link :query query-string->map :fix) fix))
-           (is (= (:path api-call-link "/test/process")))
+           (is (= (:path api-call-link) "/test/process"))
            (is (= (-> workflow-link :query query-string->map :data) data))
            (is (= (-> workflow-link :query query-string->map :flux) flux))
            (is (= (-> workflow-link :query query-string->map :fix) fix))
