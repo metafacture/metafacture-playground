@@ -118,7 +118,7 @@ There are two kinds of reviews: first, a functional review (which happens on the
 
 ##### Functional Review
 
-In functional review, the actual behavior of the bugfix or the new feature is reviewed. If the reviewer finds problems or has comments during the review, they describe the issues providing links or screenshots that show the behavior, and reassign the team member that submitted the issue, leaving the issue in the review column. If everything works as expected, the reviewer post a +1 comment on the issue, unassigns themself, and make the suggested code reviewer assignee and reviewer of the linked pull request. The issue remains unassigned.
+In functional review, the actual behavior of the bugfix or the new feature is reviewed. If the reviewer finds problems or has comments during the review, they describe the issues providing links or screenshots that show the behavior, and reassign the team member that submitted the issue, leaving the issue in the review column. If everything works as expected, the reviewer posts a +1 comment on the issue, unassigns themself, and makes the suggested code reviewer assignee and reviewer of the linked pull request. The issue remains unassigned.
 
 ##### Code Review
 
