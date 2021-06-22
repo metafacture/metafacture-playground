@@ -7,8 +7,9 @@
    [clojure.string :as clj-str]
    [lambdaisland.uri :refer [uri]]
    [cljsjs.semantic-ui-react]
-   [goog.object]
-   [re-pressed.core :as rp]))
+   [goog.object :as g]
+   [re-pressed.core :as rp]
+   ["@monaco-editor/react" :as monaco-react]))
 
 ;;; Using semantic ui react components
 
@@ -21,7 +22,7 @@
     (component \"Menu\" \"Item\")"
   [k & ks]
   (if (seq ks)
-    (apply goog.object/getValueByKeys semantic-ui k ks)
+    (apply g/getValueByKeys semantic-ui k ks)
     (goog.object/get semantic-ui k)))
 
 (def button (component "Button"))
@@ -41,27 +42,36 @@
 (def input (component "Input"))
 (def popup (component "Popup"))
 
+;;; Using monaco editor react component
+
+(def monaco-editor (g/get monaco-react "default"))
+
 ;;; Color and Theming
 
 (def color "blue")
 (def basic-buttons? true)
 
-; Sizes of input fields
+; Config of input fields
+
+(def focused-editor "data")
 
 (def data-config
   {:name "data"
    :width 16
-   :rows 5})
+   :height "150px"
+   :language "text/plain"})
 
 (def fix-config
   {:name "fix"
    :width 8
-   :rows 15})
+   :height "250px"
+   :language "text/plain"})
 
 (def flux-config
   {:name "flux"
    :width 8
-   :rows 15})
+   :height "250px"
+   :language "text/plain"})
 
 (def result-config
   {:width 16})
@@ -135,16 +145,15 @@
   (let [data (re-frame/subscribe [::subs/field-value :data])
         flux (re-frame/subscribe [::subs/field-value :flux])
         fix  (re-frame/subscribe [::subs/field-value :fix])]
-    (fn []
-      [:> popup
-       {:content (reagent/as-element [:div
-                                      "Shortcut: "
-                                      [:> label {:size "tiny"} "Ctrl + Enter"]])
-        :on "hover"
-        :trigger (reagent/as-element (simple-button {:content "Process"
-                                                     :dispatch-fn [::events/process @data @flux @fix]
-                                                     :icon-name "play"}))
-        :position "bottom left"}])))
+    [:> popup
+     {:content (reagent/as-element [:div
+                                    "Shortcut: "
+                                    [:> label {:size "tiny"} "Ctrl + Enter"]])
+      :on "hover"
+      :trigger (reagent/as-element (simple-button {:content "Process"
+                                                   :dispatch-fn [::events/process @data @flux @fix]
+                                                   :icon-name "play"}))
+      :position "bottom left"}]))
 
 (defn share-link [link-type label-text]
   (let [link (re-frame/subscribe [::subs/link link-type])]
@@ -190,31 +199,42 @@
 
 ;;; Input fields
 
-(defn editor [{:keys [name rows]}]
-  (let [value (re-frame/subscribe [::subs/field-value (keyword name)])
-        cursor-position (re-frame/subscribe [::subs/cursor-position (keyword name)])]
-    (reagent/create-class
-     {:display-name (str name "-editor")
-      :component-did-update  #(.setSelectionRange
-                               (js/document.getElementById (str name "-editor"))
-                               @cursor-position
-                               @cursor-position)
-      :reagent/render
-      (fn [id]
-        [:> form
-         [screenreader-label name (str name "-editor")]
-         [:> textarea
-          {:id (str name "-editor")
-           :style {:padding 0
-                   :border "none"}
-           :value (or @value "")
-           :fluid "true"
-           :rows rows
-           :on-change #(do
-                         (re-frame/dispatch-sync [::events/edit-input-value (keyword name) (-> % .-target .-value)])
-                         (re-frame/dispatch-sync [::events/update-cursor-position
-                                                  (keyword name)
-                                                  (-> % .-target .-selectionStart)]))}]])})))
+(defn set-end-of-line [editor]
+  (let [lf 0]
+    (-> (js-invoke editor "getModel")
+        (js-invoke "setEOL" lf))))
+
+(defn add-keydown-rules [monaco editor]
+  (let [control-command (g/getValueByKeys monaco "KeyMod" "CtrlCmd")
+        enter (g/getValueByKeys monaco "KeyCode" "Enter")
+        chord-fn (g/getValueByKeys monaco "KeyMod" "chord")]
+    (js-invoke editor "addAction" (clj->js {:id "process"
+                                          :label "Process Workflow"
+                                          :run  #(re-frame/dispatch [::events/process
+                                                                     @(re-frame/subscribe [::subs/field-value :data])
+                                                                     @(re-frame/subscribe [::subs/field-value :flux])
+                                                                     @(re-frame/subscribe [::subs/field-value :fix])])
+                                          :keybindings [(bit-or control-command enter)
+                                                        (chord-fn (bit-or control-command enter))]}))))
+
+(defn set-up-editor [focus-on-load editor monaco]
+  (set-end-of-line editor)
+  (add-keydown-rules monaco editor)
+  (when focus-on-load (js-invoke editor "focus")))
+
+(defn editor [{:keys [name height language]}]
+  (let [value (re-frame/subscribe [::subs/field-value (keyword name)])]
+    [screenreader-label name (str name "-editor")]
+    [:> monaco-editor
+     {:id (str name "-editor")
+      :value (or @value "")
+      :on-mount (partial set-up-editor (= name focused-editor))
+      :language language
+      :height height
+      :theme "light"
+      :options {:dragAndDrop true
+                :minimap {:enabled false}}
+      :on-change #(re-frame/dispatch-sync [::events/edit-input-value (keyword name) %])}]))
 
 (defn editor-panel [config]
   (let [path [:input-fields (-> config :name keyword)]
@@ -261,7 +281,7 @@
 
 (defn main-panel []
 
-  (register-keydown-rules)
+  (register-keydown-rules) ;; Attention: keydown rules don't work in the monaco editors so they need to be defined in the editors again
 
   [:> container
    [:> segment
