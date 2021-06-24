@@ -15,6 +15,7 @@
                  [lambdaisland/uri "1.4.54"]
                  [day8.re-frame/http-fx "0.2.2"]
                  [re-pressed "0.3.1"]
+                 [com.degel/re-frame-storage-fx "0.1.1"]
                  [org.metafacture/metafacture-commons "5.2.0"]
                  [org.metafacture/metafacture-framework "5.2.0"]
                  [org.metafacture/metafacture-flowcontrol "5.2.0"]
