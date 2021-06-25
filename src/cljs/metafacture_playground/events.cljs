@@ -155,8 +155,6 @@
 
 (defn process-response
   [{db :db} [_ response]]
-  (println "pricess repsonse")
-
   {:db (-> db
            (assoc-in [:result :loading?] false)
            (assoc-in [:result :content] response))})
