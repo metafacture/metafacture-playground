@@ -183,10 +183,12 @@
    process-response)
 
 (defn bad-response
-  [{db :db} [_ response]]
+  [{db :db} [_ {:keys [status status-text]}]]
   {:db (-> db
            (assoc-in [:result :loading?] false)
-           (assoc-in [:result :content] "Bad response"))})
+           (assoc :message (str "Response from Server: "
+                                "Status-Code \"" status "\" with "
+                                "Status-Text \"" status-text \")))})
 
 (re-frame/reg-event-fx
  ::bad-response
