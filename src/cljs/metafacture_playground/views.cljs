@@ -42,6 +42,7 @@
 (def image (component "Image"))
 (def input (component "Input"))
 (def popup (component "Popup"))
+(def message (component "Message"))
 
 ;;; Using monaco editor react component
 
@@ -140,6 +141,14 @@
               :src "images/metafacture-logo.png"}]
    "Metafacture Playground"])
 
+;;; Message Panel
+
+(defn message-panel []
+  (let [current-message (re-frame/subscribe [::subs/message])]
+    (when @current-message
+      [:> message {:content @current-message
+                   :on-dismiss #(re-frame/dispatch [::events/dismiss-message])}])))
+
 ;;; Control Panel
 
 (defn process-button []
@@ -171,7 +180,7 @@
                 :alt "Copy link"
                 :disabled (not @link)}
        :placeholder (if-not @link "Nothing to share..." "")
-       :default-value (or @link "")
+       :value (or @link "")
        :readOnly true}]]))
 
 (defn share-links []
@@ -288,6 +297,8 @@
    [:> segment
 
     [page-header]
+
+    [message-panel]
 
     [control-panel]
 

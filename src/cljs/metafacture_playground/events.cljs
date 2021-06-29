@@ -49,10 +49,20 @@
      {}
      web-storage))
 
+;;; Message
+
+  (defn dismiss-message
+    [{db :db} _]
+    {:db (assoc db :message nil)})
+
+  (re-frame/reg-event-fx
+   ::dismiss-message
+   dismiss-message)
+
 ;;; Collapsing panels
 
   (defn collapse-panel
-    [{:keys [db]} [_ path status]]
+    [{db :db} [_ path status]]
     (let [db-path (conj path :collapsed?)
           new-value (not status)]
       {:db (assoc-in db db-path new-value)
@@ -137,15 +147,24 @@
 
 (defn generate-links
   [{db :db} [_ url data flux fix]]
-  (if-let [query-params (merge (when data {:data data})
-                               (when flux {:flux flux})
-                               (when fix {:fix fix}))]
+  (let [max-query-string 1024
+        max-url-string 2048
+        query-string-too-long? (> (+ (count data) (count flux) (count fix)) max-query-string)
+        query-params (merge (when data {:data data})
+                            (when flux {:flux flux})
+                            (when fix {:fix fix}))
+        api-call-link (when (and query-params (not query-string-too-long?))
+                        (generate-link url "./process" query-params))
+        workflow-link (when (and query-params (not query-string-too-long?))
+                        (generate-link url "" query-params))
+        url-string-too-long? (or (> (count api-call-link) max-url-string)
+                                 (> (count workflow-link) max-url-string))
+        message (when (or query-string-too-long? url-string-too-long?)
+                  "Share links for large workflows are not supported yet")]
     {:db (-> db
-         (assoc-in [:links :api-call] (generate-link url "./process" query-params))
-         (assoc-in [:links :workflow] (generate-link url "" query-params)))}
-    {:db (-> db
-             (assoc-in [:links :api-call] nil)
-             (assoc-in [:links :workflow] nil))}))
+             (assoc :message message)
+             (assoc-in [:links :api-call] (when-not url-string-too-long? api-call-link))
+             (assoc-in [:links :workflow] (when-not url-string-too-long? workflow-link)))}))
 
 (re-frame/reg-event-fx
  ::generate-links
