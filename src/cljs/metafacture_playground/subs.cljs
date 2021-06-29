@@ -3,6 +3,11 @@
    [re-frame.core :as re-frame]))
 
 (re-frame/reg-sub
+  ::message
+  (fn [db _]
+    (get db :message)))
+
+(re-frame/reg-sub
   ::field-value
   (fn [db [_ field-name]]
     (get-in db [:input-fields field-name :content])))
