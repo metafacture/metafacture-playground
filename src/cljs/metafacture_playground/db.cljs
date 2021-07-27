@@ -20,4 +20,5 @@
    :result {:loading? false
             :collapsed? false
             :content nil}
-   :message nil})
+   :message {:content nil
+             :type nil}})

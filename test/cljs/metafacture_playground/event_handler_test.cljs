@@ -146,7 +146,7 @@
           db'' (-> db'
                    (events/generate-links [:generate-links "https://metafacture-playground.com/test/" data nil nil])
                    :db)]
-      (and (is (= (:message db'') "Share links for large workflows are not supported yet"))
+      (and (is (= (get-in db'' [:message :content]) "Share links for large workflows are not supported yet"))
            (is (nil? (get-in db'' [:links :api-call])))
            (is (nil? (get-in db'' [:links :workflow]))))))
 
@@ -160,6 +160,6 @@
           db'' (-> db'
                    (events/generate-links [:generate-links extra-long-test-url data flux fix])
                    :db)]
-      (and (is (= (:message db'') "Share links for large workflows are not supported yet"))
+      (and (is (= (get-in db'' [:message :content]) "Share links for large workflows are not supported yet"))
            (is (nil? (get-in db'' [:links :api-call])))
            (is (nil? (get-in db'' [:links :workflow])))))))

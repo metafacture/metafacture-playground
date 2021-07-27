@@ -143,11 +143,28 @@
 
 ;;; Message Panel
 
+(defn- message-content [content type]
+  (case type
+    :error (str "ERROR: " content)
+    :warning (str "WARNING: " content)
+    :info (str "INFO: " content)
+    :success (str "SUCCESS: " content)
+    content))
+
+(defn- message-type [type]
+  (case type
+    :error {:error true}
+    :warning {:warning true}
+    :info {:info true}
+    :success {:success true}
+    nil))
+
 (defn message-panel []
-  (let [current-message (re-frame/subscribe [::subs/message])]
-    (when @current-message
-      [:> message {:content @current-message
-                   :on-dismiss #(re-frame/dispatch [::events/dismiss-message])}])))
+  (let [{:keys [content type]} @(re-frame/subscribe [::subs/message])]
+    (when content
+      [:> message (merge {:content (message-content content type)
+                          :on-dismiss #(re-frame/dispatch [::events/dismiss-message])}
+                         (message-type type))])))
 
 ;;; Control Panel
 

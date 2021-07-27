@@ -160,7 +160,8 @@
         url-string-too-long? (or (> (count api-call-link) max-url-string)
                                  (> (count workflow-link) max-url-string))
         message (when (or query-string-too-long? url-string-too-long?)
-                  "Share links for large workflows are not supported yet")]
+                  {:content "Share links for large workflows are not supported yet"
+                   :type :warning})]
     {:db (-> db
              (assoc :message message)
              (assoc-in [:links :api-call] (when-not url-string-too-long? api-call-link))
@@ -186,9 +187,10 @@
   [{db :db} [_ {:keys [status status-text]}]]
   {:db (-> db
            (assoc-in [:result :loading?] false)
-           (assoc :message (str "Response from Server: "
-                                "Status-Code \"" status "\" with "
-                                "Status-Text \"" status-text \")))})
+           (assoc :message {:content (str "Response from Server with "
+                                          "Status-Code \"" status "\" and "
+                                          "Status-Text \"" status-text \")
+                            :type :error}))})
 
 (re-frame/reg-event-fx
  ::bad-response
