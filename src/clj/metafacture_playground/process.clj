@@ -52,18 +52,9 @@
       output)]))
 
 (defn- process-flux [file-path out-path]
-  (try
-    (Flux/main (into-array [file-path]))
-    (println "Processed flux file.")
-    (slurp out-path)
-    (catch Exception e
-      (println "Something went wrong: " (.getMessage e))
-      (println "Exception: " (.printStackTrace e))
-      (str "Sorry, something went wrong: " (.getMessage e)))
-    (catch Error e
-      (println "Something really went wrong: " (.getMessage e))
-      (println "Error: " (.printStackTrace e))
-      (str "Sorry, something went wrong: " (.getMessage e)))))
+  (Flux/main (into-array [file-path]))
+  (println "Processed flux file.")
+  (slurp out-path))
 
 (defn process [data flux fix]
   (let [[out-path flux-content] (->flux-content data flux fix)]

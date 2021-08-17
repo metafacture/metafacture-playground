@@ -19,4 +19,6 @@
            :workflow nil}
    :result {:loading? false
             :collapsed? false
-            :content nil}})
+            :content nil}
+   :message {:content nil
+             :type nil}})
