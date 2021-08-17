@@ -12,7 +12,7 @@
 
 ; Initilized db = empty db
 (def empty-db
-  (events/initialize-db {:dbh {}
+  (events/initialize-db {:db {}
                          :event [::events/initialize-db]}))
 
 ; Href with query params (data, flux and fix, without processing)
@@ -58,9 +58,6 @@
            (is (= (get-in db' [:db :input-fields :fix :content])
                   new-value))))))
 
-(deftest update-cursor-position-test
-  (testing "Test updating cursor positions."))
-
 (deftest load-sample-test
   (testing "Test loading sample with all fields empty."
     (let [db' (-> empty-db
@@ -71,14 +68,14 @@
   (testing "Test loading sample with part of fields not empty."
     (let [db' (-> db1
                   (events/load-sample [:load-sample db/sample-fields])
-                  (update :db dissoc :result :links :storage/set :message)
+                  (update :db dissoc :result :links :storage/set :message :ui)
                   (dissoc :storage/set))]
       (is (= (:db db') (:db db-with-sample)))))
 
   (testing "Test loading sample with all fields not empty."
     (let [db' (-> db2
                   (events/load-sample [:load-sample db/sample-fields])
-                  (update :db dissoc :result :links :storage/set :message))]
+                  (update :db dissoc :result :links :storage/set :message :ui))]
       (is (= (:db db') (:db db-with-sample))))))
 
 
@@ -163,3 +160,39 @@
       (and (is (= (get-in db'' [:message :content]) "Share links for large workflows are not supported yet"))
            (is (nil? (get-in db'' [:links :api-call])))
            (is (nil? (get-in db'' [:links :workflow])))))))
+
+(deftest update-widths-test
+  (testing "Test updating the width of flux editor"
+    (let [long-flux-content "as-lines\n
+                             |decode-formeta\n
+                             |fix\n
+                             |stream-to-xml (rootTag= \"collection25481354555465645654\")"
+          db' (-> empty-db
+                  (events/update-width [:update-width :flux long-flux-content]))]
+      (and (is (= (get-in db' [:db :input-fields :flux :width]) 16))
+           (is (nil? (get-in db' [:input-fields :fix :width])))))
+
+    (testing "Test updating the width of fix editor"
+      (let [long-fix-content "map(_id, id)\n
+                              map(a,title)\n
+                              map(b.n,authoooooooooooooooooooooooooooooooooooooooooor)\n
+                              /*map(_else)*/"
+            db' (-> empty-db
+                    (events/update-width [:update-width :fix long-fix-content]))]
+        (and (is (= (get-in db' [:db :input-fields :fix :width]) 16))
+             (is (nil? (get-in db' [:db :input-fields :flux :width]))))))
+    
+(testing "Test updating the width of fix editor"
+  (let [long-flux-content "as-lines\n
+                             |decode-formeta\n
+                             |fix\n
+                             |stream-to-xml (rootTag= \"collection25481354555465645654\")"
+        long-fix-content "map(_id, id)\n
+                              map(a,title)\n
+                              map(b.n,authoooooooooooooooooooooooooooooooooooooooooor)\n
+                              /*map(_else)*/"
+        db' (-> empty-db
+                (events/update-width [:update-width :flux long-flux-content])
+                (events/update-width [:update-width :fix long-fix-content]))]
+    (and (is (= (get-in db' [:db :input-fields :fix :width]) 16))
+         (is (= (get-in db' [:db :input-fields :flux :width]) 16)))))))

@@ -21,4 +21,5 @@
             :collapsed? false
             :content nil}
    :message {:content nil
-             :type nil}})
+             :type nil}
+   :ui {:height nil}})
