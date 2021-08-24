@@ -53,7 +53,7 @@
 
 (defn update-width
   [{db :db} [_ editor content]]
-  (let [visible-chars 55
+  (let [visible-chars 50
         lines (clj-str/split-lines content)
         max-row-length (reduce (fn [current-max line]
                                  (if (> (count line) current-max)
