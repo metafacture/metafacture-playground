@@ -10,6 +10,7 @@
    [cljsjs.semantic-ui-react]
    [goog.object :as g]
    [re-pressed.core :as rp]
+   [clojure.pprint]
    ["@monaco-editor/react" :as monaco-react]))
 
 ;;; Using semantic ui react components
@@ -60,19 +61,17 @@
 (def data-config
   {:name "data"
    :width 16
-   :height "150px"
-   :language "text/plain"})
+   :language "text/plain"
+   :height-divider 3})
 
 (def fix-config
   {:name "fix"
    :width 8
-   :height "250px"
    :language "text/plain"})
 
 (def flux-config
   {:name "flux"
    :width 8
-   :height "250px"
    :language "text/plain"})
 
 (def result-config
@@ -119,6 +118,13 @@
    (when icon-name
      [:> icon {:name icon-name}])
    content])
+
+(defn- font-size []
+  (-> js/window
+      (.getComputedStyle (-> js/document (.getElementById "app")))
+      (.getPropertyValue "font-size")
+      (clj-str/replace "px" "")
+      js/parseFloat))
 
 ;;; Register keydown rules
 
@@ -215,7 +221,9 @@
       :on "click"
       :position "bottom left"
       :wide "very"
-      :trigger (reagent/as-element (simple-button {:content "Share" :icon-name "share alternate" :dispatch-fn [::events/generate-links uri @data @flux @fix]}))}]))
+      :trigger (reagent/as-element (simple-button {:content "Share"
+                                                   :icon-name "share alternate"
+                                                   :dispatch-fn [::events/generate-links uri @data @flux @fix]}))}]))
 
 (defn control-panel []
   [:> segment {:raised true}
@@ -236,41 +244,46 @@
         enter (g/getValueByKeys monaco "KeyCode" "Enter")
         chord-fn (g/getValueByKeys monaco "KeyMod" "chord")]
     (js-invoke editor "addAction" (clj->js {:id "process"
-                                          :label "Process Workflow"
-                                          :run  #(re-frame/dispatch [::events/process
-                                                                     @(re-frame/subscribe [::subs/field-value :data])
-                                                                     @(re-frame/subscribe [::subs/field-value :flux])
-                                                                     @(re-frame/subscribe [::subs/field-value :fix])])
-                                          :keybindings [(bit-or control-command enter)
-                                                        (chord-fn (bit-or control-command enter))]}))))
+                                            :label "Process Workflow"
+                                            :run  #(re-frame/dispatch [::events/process
+                                                                       @(re-frame/subscribe [::subs/field-value :data])
+                                                                       @(re-frame/subscribe [::subs/field-value :flux])
+                                                                       @(re-frame/subscribe [::subs/field-value :fix])])
+                                            :keybindings [(bit-or control-command enter)
+                                                          (chord-fn (bit-or control-command enter))]}))))
 
 (defn set-up-editor [focus-on-load editor monaco]
   (set-end-of-line editor)
   (add-keydown-rules monaco editor)
   (when focus-on-load (js-invoke editor "focus")))
 
-(defn editor [{:keys [name height language]}]
-  (let [value (re-frame/subscribe [::subs/field-value (keyword name)])]
+(defn editor [{:keys [name language height-divider]}]
+  (let [editor-name (keyword name)
+        value (re-frame/subscribe [::subs/field-value editor-name])
+        height (re-frame/subscribe [::subs/editor-height editor-name 5 (font-size) height-divider])]
     [screenreader-label name (str name "-editor")]
     [:> monaco-editor
-     {:id (str name "-editor")
+     {:className (str name "-editor")
       :value (or @value "")
       :on-mount (partial set-up-editor (= name focused-editor))
       :language language
-      :height height
+      :height @height
       :theme "light"
       :options {:dragAndDrop true
                 :minimap {:enabled false}}
       :on-change #(re-frame/dispatch-sync [::events/edit-input-value (keyword name) %])}]))
 
 (defn editor-panel [config]
-  (let [path [:input-fields (-> config :name keyword)]
-        collapsed? (re-frame/subscribe [::subs/collapsed? path])]
-    [:> grid-column {:width (:width config)}
+  (let [editor-name (-> config :name keyword)
+        path [:input-fields editor-name]
+        collapsed? (re-frame/subscribe [::subs/collapsed? path])
+        width (re-frame/subscribe [::subs/editor-width editor-name])]
+    (println editor-name ": width " @width)
+    [:> grid-column {:width (or @width (:width config))}
      [:> segment {:raised true}
       [title-label (:name config)]
       [collapse-label path]
-      [:> divider {:style {:margin "1.5rem 0 0.5rem 0"}}]
+      [:> divider {:style {:margin "1.5em 0 0.5em 0"}}]
       (when-not @collapsed?
         [editor config])]]))
 
@@ -284,8 +297,7 @@
       (if @loading?
         [:> segment {:basic true}
          [:> loader {:active true
-                     :style {:padding "1.5rem"}}]]
-
+                     :style {:padding "1.5em"}}]]
         [:> form
          [screenreader-label "Result" "result-panel"]
          [:> textarea {:id "result-panel"
@@ -301,7 +313,7 @@
    [:> segment {:raised true}
     [title-label "Result"]
     [collapse-label [:result]]
-    [:> divider {:style {:margin "1.5rem 0"}}]
+    [:> divider {:style {:margin "1.5em 0"}}]
     [result]]])
 
 ;;; Main panel
@@ -309,6 +321,9 @@
 (defn main-panel []
 
   (register-keydown-rules) ;; Attention: keydown rules don't work in the monaco editors so they need to be defined in the editors again
+
+  (.addEventListener js/window "resize"
+                     #(re-frame/dispatch [::events/window-resize (.-innerHeight js/window)]))
 
   [:> container
    [:> segment

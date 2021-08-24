@@ -23,31 +23,65 @@
          (mapv keyword))
     storage-key))
 
-  (defn- generate-pairs [db]
-    (reduce
-     (fn [pairs [k rest-db]]
-       (concat pairs
-               (mapcat
-                (fn [sub-key]
-                  (mapv
-                   (fn [sub-sub-key]
-                     {:name (->storage-key [k sub-key sub-sub-key])
-                      :value (get-in db [k sub-key sub-sub-key])})
-                   (-> (get rest-db sub-key) keys)))
-                (keys rest-db))))
-     []
-     db))
+(defn- generate-pairs [db]
+  (reduce
+   (fn [pairs [k rest-db]]
+     (concat pairs
+             (mapcat
+              (fn [sub-key]
+                (mapv
+                 (fn [sub-sub-key]
+                   {:name (->storage-key [k sub-key sub-sub-key])
+                    :value (get-in db [k sub-key sub-sub-key])})
+                 (-> (get rest-db sub-key) keys)))
+              (keys rest-db))))
+   []
+   db))
 
-  (defn- restore-db [web-storage]
-    (reduce
-     (fn [result [key val]]
-       (let [restored-val (case val
-                            "true" true
-                            "false" false
-                            val)]
-         (assoc-in result (->key key) restored-val)))
-     {}
-     web-storage))
+(defn- restore-db [web-storage]
+  (reduce
+   (fn [result [key val]]
+     (let [restored-val (case val
+                          "true" true
+                          "false" false
+                          val)]
+       (assoc-in result (->key key) restored-val)))
+   {}
+   web-storage))
+
+;;; Size of editors
+
+(defn update-width
+  [{db :db} [_ editor content]]
+  (let [visible-chars 50
+        lines (clj-str/split-lines content)
+        max-row-length (reduce (fn [current-max line]
+                                 (if (> (count line) current-max)
+                                   (count line)
+                                   current-max))
+                               0
+                               lines)
+        full-width (when (> max-row-length visible-chars) 16)]
+    (if full-width
+      {:db (assoc-in db [:input-fields editor :width] full-width)
+       :storage/set {:session? true
+                     :name (->storage-key [:input-fields editor :width])
+                     :value full-width}}
+      {:db (update-in db [:input-fields editor] dissoc :width)
+       :storage/remove {:session? true
+                        :name (->storage-key [:input-fields editor :width])}})))
+
+(re-frame/reg-event-fx
+ ::update-width
+ update-width)
+
+(defn window-resize
+  [{db :db} [_ height]]
+  {:db (assoc-in db [:ui :height] height)})
+
+(re-frame/reg-event-fx
+ ::window-resize
+ window-resize)
 
 ;;; Message
 
@@ -61,17 +95,17 @@
 
 ;;; Collapsing panels
 
-  (defn collapse-panel
-    [{db :db} [_ path status]]
-    (let [db-path (conj path :collapsed?)
-          new-value (not status)]
-      {:db (assoc-in db db-path new-value)
-       :storage/set {:session? true
-                     :name (->storage-key db-path) :value new-value}}))
+(defn collapse-panel
+  [{:keys [db]} [_ path status]]
+  (let [db-path (conj path :collapsed?)
+        new-value (not status)]
+    {:db (assoc-in db db-path new-value)
+     :storage/set {:session? true
+                   :name (->storage-key db-path) :value new-value}}))
 
-  (re-frame/reg-event-fx
-   ::collapse-panel
-   collapse-panel)
+(re-frame/reg-event-fx
+ ::collapse-panel
+ collapse-panel)
 
 ;;; Editing input fields
 
@@ -80,7 +114,8 @@
   (let [db-path [:input-fields field-name :content]]
     {:db (assoc-in db db-path new-value)
      :storage/set {:session? true
-                   :name (->storage-key db-path) :value new-value}}))
+                   :name (->storage-key db-path) :value new-value}
+     :dispatch [::update-width field-name new-value]}))
 
 (re-frame/reg-event-fx
  ::edit-input-value
@@ -179,9 +214,9 @@
            (assoc-in [:result :loading?] false)
            (assoc-in [:result :content] response))})
 
-  (re-frame/reg-event-fx
-   ::process-response
-   process-response)
+(re-frame/reg-event-fx
+ ::process-response
+ process-response)
 
 (defn bad-response
   [{db :db} [_ {:keys [status status-text]}]]
@@ -227,12 +262,14 @@
     fix (assoc-in [:input-fields :fix :content] fix)))
 
 (defn initialize-db
-  [{[_ href] :event
+  [{[_ href window-height] :event
     web-storage :storage/all}]
   (let [query-params (-> href uri :query query-string->map)]
     (if (empty? query-params)
-      {:db (deep-merge db/default-db (restore-db web-storage))}
-      {:db (assoc-query-params db/default-db query-params)
+      {:db (deep-merge db/default-db (restore-db web-storage) {:ui {:height window-height}})}
+      {:db (-> db/default-db
+               (assoc-query-params query-params)
+               (assoc-in [:ui :height] window-height))
        :storage/set {:session? true
                      :pairs (-> (assoc-query-params {} query-params)
                                 generate-pairs)}

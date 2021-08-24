@@ -19,8 +19,9 @@
     (rdom/render [views/main-panel] root-el)))
 
 (defn init []
-  (let [href (-> js/window .-location .-href)]
-    (re-frame/dispatch-sync [::events/initialize-db href]))
+  (let [href (-> js/window .-location .-href)
+        window-height (.-innerHeight js/window)]
+    (re-frame/dispatch-sync [::events/initialize-db href window-height]))
   (re-frame/dispatch-sync [::rp/add-keyboard-event-listener "keydown"])
   (dev-setup)
   (mount-root))
