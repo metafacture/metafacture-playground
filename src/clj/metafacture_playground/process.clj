@@ -24,15 +24,22 @@
 
 (defn- fix->flux-content [fix]
   (str
-   "|org.metafacture.metamorph.Metafix(\""
+   "|fix(\""
    (content->tempfile-path fix ".fix")
    "\")|"))
 
-(defn- flux->flux-content [flux fix]
+(defn- morph->flux-content [morph]
+  (str
+   "|morph(\""
+   (content->tempfile-path morph ".morph")
+   "\")|"))
+
+(defn- flux->flux-content [flux fix morph]
   (-> flux
       (clj-str/replace "\n|" "|")
       (clj-str/replace "\\s?\\|\\s?" "|")
-      (clj-str/replace "|fix|" fix)))
+      (clj-str/replace "|fix|" fix)
+      (clj-str/replace "|morph|" morph)))
 
 (defn- flux-output []
   (let [temp-file-path (content->tempfile-path "" ".txt")]
@@ -42,13 +49,14 @@
       temp-file-path
       "\");")]))
 
-(defn- ->flux-content [data flux fix]
+(defn- ->flux-content [data flux fix morph]
   (let [fix (fix->flux-content fix)
+        morph (morph->flux-content morph)
         [out-path output] (flux-output)]
     [out-path
      (str
       (data->flux-content data)
-      (flux->flux-content flux fix)
+      (flux->flux-content flux fix morph)
       output)]))
 
 (defn- process-flux [file-path out-path]
@@ -56,8 +64,8 @@
   (println "Processed flux file.")
   (slurp out-path))
 
-(defn process [data flux fix]
-  (let [[out-path flux-content] (->flux-content data flux fix)]
+(defn process [data flux fix morph]
+  (let [[out-path flux-content] (->flux-content data flux fix morph)]
        (-> flux-content
            (content->tempfile-path ".flux")
            (process-flux out-path))))

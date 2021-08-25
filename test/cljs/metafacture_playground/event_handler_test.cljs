@@ -109,7 +109,6 @@
            (is (not (get-in db' [:db :input-fields :fix :collapsed?])))
            (is (not (get-in db' [:db :input-fields :data :collapsed?])))
            (is (not (get-in db' [:db :result :collapsed?]))))))
-
   (testing "Test collapsing and expanding a panel"
     (let [db' (-> empty-db
                   (events/collapse-panel [:collapse-panel [:input-fields :flux] false])
@@ -123,8 +122,9 @@
           data (get-in db' [:db :input-fields :data :content])
           fix (get-in db' [:db :input-fields :fix :content])
           flux (get-in db' [:db :input-fields :flux :content])
+          morph (get-in db' [:db :input-fields :morph :content])
           test-url "https://metafacture-playground.com/test/"
-          db'' (events/generate-links db' [:generate-links test-url data flux fix])
+          db'' (events/generate-links db' [:generate-links test-url data flux fix morph :fix])
           api-call-link (uri (get-in db'' [:db :links :api-call]))
           workflow-link (uri (get-in db'' [:db :links :workflow]))]
       (and (is (= (-> api-call-link :query query-string->map :data) data))
@@ -134,28 +134,30 @@
            (is (= (-> workflow-link :query query-string->map :data) data))
            (is (= (-> workflow-link :query query-string->map :flux) flux))
            (is (= (-> workflow-link :query query-string->map :fix) fix))
+           (is (= (-> workflow-link :query query-string->map :morph) morph))
            (is (= (:path workflow-link) "/test/")))))
 
-  (testing "Test not generating links if parameters are too long "
+  (testing "Test not generating links if parameters are too long"
     (let [db' (-> empty-db
                   (events/edit-value [:edit-value :data (generate-random-string 1025)]))
           data (get-in db' [:db :input-fields :data :content])
           db'' (-> db'
-                   (events/generate-links [:generate-links "https://metafacture-playground.com/test/" data nil nil])
+                   (events/generate-links [:generate-links "https://metafacture-playground.com/test/" data nil nil nil :fix])
                    :db)]
       (and (is (= (get-in db'' [:message :content]) "Share links for large workflows are not supported yet"))
            (is (nil? (get-in db'' [:links :api-call])))
            (is (nil? (get-in db'' [:links :workflow]))))))
 
-  (testing "Test not generating links if url is too long "
+  (testing "Test not generating links if url is too long"
     (let [db' (-> empty-db
                   (events/load-sample [:load-sample db/sample-fields]))
           data (get-in db' [:db :input-fields :data :content])
           fix (get-in db' [:db :input-fields :fix :content])
+          morph (get-in db' [:db :input-fields :morph :content])
           flux (get-in db' [:db :input-fields :flux :content])
           extra-long-test-url (str "https://metafacture-playground.com/" (generate-random-string 1671) "/")
           db'' (-> db'
-                   (events/generate-links [:generate-links extra-long-test-url data flux fix])
+                   (events/generate-links [:generate-links extra-long-test-url data flux fix morph :fix])
                    :db)]
       (and (is (= (get-in db'' [:message :content]) "Share links for large workflows are not supported yet"))
            (is (nil? (get-in db'' [:links :api-call])))
@@ -170,7 +172,7 @@
           db' (-> empty-db
                   (events/update-width [:update-width :flux long-flux-content]))]
       (and (is (= (get-in db' [:db :input-fields :flux :width]) 16))
-           (is (nil? (get-in db' [:input-fields :fix :width])))))
+           (is (nil? (get-in db' [:input-fields :switch :width])))))
 
     (testing "Test updating the width of fix editor"
       (let [long-fix-content "map(_id, id)\n
@@ -179,7 +181,7 @@
                               /*map(_else)*/"
             db' (-> empty-db
                     (events/update-width [:update-width :fix long-fix-content]))]
-        (and (is (= (get-in db' [:db :input-fields :fix :width]) 16))
+        (and (is (= (get-in db' [:db :input-fields :switch :width]) 16))
              (is (nil? (get-in db' [:db :input-fields :flux :width]))))))
     
 (testing "Test updating the width of fix editor"
@@ -194,5 +196,11 @@
         db' (-> empty-db
                 (events/update-width [:update-width :flux long-flux-content])
                 (events/update-width [:update-width :fix long-fix-content]))]
-    (and (is (= (get-in db' [:db :input-fields :fix :width]) 16))
+    (and (is (= (get-in db' [:db :input-fields :switch :width]) 16))
          (is (= (get-in db' [:db :input-fields :flux :width]) 16)))))))
+
+(deftest switch-editor-test
+  (testing "Test switching between fix and morph editor"
+    (let [db' (-> empty-db
+                  (events/switch-editor [:switch-editor :morph]))]
+      (is (= (get-in db' [:db :input-fields :switch :active]) :morph)))))
