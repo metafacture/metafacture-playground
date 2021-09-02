@@ -36,8 +36,8 @@
 
 (defn- flux->flux-content [flux fix morph]
   (-> flux
-      (clj-str/replace "\n|" "|")
-      (clj-str/replace "\\s?\\|\\s?" "|")
+      (clj-str/replace #"\n*\|" "|")
+      (clj-str/replace #"\s*\|\s*" "|")
       (clj-str/replace "|fix|" fix)
       (clj-str/replace "|morph|" morph)))
 
