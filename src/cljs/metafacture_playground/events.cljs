@@ -288,18 +288,24 @@
  bad-response)
 
 (defn process
-  [{db :db} [_ data flux fix morph]]
-  {:http-xhrio {:method          :get
-                :uri             "process"
-                :params {:data data
-                         :flux flux
-                         :fix fix
-                         :morph morph}
-                :format (ajax/json-request-format)
-                :response-format (ajax/text-response-format)
-                :on-success      [::process-response]
-                :on-failure      [::bad-response]}
-   :db (assoc-in db [:result :loading?] true)})
+  [{db :db} [_ data flux fix morph active-editor]]
+  (let [active-editor-in-flux? (re-find (re-pattern (str "\\|(\\s|\\n)*" (name active-editor) "(\\s|\\n)*\\|")) flux)
+        message (when-not active-editor-in-flux?
+                  (str "Flux does not use selected " (name active-editor) "."))]
+    {:http-xhrio {:method          :get
+                  :uri             "process"
+                  :params {:data data
+                           :flux flux
+                           :fix fix
+                           :morph morph}
+                  :format (ajax/json-request-format)
+                  :response-format (ajax/text-response-format)
+                  :on-success      [::process-response]
+                  :on-failure      [::bad-response]}
+     :db (cond-> db
+           true (assoc-in [:result :loading?] true)
+           message (assoc :message {:content message
+                                    :type :warning}))}))
 
 (re-frame/reg-event-fx
  ::process

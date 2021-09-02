@@ -132,9 +132,10 @@
   (let [data (re-frame/subscribe [::subs/field-value :data])
         flux (re-frame/subscribe [::subs/field-value :flux])
         fix (re-frame/subscribe [::subs/field-value :fix])
-        morph (re-frame/subscribe [::subs/field-value :morph])]
+        morph (re-frame/subscribe [::subs/field-value :morph])
+        active-editor (re-frame/subscribe [::subs/active-editor])]
     (re-frame/dispatch
-     [::rp/set-keydown-rules {:event-keys [[[::events/process @data @flux @fix @morph]
+     [::rp/set-keydown-rules {:event-keys [[[::events/process @data @flux @fix @morph @active-editor]
                                             [{:ctrlKey true
                                               :keyCode 13}]]]
                               :always-listen-keys [{:ctrlKey true
@@ -179,14 +180,15 @@
   (let [data (re-frame/subscribe [::subs/field-value :data])
         flux (re-frame/subscribe [::subs/field-value :flux])
         fix  (re-frame/subscribe [::subs/field-value :fix])
-        morph (re-frame/subscribe [::subs/field-value :morph])]
+        morph (re-frame/subscribe [::subs/field-value :morph])
+        active-editor (re-frame/subscribe [::subs/active-editor])]
     [:> popup
      {:content (reagent/as-element [:div
                                     "Shortcut: "
                                     [:> label {:size "tiny"} "Ctrl + Enter"]])
       :on "hover"
       :trigger (reagent/as-element (simple-button {:content "Process"
-                                                   :dispatch-fn [::events/process @data @flux @fix @morph]
+                                                   :dispatch-fn [::events/process @data @flux @fix @morph @active-editor]
                                                    :icon-name "play"}))
       :position "bottom left"}]))
 
@@ -253,7 +255,8 @@
                                                                        @(re-frame/subscribe [::subs/field-value :data])
                                                                        @(re-frame/subscribe [::subs/field-value :flux])
                                                                        @(re-frame/subscribe [::subs/field-value :fix])
-                                                                       @(re-frame/subscribe [::subs/field-value :morph])])
+                                                                       @(re-frame/subscribe [::subs/field-value :morph])
+                                                                       @(re-frame/subscribe [::subs/active-editor])])
                                             :keybindings [(bit-or control-command enter)
                                                           (chord-fn (bit-or control-command enter))]}))))
 
