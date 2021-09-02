@@ -97,8 +97,8 @@
   (testing "Test status after processing response"
     (let [db' (-> empty-db
                   (events/load-sample [:load-sample db/sample-fields]))
-          {:keys [fix flux data]} (get-in db' [:db :input-fields])
-          db'' (events/process db' [:process data flux fix])]
+          {:keys [fix flux data morph]} (get-in db' [:db :input-fields])
+          db'' (events/process db' [:process (:content data) (:content flux) (:content fix) (:content morph) :fix])]
       (is (get-in db'' [:db :result :loading?])))))
 
 (deftest collapse-panel-test
