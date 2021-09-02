@@ -289,7 +289,7 @@
 
 (defn process
   [{db :db} [_ data flux fix morph active-editor]]
-  (let [active-editor-in-flux? (re-find (re-pattern (str "\\|(\\s|\\n)*" (name active-editor) "(\\s|\\n)*\\|")) flux)
+  (let [active-editor-in-flux? (re-find (re-pattern (str "\\|(\\s|\\n)*" (name active-editor) "(\\s|\\n)*\\|")) (or flux ""))
         message (when-not active-editor-in-flux?
                   (str "Flux does not use selected " (name active-editor) "."))]
     {:http-xhrio {:method          :get
