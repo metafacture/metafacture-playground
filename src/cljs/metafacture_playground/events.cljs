@@ -302,10 +302,10 @@
                   :response-format (ajax/text-response-format)
                   :on-success      [::process-response]
                   :on-failure      [::bad-response]}
-     :db (cond-> db
-           true (assoc-in [:result :loading?] true)
-           message (assoc :message {:content message
-                                    :type :warning}))}))
+     :db (-> db
+           (assoc-in [:result :loading?] true)
+           (assoc :message {:content message
+                            :type :warning}))}))
 
 (re-frame/reg-event-fx
  ::process
