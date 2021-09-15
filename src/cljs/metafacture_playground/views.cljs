@@ -39,11 +39,12 @@
 (def textarea (component "Form" "TextArea"))
 (def label (component "Label"))
 (def icon (component "Icon"))
-(def divider (component "Divider"))
 (def image (component "Image"))
 (def input (component "Input"))
 (def popup (component "Popup"))
 (def message (component "Message"))
+(def menu (component "Menu"))
+(def menu-item (component "Menu" "Item"))
 
 ;;; Using monaco editor react component
 
@@ -64,15 +65,17 @@
    :language "text/plain"
    :height-divider 3})
 
-(def fix-config
-  {:name "fix"
-   :width 8
-   :language "text/plain"})
+(def switch-config
+  {:common {:width 8}
+   :different {:fix {:name "fix"
+                     :language "text/plain"}
+               :morph {:name "morph"
+                       :language "text/plain"}}})
 
-(def flux-config
-  {:name "flux"
-   :width 8
-   :language "text/plain"})
+  (def flux-config
+    {:name "flux"
+     :width 8
+     :language "text/plain"})
 
 (def result-config
   {:width 16})
@@ -80,25 +83,22 @@
 ;;; Utils
 
 (defn title-label [name]
-  [:> label
+  [:> menu-item
    {:id (str name "-label")
-    :attached "top left"
     :size "large"
-    :color color}
+    :color color
+    :style {:font-weight "bold"}
+    :active true}
    (clj-str/capitalize name)])
 
 (defn collapse-label [panel-path]
   (let [collapsed? (re-frame/subscribe [::subs/collapsed? panel-path])]
-    [:> label
-     {:attached "top right"
-      :on-click #(re-frame/dispatch [::events/collapse-panel panel-path @collapsed?])}
-     [:> icon
-      {:name
-       (if @collapsed?
-         "chevron down"
-         "chevron up")
-       :style {:margin 0}
-       :size "large"}]]))
+    [:> menu-item
+     {:on-click #(re-frame/dispatch [::events/collapse-panel panel-path @collapsed?])
+      :icon (if @collapsed? "chevron down" "chevron up")
+      :active true
+      :position "right"
+      :size "large"}]))
 
 (defn screenreader-label [name for]
   [:label {:style {:position "absolute"
@@ -131,9 +131,11 @@
 (defn register-keydown-rules []
   (let [data (re-frame/subscribe [::subs/field-value :data])
         flux (re-frame/subscribe [::subs/field-value :flux])
-        fix (re-frame/subscribe [::subs/field-value :fix])]
+        fix (re-frame/subscribe [::subs/field-value :fix])
+        morph (re-frame/subscribe [::subs/field-value :morph])
+        active-editor (re-frame/subscribe [::subs/active-editor])]
     (re-frame/dispatch
-     [::rp/set-keydown-rules {:event-keys [[[::events/process @data @flux @fix]
+     [::rp/set-keydown-rules {:event-keys [[[::events/process @data @flux @fix @morph @active-editor]
                                             [{:ctrlKey true
                                               :keyCode 13}]]]
                               :always-listen-keys [{:ctrlKey true
@@ -177,14 +179,16 @@
 (defn process-button []
   (let [data (re-frame/subscribe [::subs/field-value :data])
         flux (re-frame/subscribe [::subs/field-value :flux])
-        fix  (re-frame/subscribe [::subs/field-value :fix])]
+        fix  (re-frame/subscribe [::subs/field-value :fix])
+        morph (re-frame/subscribe [::subs/field-value :morph])
+        active-editor (re-frame/subscribe [::subs/active-editor])]
     [:> popup
      {:content (reagent/as-element [:div
                                     "Shortcut: "
                                     [:> label {:size "tiny"} "Ctrl + Enter"]])
       :on "hover"
       :trigger (reagent/as-element (simple-button {:content "Process"
-                                                   :dispatch-fn [::events/process @data @flux @fix]
+                                                   :dispatch-fn [::events/process @data @flux @fix @morph @active-editor]
                                                    :icon-name "play"}))
       :position "bottom left"}]))
 
@@ -215,7 +219,9 @@
   (let [uri (-> js/window .-location .-href uri (assoc :query nil))
         data (re-frame/subscribe [::subs/field-value :data])
         flux (re-frame/subscribe [::subs/field-value :flux])
-        fix (re-frame/subscribe [::subs/field-value :fix])]
+        fix (re-frame/subscribe [::subs/field-value :fix])
+        morph (re-frame/subscribe [::subs/field-value :morph])
+        active-editor (re-frame/subscribe [::subs/active-editor])]
     [:> popup
      {:children (reagent/as-element [share-links])
       :on "click"
@@ -223,7 +229,7 @@
       :wide "very"
       :trigger (reagent/as-element (simple-button {:content "Share"
                                                    :icon-name "share alternate"
-                                                   :dispatch-fn [::events/generate-links uri @data @flux @fix]}))}]))
+                                                   :dispatch-fn [::events/generate-links uri @data @flux @fix @morph @active-editor]}))}]))
 
 (defn control-panel []
   [:> segment {:raised true}
@@ -248,7 +254,9 @@
                                             :run  #(re-frame/dispatch [::events/process
                                                                        @(re-frame/subscribe [::subs/field-value :data])
                                                                        @(re-frame/subscribe [::subs/field-value :flux])
-                                                                       @(re-frame/subscribe [::subs/field-value :fix])])
+                                                                       @(re-frame/subscribe [::subs/field-value :fix])
+                                                                       @(re-frame/subscribe [::subs/field-value :morph])
+                                                                       @(re-frame/subscribe [::subs/active-editor])])
                                             :keybindings [(bit-or control-command enter)
                                                           (chord-fn (bit-or control-command enter))]}))))
 
@@ -278,14 +286,49 @@
         path [:input-fields editor-name]
         collapsed? (re-frame/subscribe [::subs/collapsed? path])
         width (re-frame/subscribe [::subs/editor-width editor-name])]
-    (println editor-name ": width " @width)
     [:> grid-column {:width (or @width (:width config))}
      [:> segment {:raised true}
-      [title-label (:name config)]
-      [collapse-label path]
-      [:> divider {:style {:margin "1.5em 0 0.5em 0"}}]
+      [:> menu
+       {:color color
+        :stackable true}
+       [title-label (:name config)]
+       [collapse-label path]]
       (when-not @collapsed?
         [editor config])]]))
+
+(defn editor-menu-item [config editor]
+  (let [current-editor (re-frame/subscribe [::subs/active-editor])]
+    [:> popup
+     {:content (str (-> editor name clj-str/capitalize)
+                    "-Transformation. Needs a "
+                    (name editor)
+                    "-function in your flux.")
+      :trigger (reagent/as-element
+                [:> menu-item
+                 {:active (= @current-editor editor)
+                  :on-click #(re-frame/dispatch [::events/switch-editor editor])
+                  :style (if (= @current-editor editor)
+                           {:font-weight "bold"}
+                           {:color "#2185d0c4"})}
+                 (clj-str/capitalize (get-in config [:different editor :name]))])}]))
+
+(defn switch-editor-panel [config]
+  (let [path [:input-fields :switch]
+        collapsed? (re-frame/subscribe [::subs/collapsed? path])
+        current-editor (re-frame/subscribe [::subs/active-editor])
+        editor-config (merge (get-in config [:different @current-editor])
+                             (:common config))
+        width (re-frame/subscribe [::subs/editor-width :switch])]
+    [:> grid-column {:width (or @width (-> config :common :width))}
+     [:> segment {:raised true}
+      [:> menu
+       {:color color
+        :stackable true}
+       [editor-menu-item config :fix]
+       [editor-menu-item config :morph]
+       [collapse-label path]]
+      (when-not @collapsed?
+        [editor editor-config])]]))
 
 ;;; Result field
 
@@ -311,9 +354,11 @@
 (defn result-panel [width]
   [:> grid-column {:width width}
    [:> segment {:raised true}
-    [title-label "Result"]
-    [collapse-label [:result]]
-    [:> divider {:style {:margin "1.5em 0"}}]
+    [:> menu
+     {:color color
+      :stackable true}
+     [title-label "Result"]
+     [collapse-label [:result]]]
     [result]]])
 
 ;;; Main panel
@@ -340,6 +385,6 @@
 
      [editor-panel flux-config]
 
-     [editor-panel fix-config]
+     [switch-editor-panel switch-config]
 
      [result-panel (:width result-config)]]]])

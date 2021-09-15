@@ -37,10 +37,10 @@
  (fn [db [_ editor]]
    (let [width (get-in db [:input-fields editor :width])]
      (case editor
-       :flux (if (= 16 (get-in db [:input-fields :fix :width]))
+       :flux (if (= 16 (get-in db [:input-fields :switch :width]))
                16
                width)
-       :fix (if (= 16 (get-in db [:input-fields :flux :width]))
+       :switch (if (= 16 (get-in db [:input-fields :flux :width]))
               16
               width)
        width))))
@@ -49,6 +49,11 @@
  ::collapsed?
  (fn [db [_ path]]
    (get-in db (conj path :collapsed?))))
+
+(re-frame/reg-sub
+ ::active-editor
+ (fn [db _]
+   (get-in db [:input-fields :switch :active])))
 
 (re-frame/reg-sub
  ::process-result

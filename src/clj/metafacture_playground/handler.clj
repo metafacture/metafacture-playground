@@ -9,8 +9,8 @@
 
 (defroutes routes
   (GET "/" [] (resource-response "index.html" {:root "public"}))
-  (GET "/process" [data flux fix]
-    (-> (process data flux fix)
+  (GET "/process" [data flux fix morph]
+    (-> (process data flux fix morph)
         (response)
         (header "Access-Control-Allow-Origin" "*")))
   (resources "/")
