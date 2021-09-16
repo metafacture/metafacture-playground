@@ -13,7 +13,7 @@
                  [yogthos/config "1.1.7"]
                  [ring "1.8.2"]
                  [lambdaisland/uri "1.4.54"]
-                 [day8.re-frame/http-fx "0.2.2"]
+                 [day8.re-frame/fetch-fx "0.0.1"]
                  [re-pressed "0.3.1"]
                  [com.degel/re-frame-storage-fx "0.1.1"]
                  [org.metafacture/metafacture-commons "5.2.0"]
