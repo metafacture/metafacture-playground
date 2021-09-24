@@ -1,8 +1,7 @@
 (ns metafacture-playground.events
   (:require
    [re-frame.core :as re-frame]
-   [day8.re-frame.http-fx]
-   [ajax.core :as ajax]
+   [day8.re-frame.fetch-fx]
    [lambdaisland.uri :refer [uri join assoc-query* query-string->map query-encode]]
    [metafacture-playground.db :as db]
    [metafacture-playground.effects :as effects]
@@ -268,20 +267,25 @@
   [{db :db} [_ response]]
   {:db (-> db
            (assoc-in [:result :loading?] false)
-           (assoc-in [:result :content] response))})
+           (assoc-in [:result :content] (:body response)))})
 
 (re-frame/reg-event-fx
  ::process-response
  process-response)
 
 (defn bad-response
-  [{db :db} [_ {:keys [status status-text]}]]
-  {:db (-> db
-           (assoc-in [:result :loading?] false)
-           (assoc :message {:content (str "Response from Server with "
-                                          "Status-Code \"" status "\" and "
-                                          "Status-Text \"" status-text \")
-                            :type :error}))})
+  [{db :db} [_ {:keys [problem problem-message status status-text]}]]
+  (let [message-content   (case problem
+                            :fetch (str "Received no server response. Message: " problem-message)
+                            :timeout (str "Response from Server: " problem-message)
+                            :body (str "Response from Server: " problem-message)
+                            :server (str "Response from Server with "
+                                         "Status-Code \"" status "\" and "
+                                         "Status-Text \"" status-text \"))]
+    {:db (-> db
+             (assoc-in [:result :loading?] false)
+             (assoc :message {:content message-content
+                              :type :error}))}))
 
 (re-frame/reg-event-fx
  ::bad-response
@@ -292,20 +296,20 @@
   (let [active-editor-in-flux? (re-find (re-pattern (str "\\|(\\s|\\n)*" (name active-editor) "(\\s|\\n)*\\|")) (or flux ""))
         message (when-not active-editor-in-flux?
                   (str "Flux does not use selected " (name active-editor) "."))]
-    {:http-xhrio {:method          :get
-                  :uri             "process"
-                  :params {:data data
-                           :flux flux
-                           :fix fix
-                           :morph morph}
-                  :format (ajax/json-request-format)
-                  :response-format (ajax/text-response-format)
-                  :on-success      [::process-response]
-                  :on-failure      [::bad-response]}
+    {:fetch {:method                 :get
+             :url                    "process"
+             :params                 {:data data
+                                      :flux flux
+                                      :fix fix
+                                      :morph morph}
+             :timeout                10000
+             :response-content-types {"text/plain" :text}
+             :on-success             [::process-response]
+             :on-failure             [::bad-response]}
      :db (-> db
-           (assoc-in [:result :loading?] true)
-           (assoc :message {:content message
-                            :type :warning}))}))
+             (assoc-in [:result :loading?] true)
+             (assoc :message {:content message
+                              :type :warning}))}))
 
 (re-frame/reg-event-fx
  ::process
