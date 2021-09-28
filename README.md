@@ -1,9 +1,11 @@
 # Metafacture Playground
 
-This is an approach to provide a web application to play around with Metafactures languages Fix and Flux inspired by the [JSON-LD Playground](https://json-ld.org/playground/).
+This is an approach to provide a web application to play around with Metafactures languages Fix, Flux and Morph inspired by the [JSON-LD Playground](https://json-ld.org/playground/).
 This project is inititially created using the [leiningen re-frame template](https://github.com/day8/re-frame-template).
 
-The current test deployment is available at [http://test.lobid.org/playground/](http://test.lobid.org/playground/).
+The ***production deployment*** is available at [https://metafacture.org/playground/](https://metafacture.org/playground/).
+
+The current ***test deployment*** is available at [https://test.metafacture.org/playground/](https://test.metafacture.org/playground/).
 
 [Here](contributing.md) you can read about contributing to Metafacture Playground.
 
