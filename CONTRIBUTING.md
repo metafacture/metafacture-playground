@@ -90,6 +90,10 @@ For details, see [these](https://chris.beams.io/posts/git-commit/) [posts](https
 
 As a general rule, we don't change public commit history, i.e. we don’t use ```--force``` or ```-f``` with ```git push```. Local amending and rebasing before pushing to GitHub is no problem and will not require to ```--force``` when pushing. While we consider this general rule as directive, we condone force pushing as long as the branch has no open pull request yet and only one person is working on this branch. In case of a force push we use ```--force-with-lease``` to ensure that we do not overwrite any remote commits. If rewriting is required in an open pull request, instead of force pushing we open a new branch based on main and ```cherry-pick``` commits or add new code in this branch. The existing pull request is then closed.
 
+#### Browsers
+
+We test the Metafacture Playground against Mozilla Firefox and Google Chrome. The behaviour in these two browsers may be different, but should be acceptable for each of them.
+
 ## Maintainer Guidelines
 
 ### Board and Issues
@@ -146,3 +150,4 @@ The *Definition of Done* describes a list of criteria which issues have to meet 
 - GitHub Actions / CI passed (contains tests)
 - Pull request is reviewed and approved
 - Functionality is merged into the main branch
+- Deployed to production
