@@ -229,7 +229,7 @@
 
 (defn generate-links
   [{db :db} [_ url data flux fix morph active-editor]]
-  (let [max-query-string 1024
+  (let [max-query-string 1536
         max-url-string 2048
         api-call-params (merge (when data {:data data})
                                (when flux {:flux flux})
