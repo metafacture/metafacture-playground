@@ -7,7 +7,7 @@ The ***production deployment*** is available at [https://metafacture.org/playgro
 
 The current ***test deployment*** is available at [https://test.metafacture.org/playground/](https://test.metafacture.org/playground/).
 
-[Here](contributing.md) you can read about contributing to Metafacture Playground.
+[Here](CONTRIBUTING.md) you can read about contributing to Metafacture Playground.
 
 ## Installation
 
