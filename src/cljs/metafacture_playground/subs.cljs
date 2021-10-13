@@ -9,6 +9,11 @@
     (get db :message)))
 
 (re-frame/reg-sub
+ ::error-details-visible?
+ (fn [db _]
+   (get-in db [:message :show-details?])))
+
+(re-frame/reg-sub
  ::field-value
  (fn [db [_ field-name]]
    (get-in db [:input-fields field-name :content])))

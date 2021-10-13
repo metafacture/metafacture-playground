@@ -109,11 +109,33 @@
            (is (not (get-in db' [:db :input-fields :fix :collapsed?])))
            (is (not (get-in db' [:db :input-fields :data :collapsed?])))
            (is (not (get-in db' [:db :result :collapsed?]))))))
+
   (testing "Test collapsing and expanding a panel"
     (let [db' (-> empty-db
                   (events/collapse-panel [:collapse-panel [:input-fields :flux] false])
                   (events/collapse-panel [:collapse-panel [:input-fields :flux] true]))]
       (is (not (get-in db' [:db :input-fields :flux :collapsed?]))))))
+
+(deftest message-test
+  (testing "Test dismissing message"
+    (let [db' (-> empty-db
+                  (assoc-in [:db :message :content] "I am a new error")
+                  (assoc-in [:db :message :type] :error)
+                  (events/dismiss-message [:dismiss-message]))]
+      (is (nil? (get-in db' [:db :message])))))
+
+  (testing "Show and hide error details"
+    (let [db' (-> empty-db
+                  (assoc-in [:db :message :content] "I am a new error with details")
+                  (assoc-in [:db :message :type] :error)
+                  (assoc-in [:db :message :details] "You clicked too fast!"))
+          db'' (-> db'
+                   (events/show-error-details [:show-error-details true]))
+          db''' (-> db''
+                    (events/show-error-details [:show-error-details false]))]
+      (and (is (= (get-in db' [:db :message :show-details?]) false))
+           (is (= (get-in db'' [:db :message :show-details?]) true))
+           (is (= (get-in db''' [:db :message :show-details?]) false))))))
 
 (deftest generate-links-test
   (testing "Test generating share links"

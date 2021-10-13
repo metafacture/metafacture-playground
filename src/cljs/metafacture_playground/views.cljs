@@ -10,7 +10,6 @@
    [cljsjs.semantic-ui-react]
    [goog.object :as g]
    [re-pressed.core :as rp]
-   [clojure.pprint]
    ["@monaco-editor/react" :as monaco-react]))
 
 ;;; Using semantic ui react components
@@ -108,11 +107,12 @@
            :for for}
    (clj-str/capitalize name)])
 
-(defn simple-button [{:keys [content dispatch-fn icon-name]}]
+(defn simple-button [{:keys [content dispatch-fn icon-name fluid]}]
   [:> button
    (merge {:id (-> content (clj-str/replace " " "-") (str "-button"))
            :basic basic-buttons?
-           :color color}
+           :color color
+           :fluid fluid}
           (when dispatch-fn
             {:onClick #(re-frame/dispatch dispatch-fn)}))
    (when icon-name
@@ -151,28 +151,29 @@
 
 ;;; Message Panel
 
-(defn- message-content [content type]
-  (case type
-    :error (str "ERROR: " content)
-    :warning (str "WARNING: " content)
-    :info (str "INFO: " content)
-    :success (str "SUCCESS: " content)
-    content))
-
-(defn- message-type [type]
-  (case type
-    :error {:error true}
-    :warning {:warning true}
-    :info {:info true}
-    :success {:success true}
-    nil))
-
 (defn message-panel []
-  (let [{:keys [content type]} @(re-frame/subscribe [::subs/message])]
+  (let [{:keys [content details type]} @(re-frame/subscribe [::subs/message])
+        show-details? (re-frame/subscribe [::subs/error-details-visible?])]
     (when content
-      [:> message (merge {:content (message-content content type)
-                          :on-dismiss #(re-frame/dispatch [::events/dismiss-message])}
-                         (message-type type))])))
+      [:> segment
+       [:> message (merge {:header (-> type name clj-str/capitalize)
+                           :on-dismiss #(re-frame/dispatch [::events/dismiss-message])
+                           type true}
+                          (if (sequential? content)
+                            {:list content}
+                            {:content content}))]
+       (when details
+         (if @show-details?
+           [:> message {:header "Details"
+                        :content details
+                        :on-dismiss #(re-frame/dispatch [::events/show-error-details false])
+                        type true
+                        :style {:white-space "pre-wrap"}}]
+           [:> button {:fluid true
+                       :style {:margin 0}
+                       :basic true
+                       :on-click #(re-frame/dispatch [::events/show-error-details true])}
+            "Show Details"]))])))
 
 ;;; Control Panel
 
