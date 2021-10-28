@@ -17,3 +17,7 @@
 
 # npm
 /package-lock.json
+
+# IDE
+.clj-kondo/
+.lsp/
