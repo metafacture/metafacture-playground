@@ -11,7 +11,7 @@
 
 (defn exception-handler [exception request]
   (let [json-body (json/write-str {:message (.getMessage exception)
-                                    :stacktrace (with-out-str (st/print-stack-trace exception))
+                                    :stacktrace (with-out-str (st/print-cause-trace exception))
                                     :uri (:uri request)})]
        {:status 500
         :body json-body}))
