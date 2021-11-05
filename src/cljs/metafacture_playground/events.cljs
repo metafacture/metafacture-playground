@@ -301,8 +301,8 @@
   [{db :db} [_ {:keys [problem problem-message status status-text body]}]]
   (let [message-data (case problem
                        :fetch {:content (str "Received no server response. Message: " problem-message)}
-                       :timeout {:content (str "Response from Server: " problem-message)}
-                       :body {:content (str "Response from Server: " problem-message)}
+                       :timeout {:content (str "Response from server: " problem-message)}
+                       :body {:content (str "Response from server: " problem-message)}
                        :server (server-problem-message status status-text body))]
        {:db (-> db
                 (assoc-in [:result :loading?] false)
