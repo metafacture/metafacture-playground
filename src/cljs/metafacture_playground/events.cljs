@@ -6,7 +6,8 @@
    [metafacture-playground.db :as db]
    [metafacture-playground.effects :as effects]
    [com.degel.re-frame.storage]
-   [clojure.string :as clj-str]))
+   [clojure.string :as clj-str]
+   [cognitect.transit :as transit]))
 
 ;;; Utils for web storage use
 
@@ -88,13 +89,21 @@
 
 ;;; Message
 
-  (defn dismiss-message
-    [{db :db} _]
-    {:db (assoc db :message nil)})
+(defn show-error-details
+  [{db :db} [_ val]]
+  {:db (assoc-in db [:message :show-details?] val)})
 
-  (re-frame/reg-event-fx
-   ::dismiss-message
-   dismiss-message)
+(re-frame/reg-event-fx
+ ::show-error-details
+ show-error-details)
+
+(defn dismiss-message
+  [{db :db} _]
+  {:db (assoc db :message nil)})
+
+(re-frame/reg-event-fx
+ ::dismiss-message
+ dismiss-message)
 
 ;;; Collapsing panels
 
@@ -273,19 +282,31 @@
  ::process-response
  process-response)
 
+(defn- server-problem-message [status status-text body]
+  (let [body (transit/read (transit/reader :json) body)
+        message (get body "message")
+        message-content (if message
+                          [(str "Response from Server with "
+                                "Status-Code \"" status "\" and "
+                                "Status-Text \"" status-text "\". ")
+                           (str "Exception with Message \"" message "\".")]
+                          (str "Response from Server with "
+                               "Status-Code \"" status "\" and "
+                               "Status-Text \"" status-text \"))]
+    (merge {:content message-content}
+           (when-let [stacktrace (get body "stacktrace")]
+             {:details stacktrace}))))
+
 (defn bad-response
-  [{db :db} [_ {:keys [problem problem-message status status-text]}]]
-  (let [message-content   (case problem
-                            :fetch (str "Received no server response. Message: " problem-message)
-                            :timeout (str "Response from Server: " problem-message)
-                            :body (str "Response from Server: " problem-message)
-                            :server (str "Response from Server with "
-                                         "Status-Code \"" status "\" and "
-                                         "Status-Text \"" status-text \"))]
-    {:db (-> db
-             (assoc-in [:result :loading?] false)
-             (assoc :message {:content message-content
-                              :type :error}))}))
+  [{db :db} [_ {:keys [problem problem-message status status-text body]}]]
+  (let [message-data (case problem
+                       :fetch {:content (str "Received no server response. Message: " problem-message)}
+                       :timeout {:content (str "Response from server: " problem-message)}
+                       :body {:content (str "Response from server: " problem-message)}
+                       :server (server-problem-message status status-text body))]
+       {:db (-> db
+                (assoc-in [:result :loading?] false)
+                (assoc :message (merge message-data {:type :error})))}))
 
 (re-frame/reg-event-fx
  ::bad-response

@@ -47,6 +47,8 @@
             :collapsed? false
             :content nil}
    :message {:content nil
+             :details nil
+             :show-details? false
              :type nil}
    :ui {:height nil}})
 

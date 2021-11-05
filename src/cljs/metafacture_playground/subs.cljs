@@ -3,10 +3,22 @@
    [re-frame.core :as re-frame]
    [clojure.string :as clj-str]))
 
+(defn- expand-indentation [details]
+  (when details
+    (-> details
+        (clj-str/replace #"\n\s{4}\b" "\n        ")
+        (clj-str/replace #"\n\s\b" "\n    "))))
+
 (re-frame/reg-sub
   ::message
   (fn [db _]
-    (get db :message)))
+    (-> (get db :message)
+        (update :details expand-indentation))))
+
+(re-frame/reg-sub
+ ::error-details-visible?
+ (fn [db _]
+   (get-in db [:message :show-details?])))
 
 (re-frame/reg-sub
  ::field-value
