@@ -47,7 +47,7 @@
                  [org.metafacture/metamorph-api "5.2.0"]
                  [org.metafacture/metamorph "5.2.0"]
                  [org.metafacture/metamorph-test "5.2.0"]
-                 [org.metafacture/metafacture-fix "0.2.0-SNAPSHOT" :exclusions [[org.eclipse.xtext/xtext-dev-bom]]]]
+                 [org.metafacture/metafix "0.2.0-SNAPSHOT" :exclusions [[org.eclipse.xtext/xtext-dev-bom]]]]
 
   :plugins [[lein-shadow "0.3.1"]
 
