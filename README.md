@@ -29,7 +29,7 @@ This project depends on [metafacture-fix](https://github.com/metafacture/metafac
 
 Clone and install metafacture-fix:
 ```bash
-$ git clone https://github.com/metafacture/metafacture-fix.git -b 35-metafix
+$ git clone https://github.com/metafacture/metafacture-fix.git
 $ cd metafacture-fix
 ```
 

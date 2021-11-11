@@ -13,7 +13,7 @@ jobs:
       with:
         path: metafacture-fix
         repository: metafacture/metafacture-fix
-        ref: 35-metafix
+        ref: master
     - name: Install metafacture-fix
       run: |
         cd metafacture-fix
