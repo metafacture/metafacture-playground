@@ -230,6 +230,13 @@
    0
    params))
 
+(defn- query-string-too-long? [params maximum]
+  (try
+    (> (count-query-string params)
+       maximum)
+    (catch js/RangeError _
+      true)))
+
 (defn generate-link [url path query-params]
   (-> (uri url)
       (join path)
@@ -248,10 +255,8 @@
                                (when fix {:fix fix})
                                (when morph {:morph morph})
                                {:active-editor (name active-editor)})
-        api-call-query-string-too-long? (> (count-query-string api-call-params)
-                                           max-query-string)
-        workflow-query-string-too-long? (> (count-query-string workflow-params)
-                                           max-query-string)
+        api-call-query-string-too-long? (query-string-too-long? api-call-params max-query-string)
+        workflow-query-string-too-long? (query-string-too-long? workflow-params max-query-string)
         api-call-link (when (and api-call-params (not api-call-query-string-too-long?))
                         (generate-link url "./process" api-call-params))
         workflow-link (when (and workflow-params (not workflow-query-string-too-long?))
