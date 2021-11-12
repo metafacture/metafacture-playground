@@ -10,7 +10,7 @@
                  [reagent "0.10.0"]
                  [re-frame "1.1.2"]
                  [yogthos/config "1.1.7"]
-                 [ring "1.8.2"]
+                 [ring "1.9.0"]
                  [compojure "1.6.2"]
                  [lambdaisland/uri "1.4.54"]
                  [day8.re-frame/fetch-fx "0.0.1"]

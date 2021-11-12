@@ -283,8 +283,7 @@
  process-response)
 
 (defn- server-problem-message [status status-text body]
-  (let [body (transit/read (transit/reader :json) body)
-        message (get body "message")
+  (let [message (get body "message")
         message-content (if message
                           [(str "Response from Server with "
                                 "Status-Code \"" status "\" and "
@@ -299,7 +298,8 @@
 
 (defn bad-response
   [{db :db} [_ {:keys [problem problem-message status status-text body]}]]
-  (let [message-data (case problem
+  (let [body (when body (transit/read (transit/reader :json) body))
+        message-data (case problem
                        :fetch {:content (str "Received no server response. Message: " problem-message)}
                        :timeout {:content (str "Response from server: " problem-message)}
                        :body {:content (str "Response from server: " problem-message)}
@@ -317,14 +317,15 @@
   (let [active-editor-in-flux? (re-find (re-pattern (str "\\|(\\s|\\n)*" (name active-editor) "(\\s|\\n)*\\|")) (or flux ""))
         message (when-not active-editor-in-flux?
                   (str "Flux does not use selected " (name active-editor) "."))]
-    {:fetch {:method                 :get
+    {:fetch {:method                 :post
              :url                    "process"
-             :params                 {:data data
-                                      :flux flux
-                                      :fix fix
-                                      :morph morph}
+             :body                   (.stringify js/JSON (clj->js {:data data
+                                                                   :flux flux
+                                                                   :fix fix
+                                                                   :morph morph}))
              :timeout                10000
-             :response-content-types {"text/plain" :text}
+             :response-content-types {"text/plain" :text
+                                      #"application/.*json" :json}
              :on-success             [::process-response]
              :on-failure             [::bad-response]}
      :db (-> db
