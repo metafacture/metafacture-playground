@@ -144,7 +144,8 @@
   [{db :db} [_ sample]]
   {:db (add-sample db sample)
    :storage/set {:session? true
-                 :pairs (generate-pairs {:input-fields sample})}
+                 :pairs (-> {:input-fields (update-in sample [:switch :active] name)}
+                            generate-pairs)}
    :dispatch-n (mapv
                 (fn [editor]
                   [::update-width editor (get-in sample [editor :content])])
@@ -362,7 +363,10 @@
     web-storage :storage/all}]
   (let [query-params (-> href uri :query query-string->map)]
     (if (empty? query-params)
-      {:db (deep-merge db/default-db (restore-db web-storage) {:ui {:height window-height}})}
+      {:db (deep-merge
+            db/default-db
+            (restore-db web-storage)
+            {:ui {:height window-height}})}
       {:db (-> db/default-db
                (assoc-query-params query-params)
                (assoc-in [:ui :height] window-height))
