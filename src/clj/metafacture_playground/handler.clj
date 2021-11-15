@@ -1,33 +1,51 @@
 (ns metafacture-playground.handler
   (:require
-   [compojure.core :refer [GET defroutes]]
+   [compojure.core :refer [GET POST defroutes]]
    [compojure.route :refer [resources not-found]]
    [metafacture-playground.process :refer [process]]
    [ring.util.response :refer [resource-response header response]]
    [ring.middleware.reload :refer [wrap-reload]]
    [ring.middleware.params :refer [wrap-params]]
+   [ring.util.request :refer [body-string]]
    [clojure.data.json :as json]
    [clojure.stacktrace :as st]))
 
-(defn exception-handler [exception request]
+(defn wrap-body-string [handler]
+  (fn [request]
+    (let [body-str (body-string request)]
+      (handler (assoc request :body body-str)))))
+
+(defn exception-handler [exception uri]
   (let [json-body (json/write-str {:message (.getMessage exception)
-                                    :stacktrace (with-out-str (st/print-cause-trace exception))
-                                    :uri (:uri request)})]
+                                   :stacktrace (with-out-str (st/print-cause-trace exception))
+                                   :uri uri})]
        {:status 500
         :body json-body}))
 
+(defn process-request [data flux fix morph uri]
+  (try
+    (-> (process data flux fix morph)
+        (response)
+        (header "Access-Control-Allow-Origin" "*"))
+    (catch Exception e
+      (exception-handler e uri))))
+
 (defroutes routes
   (GET "/" [] (resource-response "index.html" {:root "public"}))
-  (GET "/process" [data flux fix morph :as request]
-    (try
-      (-> (process data flux fix morph)
-          (response)
-          (header "Access-Control-Allow-Origin" "*"))
-      (catch Exception e
-        (exception-handler e request))))
+  (GET "/process" [data flux fix morph uri]
+    (process-request data flux fix morph uri))
+  (POST "/process" request
+    (let [body (-> request :body (json/read-str :key-fn keyword))
+          {:keys [data flux fix morph]} body]
+      (process-request data flux fix morph (:uri request))))
   (resources "/")
   (not-found "Page not found"))
 
-(def dev-handler (-> routes wrap-params wrap-reload))
+(def dev-handler (-> routes
+                     wrap-params
+                     wrap-body-string
+                     wrap-reload))
 
-(def handler (-> routes wrap-params))
+(def handler (-> routes
+                 wrap-params
+                 wrap-body-string))

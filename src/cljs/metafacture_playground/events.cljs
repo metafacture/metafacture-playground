@@ -144,7 +144,8 @@
   [{db :db} [_ sample]]
   {:db (add-sample db sample)
    :storage/set {:session? true
-                 :pairs (generate-pairs {:input-fields sample})}
+                 :pairs (-> {:input-fields (update-in sample [:switch :active] name)}
+                            generate-pairs)}
    :dispatch-n (mapv
                 (fn [editor]
                   [::update-width editor (get-in sample [editor :content])])
@@ -230,6 +231,13 @@
    0
    params))
 
+(defn- query-string-too-long? [params maximum]
+  (try
+    (> (count-query-string params)
+       maximum)
+    (catch js/RangeError _
+      true)))
+
 (defn generate-link [url path query-params]
   (-> (uri url)
       (join path)
@@ -248,10 +256,8 @@
                                (when fix {:fix fix})
                                (when morph {:morph morph})
                                {:active-editor (name active-editor)})
-        api-call-query-string-too-long? (> (count-query-string api-call-params)
-                                           max-query-string)
-        workflow-query-string-too-long? (> (count-query-string workflow-params)
-                                           max-query-string)
+        api-call-query-string-too-long? (query-string-too-long? api-call-params max-query-string)
+        workflow-query-string-too-long? (query-string-too-long? workflow-params max-query-string)
         api-call-link (when (and api-call-params (not api-call-query-string-too-long?))
                         (generate-link url "./process" api-call-params))
         workflow-link (when (and workflow-params (not workflow-query-string-too-long?))
@@ -283,8 +289,7 @@
  process-response)
 
 (defn- server-problem-message [status status-text body]
-  (let [body (transit/read (transit/reader :json) body)
-        message (get body "message")
+  (let [message (get body "message")
         message-content (if message
                           [(str "Response from Server with "
                                 "Status-Code \"" status "\" and "
@@ -299,7 +304,8 @@
 
 (defn bad-response
   [{db :db} [_ {:keys [problem problem-message status status-text body]}]]
-  (let [message-data (case problem
+  (let [body (when body (transit/read (transit/reader :json) body))
+        message-data (case problem
                        :fetch {:content (str "Received no server response. Message: " problem-message)}
                        :timeout {:content (str "Response from server: " problem-message)}
                        :body {:content (str "Response from server: " problem-message)}
@@ -317,14 +323,15 @@
   (let [active-editor-in-flux? (re-find (re-pattern (str "\\|(\\s|\\n)*" (name active-editor) "(\\s|\\n)*\\|")) (or flux ""))
         message (when-not active-editor-in-flux?
                   (str "Flux does not use selected " (name active-editor) "."))]
-    {:fetch {:method                 :get
+    {:fetch {:method                 :post
              :url                    "process"
-             :params                 {:data data
-                                      :flux flux
-                                      :fix fix
-                                      :morph morph}
+             :body                   (.stringify js/JSON (clj->js {:data data
+                                                                   :flux flux
+                                                                   :fix fix
+                                                                   :morph morph}))
              :timeout                10000
-             :response-content-types {"text/plain" :text}
+             :response-content-types {"text/plain" :text
+                                      #"application/.*json" :json}
              :on-success             [::process-response]
              :on-failure             [::bad-response]}
      :db (-> db
@@ -356,7 +363,10 @@
     web-storage :storage/all}]
   (let [query-params (-> href uri :query query-string->map)]
     (if (empty? query-params)
-      {:db (deep-merge db/default-db (restore-db web-storage) {:ui {:height window-height}})}
+      {:db (deep-merge
+            db/default-db
+            (restore-db web-storage)
+            {:ui {:height window-height}})}
       {:db (-> db/default-db
                (assoc-query-params query-params)
                (assoc-in [:ui :height] window-height))
