@@ -56,7 +56,23 @@
                   (dissoc :storage/set))]
       (and (is (not= db' empty-db))
            (is (= (get-in db' [:db :input-fields :fix :content])
-                  new-value))))))
+                  new-value))
+           (is (true? (get-in db' [:db :input-fields :data :disabled?])))
+           (is (true? (get-in db' [:db :input-fields :fix :disabled?])))
+           (is (true? (get-in db' [:db :input-fields :morph :disabled?]))))))
+  
+(testing "Test disabling editor depending on editing values")
+  (let [new-value "I use the input PG_DATA and a | morph | "
+        db' (-> empty-db
+                (events/edit-value [:edit-input-value :flux new-value])
+                (update-in [:db :input-fields] dissoc :result)
+                (dissoc :storage/set))]
+    (and (is (not= db' empty-db))
+         (is (= (get-in db' [:db :input-fields :flux :content])
+                new-value))
+         (is (false? (get-in db' [:db :input-fields :data :disabled?])))
+         (is (true? (get-in db' [:db :input-fields :fix :disabled?])))
+         (is (false? (get-in db' [:db :input-fields :morph :disabled?]))))))
 
 (deftest load-sample-test
   (testing "Test loading sample with all fields empty."

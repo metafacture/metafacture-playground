@@ -34,12 +34,17 @@
    (content->tempfile-path morph ".morph")
    "\")|"))
 
-(defn- flux->flux-content [flux fix morph]
+(defn- flux->flux-content [flux fix morph output]
   (-> flux
       (clj-str/replace #"\n*\|" "|")
       (clj-str/replace #"\s*\|\s*" "|")
+      (clj-str/replace #"\n*;" ";")
+      (clj-str/replace #"\s*;\s*" ";")
+      (clj-str/replace "PG_DATA|" "")
       (clj-str/replace "|fix|" fix)
-      (clj-str/replace "|morph|" morph)))
+      (clj-str/replace "|morph|" morph)
+      (clj-str/replace #"\|write\(\".*\"\);" output)
+      (clj-str/replace "|print;" output)))
 
 (defn- flux-output []
   (let [temp-file-path (content->tempfile-path "" ".txt")]
@@ -52,12 +57,12 @@
 (defn- ->flux-content [data flux fix morph]
   (let [fix (fix->flux-content fix)
         morph (morph->flux-content morph)
-        [out-path output] (flux-output)]
+        [out-path output] (flux-output)
+        data-via-playground? (re-find #"PG_DATA" flux)]
     [out-path
      (str
-      (data->flux-content data)
-      (flux->flux-content flux fix morph)
-      output)]))
+      (when data-via-playground? (data->flux-content data))
+      (flux->flux-content flux fix morph output))]))
 
 (defn- process-flux [file-path out-path]
   (Flux/main (into-array [file-path]))

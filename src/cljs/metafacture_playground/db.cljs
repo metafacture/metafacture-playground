@@ -2,8 +2,8 @@
 
 ; TODO: we should extract the samples here and in process_test.clj to files
 (def sample-data {:data "1{a: Faust, b {n: Goethe, v: JW}, c: Weimar}\n2{a: Räuber, b {n: Schiller, v: F}, c: Weimar}"
-                  :flux-with-fix "as-lines\n|decode-formeta\n|fix\n|encode-xml(rootTag=\"collection\")"
-                  :flux-with-morph "as-lines\n|decode-formeta\n|morph\n|encode-xml(rootTag=\"collection\")"
+                  :flux-with-fix "PG_DATA\n|as-lines\n|decode-formeta\n|fix\n|encode-xml(rootTag=\"collection\")\n|print\n;"
+                  :flux-with-morph "PG_DATA\n|as-lines\n|decode-formeta\n|morph\n|encode-xml(rootTag=\"collection\")\n|print\n;"
                   :fix  "move_field(_id, id)\nmove_field(a, title)\npaste(author, b.v, b.n, '~aus', c)\nretain(id, title, author)"
                   :morph  (str "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                          "<metamorph xmlns=\"http://www.culturegraph.org/metamorph\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
@@ -32,12 +32,15 @@
 (def default-db
   {:input-fields {:data {:content nil
                          :collapsed? false
-                         :width nil}
+                         :width nil
+                         :disabled? true}
                   :flux {:content nil
                          :collapsed? false
                          :width nil}
-                  :fix {:content nil}
-                  :morph {:content nil}
+                  :fix {:content nil
+                        :disabled? true}
+                  :morph {:content nil
+                          :disabled? true}
                   :switch {:collapsed? false
                            :active :fix
                            :width nil}}
@@ -60,12 +63,15 @@
 (def db-parse-fns
   {:input-fields {:data {:content str
                          :collapsed? parseBoolean
-                         :width int}
+                         :width int
+                         :disabled? parseBoolean}
                   :flux {:content str
                          :collapsed? parseBoolean
                          :width int}
-                  :fix {:content str}
-                  :morph {:content str}
+                  :fix {:content str
+                        :disabled? parseBoolean}
+                  :morph {:content str
+                          :disabled? parseBoolean}
                   :switch {:collapsed? parseBoolean
                            :active keyword
                            :width int}}
