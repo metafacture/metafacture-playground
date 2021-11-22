@@ -286,9 +286,11 @@
   (let [editor-name (-> config :name keyword)
         path [:input-fields editor-name]
         collapsed? (re-frame/subscribe [::subs/collapsed? path])
+        disabled? (re-frame/subscribe [::subs/disabled? editor-name])
         width (re-frame/subscribe [::subs/editor-width editor-name])]
     [:> grid-column {:width (or @width (:width config))}
-     [:> segment {:raised true}
+     [:> segment {:raised true
+                  :disabled @disabled?}
       [:> menu
        {:color color
         :stackable true}
@@ -317,11 +319,13 @@
   (let [path [:input-fields :switch]
         collapsed? (re-frame/subscribe [::subs/collapsed? path])
         current-editor (re-frame/subscribe [::subs/active-editor])
+        disabled? (re-frame/subscribe [::subs/disabled? @current-editor])
         editor-config (merge (get-in config [:different @current-editor])
                              (:common config))
         width (re-frame/subscribe [::subs/editor-width :switch])]
     [:> grid-column {:width (or @width (-> config :common :width))}
-     [:> segment {:raised true}
+     [:> segment {:raised true
+                  :disabled @disabled?}
       [:> menu
        {:color color
         :stackable true}

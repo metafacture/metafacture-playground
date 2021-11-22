@@ -123,10 +123,30 @@
 
 (defn edit-value
   [{db :db} [_ field-name new-value]]
-  (let [db-path [:input-fields field-name :content]]
-    {:db (assoc-in db db-path new-value)
+  (let [db-path [:input-fields field-name :content]
+        disable-editors (when (= field-name :flux)
+                          (let [val (-> new-value
+                                        (clj-str/replace #"\n*\|" "|")
+                                        (clj-str/replace #"\s*\|\s*" "|"))
+                                data-used? (boolean (re-find #"PG_DATA" val))
+                                morph-used? (boolean (re-find #"\|morph\|" val))
+                                fix-used? (boolean (re-find #"\|fix\|" val))]
+                            {[:input-fields :data :disabled?] (not data-used?)
+                             [:input-fields :morph :disabled?] (not morph-used?)
+                             [:input-fields :fix :disabled?] (not fix-used?)}))]
+    {:db (-> (reduce
+              (fn [db [path v]]
+                (assoc-in db path v))
+              db
+              disable-editors)
+             (assoc-in db-path new-value))
      :storage/set {:session? true
-                   :name (->storage-key db-path) :value new-value}
+                   :pairs (conj
+                           (mapv
+                            (fn [[db-path v]]
+                              {:name (->storage-key db-path) :value v})
+                            disable-editors)
+                           {:name (->storage-key db-path) :value new-value})}
      :dispatch [::update-width field-name new-value]}))
 
 (re-frame/reg-event-fx
@@ -157,26 +177,34 @@
 
 (defn- clear-db [db paths]
   (reduce
-   (fn [db path]
-     (assoc-in db path nil))
+   (fn [db [path v]]
+     (assoc-in db path v))
    db
    paths))
 
 (defn clear-all
   [{db :db} _]
-  (let [storage-paths [[:input-fields :data :content]
-                       [:input-fields :flux :content]
-                       [:input-fields :fix :content]
-                       [:input-fields :morph :content]
-                       [:input-fields :data :width]
-                       [:input-fields :flux :width]
-                       [:input-fields :switch :width]]
-        other-paths [[:result :content]
-                     [:links :api-call]
-                     [:links :workflow]]]
-       {:db (clear-db db (concat storage-paths other-paths))
+  (let [storage-remove [[[:input-fields :data :content] nil]
+                        [[:input-fields :flux :content] nil]
+                        [[:input-fields :fix :content] nil]
+                        [[:input-fields :morph :content] nil]
+                        [[:input-fields :data :width] nil]
+                        [[:input-fields :flux :width] nil]
+                        [[:input-fields :switch :width] nil]]
+        storage-set [[[:input-fields :data :disabled?] true]
+                     [[:input-fields :fix :disabled?] true]
+                     [[:input-fields :morph :disabled?] true]]
+        other [[[:result :content] nil]
+               [[:links :api-call] nil]
+               [[:links :workflow] nil]]]
+       {:db (clear-db db (concat storage-remove other storage-set))
         :storage/remove {:session? true
-                         :names (mapv ->storage-key storage-paths)}}))
+                         :names (mapv #(->storage-key (first %)) storage-remove)}
+        :storage/set {:session? true
+                      :pairs (mapv (fn [[path v]]
+                                     {:name (->storage-key path)
+                                      :value v})
+                                   storage-set)}}))
 
 (re-frame/reg-event-fx
  ::clear-all

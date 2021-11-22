@@ -63,6 +63,11 @@
    (get-in db (conj path :collapsed?))))
 
 (re-frame/reg-sub
+ ::disabled?
+ (fn [db [_ editor]]
+   (get-in db [:input-fields editor :disabled?])))
+
+(re-frame/reg-sub
  ::active-editor
  (fn [db _]
    (get-in db [:input-fields :switch :active])))
