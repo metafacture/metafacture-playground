@@ -9,6 +9,7 @@
                  [thheller/shadow-cljs "2.11.7"]
                  [reagent "0.10.0"]
                  [re-frame "1.1.2"]
+                 [day8.re-frame/test "0.1.5"]
                  [yogthos/config "1.1.7"]
                  [ring "1.9.0"]
                  [compojure "1.6.2"]

@@ -2,9 +2,10 @@
   (:require
    [re-frame.core :as re-frame]
    [day8.re-frame.fetch-fx]
-   [lambdaisland.uri :refer [uri join assoc-query* query-string->map query-encode]]
+   [lambdaisland.uri :refer [uri join assoc-query* query-encode]]
    [metafacture-playground.db :as db]
    [metafacture-playground.effects :as effects]
+   [metafacture-playground.utils :as utils]
    [com.degel.re-frame.storage]
    [clojure.string :as clj-str]
    [cognitect.transit :as transit]))
@@ -153,23 +154,17 @@
  ::edit-input-value
  edit-value)
 
-(defn- add-sample [db sample]
-  (reduce
-   (fn [db [k sample-v]]
-     (assoc-in db [:input-fields k] sample-v))
-   db
-   sample))
-
 (defn load-sample
   [{db :db} [_ sample]]
-  {:db (add-sample db sample)
-   :storage/set {:session? true
-                 :pairs (-> {:input-fields (update-in sample [:switch :active] name)}
-                            generate-pairs)}
-   :dispatch-n (mapv
-                (fn [editor]
-                  [::update-width editor (get-in sample [editor :content])])
-                [:data :flux :fix])})
+  (let [active-editor (when (:active-editor sample)
+                        (-> sample :active-editor keyword))]
+    {:db db
+     :dispatch-n (conj
+                  (mapv
+                   (fn [editor]
+                     [::edit-input-value editor (get sample editor "")])
+                   [:data :flux :fix :morph])
+                  [::switch-editor active-editor])}))
 
 (re-frame/reg-event-fx
   ::load-sample
@@ -212,11 +207,13 @@
 
 (defn switch-editor
   [{db :db} [_ editor]]
-  {:db (assoc-in db [:input-fields :switch :active] editor)
-   :dispatch [::update-width editor (get-in db [:input-fields editor :content])]
-   :storage/set {:session? true
-                 :name (->storage-key [:input-fields :switch :active])
-                 :value (name editor)}})
+  (merge
+   {:db (assoc-in db [:input-fields :switch :active] editor)
+    :storage/set {:session? true
+                  :name (->storage-key [:input-fields :switch :active])
+                  :value (when editor (name editor))}}
+   (when editor
+     {:dispatch [::update-width editor (get-in db [:input-fields editor :content])]})))
 
 (re-frame/reg-event-fx
  ::switch-editor
@@ -373,6 +370,29 @@
 
 ;;; Initialize-db
 
+(defn examples-response
+  [{db :db} [_ {:keys [body]}]]
+  (let [body (transit/read (transit/reader :json) body)]
+    {:db (assoc db :examples body)}))
+
+(re-frame/reg-event-fx
+ ::examples-response
+ examples-response)
+
+(defn load-samples
+  [{db :db} _]
+  {:db db
+   :fetch {:method                 :get
+           :url                    "examples"
+           :timeout                10000
+           :response-content-types {#"application/.*json" :json}
+           :on-success             [::examples-response]
+           :on-failure             [::bad-response]}})
+
+(re-frame/reg-event-fx
+ ::load-samples
+ load-samples)
+
 (defn deep-merge [a & maps]
   (if (map? a)
     (apply merge-with deep-merge a maps)
@@ -389,19 +409,21 @@
 (defn initialize-db
   [{[_ href window-height] :event
     web-storage :storage/all}]
-  (let [query-params (-> href uri :query query-string->map)]
+  (let [query-params (utils/parse-url href)]
     (if (empty? query-params)
       {:db (deep-merge
             db/default-db
             (restore-db web-storage)
-            {:ui {:height window-height}})}
+            {:ui {:height window-height}})
+       :dispatch [::load-samples]}
       {:db (-> db/default-db
-               (assoc-query-params query-params)
                (assoc-in [:ui :height] window-height))
-       :dispatch-n (mapv
-                    (fn [editor]
-                      [::update-width editor (get query-params editor)])
-                    [:data :flux (-> query-params :active-editor keyword)])
+       :dispatch-n (conj
+                     (mapv
+                      (fn [editor]
+                        [::edit-input-value editor (get query-params editor "")])
+                      [:data :flux :fix :morph])
+                    [::load-samples])
        :storage/set {:session? true
                      :pairs (-> (assoc-query-params {} query-params)
                                 generate-pairs)}
