@@ -4,7 +4,6 @@
    [re-frame.core :as re-frame]
    [metafacture-playground.subs :as subs]
    [metafacture-playground.events :as events]
-   [metafacture-playground.db :as db]
    [clojure.string :as clj-str]
    [lambdaisland.uri :refer [uri]]
    [cljsjs.semantic-ui-react]
@@ -26,6 +25,7 @@
     (apply g/getValueByKeys semantic-ui k ks)
     (goog.object/get semantic-ui k)))
 
+(def button-group (component "Button" "Group"))
 (def button (component "Button"))
 (def header (component "Header"))
 (def container (component "Container"))
@@ -44,6 +44,9 @@
 (def message (component "Message"))
 (def menu (component "Menu"))
 (def menu-item (component "Menu" "Item"))
+(def dropdown (component "Dropdown"))
+(def dropdown-menu (component "Dropdown" "Menu"))
+(def dropdown-item (component "Dropdown" "Item"))
 
 ;;; Using monaco editor react component
 
@@ -107,14 +110,16 @@
            :for for}
    (clj-str/capitalize name)])
 
-(defn simple-button [{:keys [content dispatch-fn icon-name fluid]}]
+(defn simple-button [{:keys [content dispatch-fn icon-name fluid style]}]
   [:> button
    (merge {:id (-> content (clj-str/replace " " "-") (str "-button"))
            :basic basic-buttons?
            :color color
            :fluid fluid}
           (when dispatch-fn
-            {:onClick #(re-frame/dispatch dispatch-fn)}))
+            {:onClick #(re-frame/dispatch dispatch-fn)})
+          (when style
+            {:style style}))
    (when icon-name
      [:> icon {:name icon-name}])
    content])
@@ -177,6 +182,24 @@
 
 ;;; Control Panel
 
+(defn examples-dropdown []
+  [:> button-group {:color color
+                     :basic true}
+  [:> dropdown
+   {:className "icon"
+    :button true
+    :icon "code"
+    :labeled true
+    :text "Load example"}
+   [:> dropdown-menu
+    (for [[k {:keys [display-name value]}] @(re-frame/subscribe [::subs/examples])]
+      ^{:key k}
+      [:> dropdown-item
+       {:key k
+        :text display-name
+        :value display-name
+        :on-click #(re-frame/dispatch [::events/load-sample value])}])]]])
+
 (defn process-button []
   (let [data (re-frame/subscribe [::subs/field-value :data])
         flux (re-frame/subscribe [::subs/field-value :flux])
@@ -190,7 +213,8 @@
       :on "hover"
       :trigger (reagent/as-element (simple-button {:content "Process"
                                                    :dispatch-fn [::events/process @data @flux @fix @morph @active-editor]
-                                                   :icon-name "play"}))
+                                                   :icon-name "play"
+                                                   :style {:margin-left "0.1em"}}))
       :position "bottom left"}]))
 
 (defn share-link [link-type label-text]
@@ -234,8 +258,8 @@
 
 (defn control-panel []
   [:> segment {:raised true}
-   [simple-button {:content "Load sample" :dispatch-fn [::events/load-sample db/sample-fields] :icon-name "code"}]
-   [simple-button {:content "Clear all" :dispatch-fn [::events/clear-all] :icon-name "erase"}]
+   [examples-dropdown]
+   [simple-button {:content "Clear" :dispatch-fn [::events/clear-all] :icon-name "erase" :style {:margin-left "0.3em"}}]
    [process-button]
    [share-button]])
 

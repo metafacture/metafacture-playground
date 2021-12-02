@@ -1,0 +1,1 @@
+http://test.lobid.org/playground/process?flux=%22https%3A//d-nb.info/1106253078/about/marcxml%22%0A%7C+open-http%28accept%3D%22application/xml%22%29%0A%7C+decode-xml%0A%7C+handle-marcxml%0A%7C+encode-json%28prettyPrinting%3D%22true%22%29%0A%7C+print%0A%3B
