@@ -50,7 +50,7 @@
                  [org.metafacture/metamorph-test "5.2.0"]
                  [org.metafacture/metafix "0.2.0-SNAPSHOT" :exclusions [[org.eclipse.xtext/xtext-dev-bom]]]]
 
-  :plugins [[lein-shadow "0.3.1"]
+  :plugins [[lein-shadow "0.4.0"]
 
             [lein-shell "0.5.0"]]
 
