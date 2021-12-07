@@ -18,6 +18,8 @@ jobs:
     - name: Install metafacture-fix
       working-directory: metafacture-fix 
       run: ./gradlew install
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
     - uses: actions/checkout@v2
     - name: Install dependencies
       run: lein deps
