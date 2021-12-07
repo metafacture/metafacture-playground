@@ -16,9 +16,8 @@ jobs:
         repository: metafacture/metafacture-fix
         ref: master
     - name: Install metafacture-fix
-      run: |
-        cd metafacture-fix
-        ./gradlew install
+      working-directory: metafacture-fix 
+      run: ./gradlew install
     - uses: actions/checkout@v2
     - name: Install dependencies
       run: lein deps
