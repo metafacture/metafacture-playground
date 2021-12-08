@@ -15,9 +15,6 @@
 /shadow-cljs.edn
 /.shadow-cljs/
 
-# npm
-/package-lock.json
-
 # IDE
 .clj-kondo/
 .lsp/
