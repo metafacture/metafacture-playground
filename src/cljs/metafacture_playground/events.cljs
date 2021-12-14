@@ -267,10 +267,14 @@
       true)))
 
 (defn generate-link [url path query-params]
-  (-> (uri url)
-      (join path)
-      (assoc-query* query-params)
-      str))
+  (let [inputs (-> query-params
+                   (dissoc :active-editor)
+                   vals)]
+    (when-not (every? clj-str/blank? inputs)
+      (-> (uri url)
+          (join path)
+          (assoc-query* query-params)
+          str))))
 
 (defn generate-links
   [{db :db} [_ url data flux fix morph active-editor]]
@@ -302,6 +306,31 @@
 (re-frame/reg-event-fx
  ::generate-links
  generate-links)
+
+;;; Export workflow
+
+(defn- prepare-flux [flux data-filename fix-filename morph-filename]
+  (-> flux
+      (clj-str/replace #"PG_DATA\s*\|" (str "FLUX_DIR + \"" data-filename "\"\n|open-file\n|"))
+      (clj-str/replace #"\|\s*fix\s*\|" (str "|fix( FLUX_DIR + \"" fix-filename "\" )\n|"))
+      (clj-str/replace #"\|\s*morph\s*\|" (str "|morph( FLUX_DIR + \"" morph-filename "\" ) \n|"))))
+
+(defn export-workflow
+  [{:keys [db]} [_ data flux fix morph]]
+  (merge {:db (if (every? clj-str/blank? [data flux fix morph])
+                (update db :message merge {:content "Nothing to export. All fields are empty."
+                                           :type :warning})
+                db)}
+         (cond-> {}
+           (not (clj-str/blank? data)) (update ::effects/export-workflow conj [data "playground.data"])
+           (not (clj-str/blank? flux)) (#(let [flux (prepare-flux flux "playground.data" "playground.fix" "playground.morph")]
+                                         (update % ::effects/export-workflow conj [flux "playground.flux"])))
+           (not (clj-str/blank? fix)) (update ::effects/export-workflow conj [fix "playground.fix"])
+           (not (clj-str/blank? morph)) (update ::effects/export-workflow conj [morph "playground.morph"]))))
+
+(re-frame/reg-event-fx
+ ::export-workflow
+ export-workflow)
 
 ;;; Processing
 
