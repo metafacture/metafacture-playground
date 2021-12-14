@@ -237,8 +237,8 @@
 
 (defn share-links []
   [:> form
-   [share-link :api-call "Result call"]
-   [share-link :workflow "Workflow"]])
+   [share-link :workflow "Workflow"]
+   [share-link :api-call "Result call"]])
 
 (defn share-button []
   (let [uri (-> js/window .-location .-href uri (assoc :query nil))
