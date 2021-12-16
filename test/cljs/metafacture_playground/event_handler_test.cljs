@@ -30,7 +30,7 @@
 (def empty-db
   (-> (events/initialize-db {:db {}
                              :event [::events/initialize-db]})
-      (dissoc :dispatch)))
+      (dissoc :dispatch :dispatch-n :storage/set :metafacture-playground.effects/unset-url-query-params)))
 
 ; db with one input-field not empty
 (def db1
@@ -42,9 +42,6 @@
       (events/edit-value [:edit-value :data (:data sample-data)])
       (events/edit-value [:edit-value :flux (:flux sample-data)])
       (events/edit-value [:edit-value :fix  (:fix sample-data)])))
-
-(def db-with-sample
-  {:db {:input-fields sample-fields}})
 
 (deftest initialize-db
   (testing "Test initializing of db without values"
@@ -161,7 +158,9 @@
 (deftest generate-links-test
   (testing "Test generating share links"
     (let [db' (-> empty-db
-                  (events/load-sample [:load-sample sample-data]))
+                  (events/edit-value [:edit-value :data (:data sample-data)])
+                  (events/edit-value [:edit-value :fix (:fix sample-data)])
+                  (events/edit-value [:edit-value :flux (:flux sample-data)]))
           data (get-in db' [:db :input-fields :data :content])
           fix (get-in db' [:db :input-fields :fix :content])
           flux (get-in db' [:db :input-fields :flux :content])
@@ -182,10 +181,10 @@
 
   (testing "Test not generating links if parameters are too long"
     (let [db' (-> empty-db
-                  (events/edit-value [:edit-value :data (generate-random-string 1537)]))
-          data (get-in db' [:db :input-fields :data :content])
+                  (events/edit-value [:edit-value :flux (generate-random-string 1537)]))
+          flux (get-in db' [:db :input-fields :flux :content])
           db'' (-> db'
-                   (events/generate-links [:generate-links "http://test.metafacture.org/playground/" data nil nil nil :fix])
+                   (events/generate-links [:generate-links "http://test.metafacture.org/playground/" nil flux nil nil :fix])
                    :db)]
       (and (is (= (get-in db'' [:message :content]) "Share links for large workflows are not supported yet"))
            (is (nil? (get-in db'' [:links :api-call])))

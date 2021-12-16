@@ -33,7 +33,10 @@
                 (mapv
                  (fn [sub-sub-key]
                    {:name (->storage-key [k sub-key sub-sub-key])
-                    :value (get-in db [k sub-key sub-sub-key])})
+                    :value (let [value (get-in db [k sub-key sub-sub-key])]
+                             (if (keyword? value)
+                               (name value)
+                               value))})
                  (-> (get rest-db sub-key) keys)))
               (keys rest-db))))
    []
@@ -162,7 +165,7 @@
                    (fn [editor]
                      [::edit-input-value editor (get sample editor "")])
                    [:data :flux :fix :morph])
-                  [::switch-editor active-editor])}))
+                  [::switch-editor (:active-editor sample)])})
 
 (re-frame/reg-event-fx
   ::load-sample
@@ -230,16 +233,18 @@
 
 ;;; Share links
 
-(defn- get-used-params [flux fix morph]
+(defn- get-used-params [flux fix morph data]
   (if flux
     (let [flux (-> flux
                    (clj-str/replace "\n|" "|")
                    (clj-str/replace "\\s?\\|\\s?" "|"))
           fix-in-flux? (re-find #"\|fix\|" flux)
-          morph-in-flux? (re-find #"\|morph\|" flux)]
-      (merge
-       (when fix-in-flux? {:fix fix})
-       (when morph-in-flux? {:morph morph})))
+          morph-in-flux? (re-find #"\|morph\|" flux)
+          data-in-flux? (re-find #"PG_DATA" flux)]
+      (cond-> {}
+        fix-in-flux? (merge {:fix fix})
+        morph-in-flux? (merge {:morph morph})
+        data-in-flux? (merge {:data data})))
     {}))
 
 (defn- count-query-string [params]
@@ -271,14 +276,13 @@
   [{db :db} [_ url data flux fix morph active-editor]]
   (let [max-query-string 1536
         max-url-string 2048
-        api-call-params (merge (when data {:data data})
-                               (when flux {:flux flux})
-                               (get-used-params flux fix morph))
-        workflow-params (merge (when data {:data data})
-                               (when flux {:flux flux})
-                               (when fix {:fix fix})
-                               (when morph {:morph morph})
-                               {:active-editor (name active-editor)})
+        api-call-params (when flux
+                          (merge
+                           {:flux flux}
+                           (get-used-params flux fix morph data)))
+        workflow-params (merge api-call-params
+                               (when active-editor
+                                 {:active-editor (name active-editor)}))
         api-call-query-string-too-long? (query-string-too-long? api-call-params max-query-string)
         workflow-query-string-too-long? (query-string-too-long? workflow-params max-query-string)
         api-call-link (when (and api-call-params (not api-call-query-string-too-long?))
@@ -343,8 +347,9 @@
 
 (defn process
   [{db :db} [_ data flux fix morph active-editor]]
-  (let [active-editor-in-flux? (re-find (re-pattern (str "\\|(\\s|\\n)*" (name active-editor) "(\\s|\\n)*\\|")) (or flux ""))
-        message (when-not active-editor-in-flux?
+  (let [active-editor-in-flux? (when (and active-editor flux)
+                                 (re-find (re-pattern (str "\\|(\\s|\\n)*" (name active-editor) "(\\s|\\n)*\\|")) flux))
+        message (when (and active-editor (not active-editor-in-flux?))
                   (str "Flux does not use selected " (name active-editor) "."))]
     {:fetch {:method                 :post
              :url                    "process"
