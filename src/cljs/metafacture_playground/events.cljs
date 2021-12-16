@@ -156,9 +156,7 @@
 
 (defn load-sample
   [{db :db} [_ sample]]
-  (let [active-editor (when (:active-editor sample)
-                        (-> sample :active-editor keyword))]
-    {:db db
+    {:db (assoc db :result nil)
      :dispatch-n (conj
                   (mapv
                    (fn [editor]
