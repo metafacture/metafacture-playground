@@ -237,8 +237,8 @@
 
 (defn share-links []
   [:> form
-   [share-link :api-call "Result call"]
-   [share-link :workflow "Workflow"]])
+   [share-link :workflow "Workflow"]
+   [share-link :api-call "Result call"]])
 
 (defn share-button []
   (let [uri (-> js/window .-location .-href uri (assoc :query nil))
@@ -261,7 +261,14 @@
    [examples-dropdown]
    [simple-button {:content "Clear" :dispatch-fn [::events/clear-all] :icon-name "erase" :style {:margin-left "0.3em"}}]
    [process-button]
-   [share-button]])
+   [share-button]
+   [simple-button {:content "Export Workflow"
+                   :dispatch-fn [::events/export-workflow
+                                 @(re-frame/subscribe [::subs/field-value :data])
+                                 @(re-frame/subscribe [::subs/field-value :flux])
+                                 @(re-frame/subscribe [::subs/field-value :fix])
+                                 @(re-frame/subscribe [::subs/field-value :morph])]
+                   :icon-name "download"}]])
 
 ;;; Input fields
 
