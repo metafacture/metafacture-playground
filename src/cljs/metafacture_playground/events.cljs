@@ -236,8 +236,8 @@
 (defn- get-used-params [flux fix morph data]
   (if flux
     (let [flux (-> flux
-                   (clj-str/replace "\n|" "|")
-                   (clj-str/replace "\\s?\\|\\s?" "|"))
+                   (clj-str/replace #"\n\|" "|")
+                   (clj-str/replace #"\s*\|\s*" "|"))
           fix-in-flux? (re-find #"\|fix\|" flux)
           morph-in-flux? (re-find #"\|morph\|" flux)
           data-in-flux? (re-find #"PG_DATA" flux)]
