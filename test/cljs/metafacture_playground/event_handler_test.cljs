@@ -15,16 +15,8 @@
   (->> (repeat length \a)
        (apply str)))
 
-(def sample-data (-> (rc/inline "examples/PG-DATA_formeta_to_JSON_(fix)")
+(def sample-data (-> (rc/inline "examples/Local_formeta_to_XML_(fix)")
                      utils/parse-url))
-
-(def sample-fields (reduce
-                    (fn [result [k v]]
-                      (assoc result k {:content v
-                                       :collapsed? false}))
-                    {:switch {:active :fix
-                              :collapsed? false}}
-                    sample-data))
 
 ; Initilized db = empty db
 (def empty-db
