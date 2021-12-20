@@ -148,7 +148,7 @@
    [:> image {:alt "Metafacture Ant"
               :src "images/metafacture-logo.png"}]
    "Metafacture Playground"
-   [:> label {:color "red" :basic true :content "BETA"}]])
+   [:> label {:color color :content "beta"}]])
 
 ;;; Message Panel
 
