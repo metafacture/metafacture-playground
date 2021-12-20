@@ -147,7 +147,8 @@
   [:> header  {:as "h1"}
    [:> image {:alt "Metafacture Ant"
               :src "images/metafacture-logo.png"}]
-   "Metafacture Playground"])
+   "Metafacture Playground"
+   [:> label {:color color :content "beta"}]])
 
 ;;; Message Panel
 
