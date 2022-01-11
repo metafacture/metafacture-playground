@@ -37,9 +37,9 @@
     (process-request data flux fix morph uri))
   (GET "/examples" request
     (try
-      (let [files (-> (io/file "resources/examples/")
-                      file-seq
-                      rest)
+      (let [files (->> (io/file "resources/examples/")
+                      .listFiles
+                      (filter #(.isFile %)))
             files-content (reduce
                            (fn [result file]
                              (assoc result (.getName file) (slurp file)))
