@@ -80,13 +80,16 @@
 (deftest load-sample-test
   (testing "Test loading sample"
     (rf-test/run-test-sync
-     (re-frame/dispatch [::events/load-sample sample-data])
-     (and (= (is @(re-frame/subscribe [::subs/field-value :data])
+     (re-frame/dispatch [::events/load-sample "sample data" sample-data])
+     (and (is (= @(re-frame/subscribe [::subs/field-value :data])
                  (:data sample-data)))
-          (= (is @(re-frame/subscribe [::subs/field-value :flux])
+          (is (= @(re-frame/subscribe [::subs/field-value :flux])
                  (:flux sample-data)))
-          (= (is @(re-frame/subscribe [::subs/field-value :fix])
-                 (:fix sample-data)))))))
+          (is (= @(re-frame/subscribe [::subs/field-value :fix])
+                 (:fix sample-data)))
+          (is (not @(re-frame/subscribe [::subs/dropdown-open?])))
+          (is (= @(re-frame/subscribe [::subs/dropdown-active-item])
+                 "sample data"))))))
 
 
 (deftest clear-all-test

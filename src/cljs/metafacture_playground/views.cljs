@@ -45,8 +45,6 @@
 (def menu (component "Menu"))
 (def menu-item (component "Menu" "Item"))
 (def dropdown (component "Dropdown"))
-(def dropdown-menu (component "Dropdown" "Menu"))
-(def dropdown-item (component "Dropdown" "Item"))
 
 ;;; Using monaco editor react component
 
@@ -184,21 +182,28 @@
 
 (defn examples-dropdown []
   [:> button-group {:color color
-                     :basic true}
-  [:> dropdown
-   {:className "icon"
-    :button true
-    :icon "code"
-    :labeled true
-    :text "Load example"}
-   [:> dropdown-menu
-    (for [[k {:keys [display-name value]}] @(re-frame/subscribe [::subs/examples])]
-      ^{:key k}
-      [:> dropdown-item
-       {:key k
-        :text display-name
-        :value display-name
-        :on-click #(re-frame/dispatch [::events/load-sample value])}])]]])
+                    :basic true}
+   (let [dropdown-value (re-frame/subscribe [::subs/dropdown-active-item])
+         dropdown-open? (re-frame/subscribe [::subs/dropdown-open?])]
+     [:> dropdown
+      {:className "icon"
+       :button true
+       :labeled true
+       :search true
+       :placeholder "Load example"
+       :value (or @dropdown-value "")
+       :open @dropdown-open?
+       :options (mapv
+                 (fn [[k {:keys [display-name value]}]]
+                   {:key k
+                    :text display-name
+                    :value display-name
+                    :active (= display-name @dropdown-value)
+                    :selected (= display-name @dropdown-value)
+                    :onClick #(re-frame/dispatch [::events/load-sample display-name value])})
+                 @(re-frame/subscribe [::subs/examples]))
+       :on-blur #(re-frame/dispatch [::events/open-dropdown false])
+       :on-click #(re-frame/dispatch [::events/open-dropdown (not @dropdown-open?)])}])])
 
 (defn process-button []
   (let [data (re-frame/subscribe [::subs/field-value :data])

@@ -157,15 +157,28 @@
  ::edit-input-value
  edit-value)
 
+(defn open-dropdown
+  [{db :db} [_ status]]
+  {:db (assoc-in db [:ui :dropdown :open?] status)})
+
+(re-frame/reg-event-fx
+ ::open-dropdown
+ open-dropdown)
+
 (defn load-sample
-  [{db :db} [_ sample]]
-    {:db (assoc db :result nil)
+  [{db :db} [_ dropdown-value sample]]
+    {:db (-> db
+             (assoc :result nil)
+             (assoc-in [:ui :dropdown :active-item] dropdown-value))
      :dispatch-n (conj
                   (mapv
                    (fn [editor]
                      [::edit-input-value editor (get sample editor "")])
                    [:data :flux :fix :morph])
-                  [::switch-editor (:active-editor sample)])})
+                  [::switch-editor (:active-editor sample)])
+     :storage/set {:session? true
+                   :name (->storage-key [:ui :dropdown :active-item])
+                   :value dropdown-value}})
 
 (re-frame/reg-event-fx
   ::load-sample

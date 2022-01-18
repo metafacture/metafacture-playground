@@ -21,6 +21,16 @@
  (fn [db _]
    (get-in db [:message :show-details?])))
 
+(re-frame/reg-sub
+ ::dropdown-active-item
+ (fn [db _]
+   (get-in db [:ui :dropdown :active-item])))
+
+(re-frame/reg-sub
+ ::dropdown-open?
+ (fn [db _]
+   (get-in db [:ui :dropdown :open?])))
+
 (defn- display-name [str]
   (clj-str/replace str "_" " "))
 
