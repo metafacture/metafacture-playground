@@ -45,7 +45,7 @@
       click-and-remove-link))
 
 (re-frame/reg-fx
- ::export-workflow
+ ::export-files
  (fn [exports]
    (doseq [[export-data file-name] exports]
        (download-data export-data file-name "text/plain"))))
