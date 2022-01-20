@@ -9,6 +9,7 @@
                  [thheller/shadow-cljs "2.11.7"]
                  [reagent "0.10.0"]
                  [re-frame "1.1.2"]
+                 [day8.re-frame/test "0.1.5"]
                  [yogthos/config "1.1.7"]
                  [ring "1.9.0"]
                  [compojure "1.6.2"]
@@ -49,7 +50,7 @@
                  [org.metafacture/metamorph-test "5.3.1"]
                  [org.metafacture/metafix "0.2.0-SNAPSHOT" :exclusions [[org.eclipse.xtext/xtext-dev-bom]]]]
 
-  :plugins [[lein-shadow "0.3.1"]
+  :plugins [[lein-shadow "0.4.0"]
 
             [lein-shell "0.5.0"]]
 

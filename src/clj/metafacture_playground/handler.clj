@@ -8,7 +8,8 @@
    [ring.middleware.params :refer [wrap-params]]
    [ring.util.request :refer [body-string]]
    [clojure.data.json :as json]
-   [clojure.stacktrace :as st]))
+   [clojure.stacktrace :as st]
+   [clojure.java.io :as io]))
 
 (defn wrap-body-string [handler]
   (fn [request]
@@ -34,6 +35,19 @@
   (GET "/" [] (resource-response "index.html" {:root "public"}))
   (GET "/process" [data flux fix morph uri]
     (process-request data flux fix morph uri))
+  (GET "/examples" request
+    (try
+      (let [files (->> (io/file "resources/examples/")
+                      .listFiles
+                      (filter #(.isFile %)))
+            files-content (reduce
+                           (fn [result file]
+                             (assoc result (.getName file) (slurp file)))
+                           {}
+                           files)]
+        (response (json/write-str files-content)))
+      (catch Exception e
+        (exception-handler e (:uri request)))))
   (POST "/process" request
     (let [body (-> request :body (json/read-str :key-fn keyword))
           {:keys [data flux fix morph]} body]

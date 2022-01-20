@@ -15,11 +15,10 @@ jobs:
         repository: metafacture/metafacture-fix
         ref: master
     - name: Install metafacture-fix
-      run: |
-        cd metafacture-fix
-        ./gradlew install
+      working-directory: metafacture-fix
+      run: ./gradlew install
     - name: Set up Node.js
-      uses: actions/setup-node@v1
+      uses: actions/setup-node@v2
     - name: Install karma and headless chrome
       run: |
         npm install -g karma-cli

@@ -2,9 +2,10 @@
   (:require
    [re-frame.core :as re-frame]
    [day8.re-frame.fetch-fx]
-   [lambdaisland.uri :refer [uri join assoc-query* query-string->map query-encode]]
+   [lambdaisland.uri :refer [uri join assoc-query* query-encode]]
    [metafacture-playground.db :as db]
    [metafacture-playground.effects :as effects]
+   [metafacture-playground.utils :as utils]
    [com.degel.re-frame.storage]
    [clojure.string :as clj-str]
    [cognitect.transit :as transit]))
@@ -32,7 +33,10 @@
                 (mapv
                  (fn [sub-sub-key]
                    {:name (->storage-key [k sub-key sub-sub-key])
-                    :value (get-in db [k sub-key sub-sub-key])})
+                    :value (let [value (get-in db [k sub-key sub-sub-key])]
+                             (if (keyword? value)
+                               (name value)
+                               value))})
                  (-> (get rest-db sub-key) keys)))
               (keys rest-db))))
    []
@@ -153,23 +157,28 @@
  ::edit-input-value
  edit-value)
 
-(defn- add-sample [db sample]
-  (reduce
-   (fn [db [k sample-v]]
-     (assoc-in db [:input-fields k] sample-v))
-   db
-   sample))
+(defn open-dropdown
+  [{db :db} [_ status]]
+  {:db (assoc-in db [:ui :dropdown :open?] status)})
+
+(re-frame/reg-event-fx
+ ::open-dropdown
+ open-dropdown)
 
 (defn load-sample
-  [{db :db} [_ sample]]
-  {:db (add-sample db sample)
-   :storage/set {:session? true
-                 :pairs (-> {:input-fields (update-in sample [:switch :active] name)}
-                            generate-pairs)}
-   :dispatch-n (mapv
-                (fn [editor]
-                  [::update-width editor (get-in sample [editor :content])])
-                [:data :flux :fix])})
+  [{db :db} [_ dropdown-value sample]]
+    {:db (-> db
+             (assoc :result nil)
+             (assoc-in [:ui :dropdown :active-item] dropdown-value))
+     :dispatch-n (conj
+                  (mapv
+                   (fn [editor]
+                     [::edit-input-value editor (get sample editor "")])
+                   [:data :flux :fix :morph])
+                  [::switch-editor (:active-editor sample)])
+     :storage/set {:session? true
+                   :name (->storage-key [:ui :dropdown :active-item])
+                   :value dropdown-value}})
 
 (re-frame/reg-event-fx
   ::load-sample
@@ -212,11 +221,13 @@
 
 (defn switch-editor
   [{db :db} [_ editor]]
-  {:db (assoc-in db [:input-fields :switch :active] editor)
-   :dispatch [::update-width editor (get-in db [:input-fields editor :content])]
-   :storage/set {:session? true
-                 :name (->storage-key [:input-fields :switch :active])
-                 :value (name editor)}})
+  (merge
+   {:db (assoc-in db [:input-fields :switch :active] editor)
+    :storage/set {:session? true
+                  :name (->storage-key [:input-fields :switch :active])
+                  :value (when editor (name editor))}}
+   (when editor
+     {:dispatch [::update-width editor (get-in db [:input-fields editor :content])]})))
 
 (re-frame/reg-event-fx
  ::switch-editor
@@ -235,16 +246,18 @@
 
 ;;; Share links
 
-(defn- get-used-params [flux fix morph]
+(defn- get-used-params [flux fix morph data]
   (if flux
     (let [flux (-> flux
-                   (clj-str/replace "\n|" "|")
-                   (clj-str/replace "\\s?\\|\\s?" "|"))
+                   (clj-str/replace #"\n\|" "|")
+                   (clj-str/replace #"\s*\|\s*" "|"))
           fix-in-flux? (re-find #"\|fix\|" flux)
-          morph-in-flux? (re-find #"\|morph\|" flux)]
-      (merge
-       (when fix-in-flux? {:fix fix})
-       (when morph-in-flux? {:morph morph})))
+          morph-in-flux? (re-find #"\|morph\|" flux)
+          data-in-flux? (re-find #"PG_DATA" flux)]
+      (cond-> {}
+        fix-in-flux? (merge {:fix fix})
+        morph-in-flux? (merge {:morph morph})
+        data-in-flux? (merge {:data data})))
     {}))
 
 (defn- count-query-string [params]
@@ -267,23 +280,26 @@
       true)))
 
 (defn generate-link [url path query-params]
-  (-> (uri url)
-      (join path)
-      (assoc-query* query-params)
-      str))
+  (let [inputs (-> query-params
+                   (dissoc :active-editor)
+                   vals)]
+    (when-not (every? clj-str/blank? inputs)
+      (-> (uri url)
+          (join path)
+          (assoc-query* query-params)
+          str))))
 
 (defn generate-links
   [{db :db} [_ url data flux fix morph active-editor]]
   (let [max-query-string 1536
         max-url-string 2048
-        api-call-params (merge (when data {:data data})
-                               (when flux {:flux flux})
-                               (get-used-params flux fix morph))
-        workflow-params (merge (when data {:data data})
-                               (when flux {:flux flux})
-                               (when fix {:fix fix})
-                               (when morph {:morph morph})
-                               {:active-editor (name active-editor)})
+        api-call-params (when flux
+                          (merge
+                           {:flux flux}
+                           (get-used-params flux fix morph data)))
+        workflow-params (merge api-call-params
+                               (when active-editor
+                                 {:active-editor (name active-editor)}))
         api-call-query-string-too-long? (query-string-too-long? api-call-params max-query-string)
         workflow-query-string-too-long? (query-string-too-long? workflow-params max-query-string)
         api-call-link (when (and api-call-params (not api-call-query-string-too-long?))
@@ -303,6 +319,31 @@
 (re-frame/reg-event-fx
  ::generate-links
  generate-links)
+
+;;; Export workflow
+
+(defn- prepare-flux [flux data-filename fix-filename morph-filename]
+  (-> flux
+      (clj-str/replace #"PG_DATA\s*\|" (str "FLUX_DIR + \"" data-filename "\"\n|open-file\n|"))
+      (clj-str/replace #"\|\s*fix\s*\|" (str "|fix( FLUX_DIR + \"" fix-filename "\" )\n|"))
+      (clj-str/replace #"\|\s*morph\s*\|" (str "|morph( FLUX_DIR + \"" morph-filename "\" ) \n|"))))
+
+(defn export-workflow
+  [{:keys [db]} [_ data flux fix morph]]
+  (merge {:db (if (every? clj-str/blank? [data flux fix morph])
+                (update db :message merge {:content "Nothing to export. All fields are empty."
+                                           :type :warning})
+                db)}
+         (cond-> {}
+           (not (clj-str/blank? data)) (update ::effects/export-workflow conj [data "playground.data"])
+           (not (clj-str/blank? flux)) (#(let [flux (prepare-flux flux "playground.data" "playground.fix" "playground.morph")]
+                                         (update % ::effects/export-workflow conj [flux "playground.flux"])))
+           (not (clj-str/blank? fix)) (update ::effects/export-workflow conj [fix "playground.fix"])
+           (not (clj-str/blank? morph)) (update ::effects/export-workflow conj [morph "playground.morph"]))))
+
+(re-frame/reg-event-fx
+ ::export-workflow
+ export-workflow)
 
 ;;; Processing
 
@@ -348,8 +389,9 @@
 
 (defn process
   [{db :db} [_ data flux fix morph active-editor]]
-  (let [active-editor-in-flux? (re-find (re-pattern (str "\\|(\\s|\\n)*" (name active-editor) "(\\s|\\n)*\\|")) (or flux ""))
-        message (when-not active-editor-in-flux?
+  (let [active-editor-in-flux? (when (and active-editor flux)
+                                 (re-find (re-pattern (str "\\|(\\s|\\n)*" (name active-editor) "(\\s|\\n)*\\|")) flux))
+        message (when (and active-editor (not active-editor-in-flux?))
                   (str "Flux does not use selected " (name active-editor) "."))]
     {:fetch {:method                 :post
              :url                    "process"
@@ -373,6 +415,29 @@
 
 ;;; Initialize-db
 
+(defn examples-response
+  [{db :db} [_ {:keys [body]}]]
+  (let [body (transit/read (transit/reader :json) body)]
+    {:db (assoc db :examples body)}))
+
+(re-frame/reg-event-fx
+ ::examples-response
+ examples-response)
+
+(defn load-samples
+  [{db :db} _]
+  {:db db
+   :fetch {:method                 :get
+           :url                    "examples"
+           :timeout                10000
+           :response-content-types {#"application/.*json" :json}
+           :on-success             [::examples-response]
+           :on-failure             [::bad-response]}})
+
+(re-frame/reg-event-fx
+ ::load-samples
+ load-samples)
+
 (defn deep-merge [a & maps]
   (if (map? a)
     (apply merge-with deep-merge a maps)
@@ -389,19 +454,21 @@
 (defn initialize-db
   [{[_ href window-height] :event
     web-storage :storage/all}]
-  (let [query-params (-> href uri :query query-string->map)]
+  (let [query-params (utils/parse-url href)]
     (if (empty? query-params)
       {:db (deep-merge
             db/default-db
             (restore-db web-storage)
-            {:ui {:height window-height}})}
+            {:ui {:height window-height}})
+       :dispatch [::load-samples]}
       {:db (-> db/default-db
-               (assoc-query-params query-params)
                (assoc-in [:ui :height] window-height))
-       :dispatch-n (mapv
-                    (fn [editor]
-                      [::update-width editor (get query-params editor)])
-                    [:data :flux (-> query-params :active-editor keyword)])
+       :dispatch-n (conj
+                     (mapv
+                      (fn [editor]
+                        [::edit-input-value editor (get query-params editor "")])
+                      [:data :flux :fix :morph])
+                    [::load-samples])
        :storage/set {:session? true
                      :pairs (-> (assoc-query-params {} query-params)
                                 generate-pairs)}

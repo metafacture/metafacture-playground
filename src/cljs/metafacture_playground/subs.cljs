@@ -1,7 +1,8 @@
 (ns metafacture-playground.subs
   (:require
    [re-frame.core :as re-frame]
-   [clojure.string :as clj-str]))
+   [clojure.string :as clj-str]
+   [metafacture-playground.utils :as utils]))
 
 (defn- expand-indentation [details]
   (when details
@@ -19,6 +20,28 @@
  ::error-details-visible?
  (fn [db _]
    (get-in db [:message :show-details?])))
+
+(re-frame/reg-sub
+ ::dropdown-active-item
+ (fn [db _]
+   (get-in db [:ui :dropdown :active-item])))
+
+(re-frame/reg-sub
+ ::dropdown-open?
+ (fn [db _]
+   (get-in db [:ui :dropdown :open?])))
+
+(defn- display-name [str]
+  (clj-str/replace str "_" " "))
+
+(re-frame/reg-sub
+ ::examples
+ (fn [db _]
+   (into (sorted-map)
+         (map (fn [[k v]]
+                {k {:display-name (display-name k)
+                    :value (utils/parse-url v)}}))
+         (get db :examples))))
 
 (re-frame/reg-sub
  ::field-value

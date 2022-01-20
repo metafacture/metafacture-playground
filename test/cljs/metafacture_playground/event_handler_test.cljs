@@ -1,8 +1,13 @@
 (ns metafacture-playground.event-handler-test
   (:require [cljs.test :refer-macros [deftest testing is]]
+            [re-frame.core :as re-frame]
+            [day8.re-frame.test :as rf-test]
             [metafacture-playground.db :as db]
             [metafacture-playground.events :as events]
-            [lambdaisland.uri :refer [uri query-string->map]]))
+            [metafacture-playground.subs :as subs]
+            [metafacture-playground.utils :as utils]
+            [lambdaisland.uri :refer [uri query-string->map]]
+            [shadow.resource :as rc]))
 
 ; Utils
 
@@ -10,42 +15,40 @@
   (->> (repeat length \a)
        (apply str)))
 
+(def sample-data (-> (rc/inline "examples/Local_formeta_to_XML_(fix)")
+                     utils/parse-url))
+
 ; Initilized db = empty db
 (def empty-db
-  (events/initialize-db {:db {}
-                         :event [::events/initialize-db]}))
-
-; Href with query params (data, flux and fix, without processing)
-(def href
-  "http://test.metafacture.org/playground/?data=1%7Ba%3A+Faust%2C+b+%7Bn%3A+Goethe%2C+v%3A+JW%7D%2C+c%3A+Weimar%7D%0A2%7Ba%3A+R%C3%A4uber%2C+b+%7Bn%3A+Schiller%2C+v%3A+F%7D%2C+c%3A+Weimar%7D&flux=as-lines%0A%7Cdecode-formeta%0A%7Cfix%0A%7Cencode-xml%28rootTag%3D%22collection%22%29&fix=move_field%28_id%2C+id%29%0Amove_field%28a%2C+title%29%0Apaste%28author%2C+b.v%2C+b.n%2C+%27~aus%27%2C+c%29%0Aretain%28id%2C+title%2C+author%29")
+  (-> (events/initialize-db {:db {}
+                             :event [::events/initialize-db]})
+      (dissoc :dispatch :dispatch-n :storage/set :metafacture-playground.effects/unset-url-query-params)))
 
 ; db with one input-field not empty
 (def db1
-  (events/edit-value empty-db [:edit-value :data (:data db/sample-data)]))
+  (events/edit-value empty-db [:edit-value :data (:data sample-data)]))
 
 ; db with no empty input-fields
 (def db2
   (-> empty-db
-      (events/edit-value [:edit-value :data (:data db/sample-data)])
-      (events/edit-value [:edit-value :flux (:flux-with-fix db/sample-data)])
-      (events/edit-value [:edit-value :fix  (:ix db/sample-data)])))
-
-(def db-with-sample
-  {:db {:input-fields db/sample-fields}})
+      (events/edit-value [:edit-value :data (:data sample-data)])
+      (events/edit-value [:edit-value :flux (:flux sample-data)])
+      (events/edit-value [:edit-value :fix  (:fix sample-data)])))
 
 (deftest initialize-db
   (testing "Test initializing of db without values"
     (is (= empty-db {:db db/default-db})))
 
   (testing "Test initializing of db with values"
-    (let [initialized-db (:db (events/initialize-db {:event [::events/initialize-db href]}))]
-      (and (is (get-in initialized-db [:input-fields :data :content]))
-           (is (get-in initialized-db [:input-fields :flux :content]))
-           (is (get-in initialized-db [:input-fields :fix :content]))
-           (is (not (get-in initialized-db [:result :content])))
-           (is (not (get-in initialized-db [:links :api-call])))
-           (is (not (get-in initialized-db [:links :workflow])))
-           (is (not (get-in initialized-db [:links :processed-workflow])))))))
+    (rf-test/run-test-sync
+     (let [href "/playground/?data=1%7Ba%3A+Faust%2C+b+%7Bn%3A+Goethe%2C+v%3A+JW%7D%2C+c%3A+Weimar%7D%0A2%7Ba%3A+R%C3%A4uber%2C+b+%7Bn%3A+Schiller%2C+v%3A+F%7D%2C+c%3A+Weimar%7D&flux=as-lines%0A%7Cdecode-formeta%0A%7Cfix%0A%7Cencode-xml%28rootTag%3D%22collection%22%29&fix=move_field%28_id%2C+id%29%0Amove_field%28a%2C+title%29%0Apaste%28author%2C+b.v%2C+b.n%2C+%27~aus%27%2C+c%29%0Aretain%28id%2C+title%2C+author%29"]
+       (re-frame/dispatch [::events/initialize-db href])
+       (and (is @(re-frame/subscribe [::subs/field-value :data]))
+            (is @(re-frame/subscribe [::subs/field-value :flux]))
+            (is @(re-frame/subscribe [::subs/field-value :fix]))
+            (is (not @(re-frame/subscribe [::subs/process-result])))
+            (is (not @(re-frame/subscribe [::subs/link :api-call])))
+            (is (not @(re-frame/subscribe [::subs/link :workflow]))))))))
 
 (deftest edit-value-test
   (testing "Test editing values."
@@ -75,24 +78,18 @@
          (is (false? (get-in db' [:db :input-fields :morph :disabled?]))))))
 
 (deftest load-sample-test
-  (testing "Test loading sample with all fields empty."
-    (let [db' (-> empty-db
-                  (events/load-sample [:load-sample db/sample-fields])
-                  (update :db dissoc :result :links))]
-      (is (:db db') (:db db-with-sample))))
-
-  (testing "Test loading sample with part of fields not empty."
-    (let [db' (-> db1
-                  (events/load-sample [:load-sample db/sample-fields])
-                  (update :db dissoc :result :links :storage/set :message :ui)
-                  (dissoc :storage/set))]
-      (is (= (:db db') (:db db-with-sample)))))
-
-  (testing "Test loading sample with all fields not empty."
-    (let [db' (-> db2
-                  (events/load-sample [:load-sample db/sample-fields])
-                  (update :db dissoc :result :links :storage/set :message :ui))]
-      (is (= (:db db') (:db db-with-sample))))))
+  (testing "Test loading sample"
+    (rf-test/run-test-sync
+     (re-frame/dispatch [::events/load-sample "sample data" sample-data])
+     (and (is (= @(re-frame/subscribe [::subs/field-value :data])
+                 (:data sample-data)))
+          (is (= @(re-frame/subscribe [::subs/field-value :flux])
+                 (:flux sample-data)))
+          (is (= @(re-frame/subscribe [::subs/field-value :fix])
+                 (:fix sample-data)))
+          (is (not @(re-frame/subscribe [::subs/dropdown-open?])))
+          (is (= @(re-frame/subscribe [::subs/dropdown-active-item])
+                 "sample data"))))))
 
 
 (deftest clear-all-test
@@ -112,7 +109,7 @@
 (deftest process-button-test
   (testing "Test status after processing response"
     (let [db' (-> empty-db
-                  (events/load-sample [:load-sample db/sample-fields]))
+                  (events/load-sample [:load-sample sample-data]))
           {:keys [fix flux data morph]} (get-in db' [:db :input-fields])
           db'' (events/process db' [:process (:content data) (:content flux) (:content fix) (:content morph) :fix])]
       (is (get-in db'' [:db :result :loading?])))))
@@ -156,7 +153,9 @@
 (deftest generate-links-test
   (testing "Test generating share links"
     (let [db' (-> empty-db
-                  (events/load-sample [:load-sample db/sample-fields]))
+                  (events/edit-value [:edit-value :data (:data sample-data)])
+                  (events/edit-value [:edit-value :fix (:fix sample-data)])
+                  (events/edit-value [:edit-value :flux (:flux sample-data)]))
           data (get-in db' [:db :input-fields :data :content])
           fix (get-in db' [:db :input-fields :fix :content])
           flux (get-in db' [:db :input-fields :flux :content])
@@ -177,25 +176,19 @@
 
   (testing "Test not generating links if parameters are too long"
     (let [db' (-> empty-db
-                  (events/edit-value [:edit-value :data (generate-random-string 1537)]))
-          data (get-in db' [:db :input-fields :data :content])
+                  (events/edit-value [:edit-value :flux (generate-random-string 1537)]))
+          flux (get-in db' [:db :input-fields :flux :content])
           db'' (-> db'
-                   (events/generate-links [:generate-links "http://test.metafacture.org/playground/" data nil nil nil :fix])
+                   (events/generate-links [:generate-links "http://test.metafacture.org/playground/" nil flux nil nil :fix])
                    :db)]
       (and (is (= (get-in db'' [:message :content]) "Share links for large workflows are not supported yet"))
            (is (nil? (get-in db'' [:links :api-call])))
            (is (nil? (get-in db'' [:links :workflow]))))))
 
   (testing "Test not generating links if url is too long"
-    (let [db' (-> empty-db
-                  (events/load-sample [:load-sample db/sample-fields]))
-          data (get-in db' [:db :input-fields :data :content])
-          fix (get-in db' [:db :input-fields :fix :content])
-          morph (get-in db' [:db :input-fields :morph :content])
-          flux (get-in db' [:db :input-fields :flux :content])
-          extra-long-test-url (str "http://test.metafacture.org/playground/" (generate-random-string 1671) "/")
-          db'' (-> db'
-                   (events/generate-links [:generate-links extra-long-test-url data flux fix morph :fix])
+    (let [extra-long-test-url (str "http://test.metafacture.org/playground/" (generate-random-string 1671) "/")
+          db'' (-> empty-db
+                   (events/generate-links [:generate-links extra-long-test-url (:data sample-data) (:flux sample-data) (:fix sample-data) "" :fix])
                    :db)]
       (and (is (= (get-in db'' [:message :content]) "Share links for large workflows are not supported yet"))
            (is (nil? (get-in db'' [:links :api-call])))
