@@ -29,7 +29,7 @@
                        (response)
                        (header "Access-Control-Allow-Origin" "*"))]
       (if-let [file-name (->> flux
-                              (re-find #"\|write\(.*\"(.*)\"\)")
+                              (re-find #"\|\s*write\(.*\"(.*)\"\)")
                               second)]
           (header response "Content-Disposition" (str "attachment; filename=\"" file-name "\""))
         response))
