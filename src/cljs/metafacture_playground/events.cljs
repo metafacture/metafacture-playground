@@ -471,12 +471,13 @@
        :dispatch [::load-samples]}
       {:db (-> db/default-db
                (assoc-in [:ui :height] window-height))
-       :dispatch-n (conj
-                     (mapv
-                      (fn [editor]
-                        [::edit-input-value editor (get query-params editor "")])
-                      [:data :flux :fix :morph])
-                    [::load-samples])
+       :dispatch-n (cond->
+                    (mapv
+                     (fn [editor]
+                       [::edit-input-value editor (get query-params editor "")])
+                     [:data :flux :fix :morph])
+                     true (conj [::load-samples])
+                     (get query-params :active-editor) (conj [::switch-editor (-> query-params :active-editor keyword)]))
        :storage/set {:session? true
                      :pairs (-> (assoc-query-params {} query-params)
                                 generate-pairs)}
