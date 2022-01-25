@@ -335,11 +335,11 @@
                                            :type :warning})
                 db)}
          (cond-> {}
-           (not (clj-str/blank? data)) (update ::effects/export-workflow conj [data "playground.data"])
+           (not (clj-str/blank? data)) (update ::effects/export-files conj [data "playground.data"])
            (not (clj-str/blank? flux)) (#(let [flux (prepare-flux flux "playground.data" "playground.fix" "playground.morph")]
-                                         (update % ::effects/export-workflow conj [flux "playground.flux"])))
-           (not (clj-str/blank? fix)) (update ::effects/export-workflow conj [fix "playground.fix"])
-           (not (clj-str/blank? morph)) (update ::effects/export-workflow conj [morph "playground.morph"]))))
+                                         (update % ::effects/export-files conj [flux "playground.flux"])))
+           (not (clj-str/blank? fix)) (update ::effects/export-files conj [fix "playground.fix"])
+           (not (clj-str/blank? morph)) (update ::effects/export-files conj [morph "playground.morph"]))))
 
 (re-frame/reg-event-fx
  ::export-workflow
@@ -348,10 +348,18 @@
 ;;; Processing
 
 (defn process-response
-  [{db :db} [_ response]]
-  {:db (-> db
-           (assoc-in [:result :loading?] false)
-           (assoc-in [:result :content] (:body response)))})
+  [{db :db} [_ {:keys [headers body]}]]
+  (if-let [content-disposition (:content-disposition headers)]
+    (let [file-name (->> content-disposition
+                         (re-find #"filename=\"(.*)\"")
+                         second)]
+      {:db (-> db
+               (assoc-in [:result :loading?] false)
+               (assoc-in [:result :content] nil))
+       ::effects/export-files [[body file-name]]})
+    {:db (-> db
+             (assoc-in [:result :loading?] false)
+             (assoc-in [:result :content] body))}))
 
 (re-frame/reg-event-fx
  ::process-response
@@ -463,12 +471,13 @@
        :dispatch [::load-samples]}
       {:db (-> db/default-db
                (assoc-in [:ui :height] window-height))
-       :dispatch-n (conj
-                     (mapv
-                      (fn [editor]
-                        [::edit-input-value editor (get query-params editor "")])
-                      [:data :flux :fix :morph])
-                    [::load-samples])
+       :dispatch-n (cond->
+                    (mapv
+                     (fn [editor]
+                       [::edit-input-value editor (get query-params editor "")])
+                     [:data :flux :fix :morph])
+                     true (conj [::load-samples])
+                     (get query-params :active-editor) (conj [::switch-editor (-> query-params :active-editor keyword)]))
        :storage/set {:session? true
                      :pairs (-> (assoc-query-params {} query-params)
                                 generate-pairs)}

@@ -25,9 +25,14 @@
 
 (defn process-request [data flux fix morph uri]
   (try
-    (-> (process data flux fix morph)
-        (response)
-        (header "Access-Control-Allow-Origin" "*"))
+    (let [response (-> (process data flux fix morph)
+                       (response)
+                       (header "Access-Control-Allow-Origin" "*"))]
+      (if-let [file-name (->> flux
+                              (re-find #"\|\s*write\(.*\"(.*)\"\)")
+                              second)]
+          (header response "Content-Disposition" (str "attachment; filename=\"" file-name "\""))
+        response))
     (catch Exception e
       (exception-handler e uri))))
 
