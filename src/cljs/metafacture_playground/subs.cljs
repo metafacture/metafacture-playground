@@ -109,3 +109,8 @@
  ::result-loading?
  (fn [db _]
    (get-in db [:result :loading?])))
+
+(re-frame/reg-sub
+ ::backend-versions
+ (fn [db _]
+   (get db :versions)))

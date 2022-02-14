@@ -22,7 +22,7 @@
 (def empty-db
   (-> (events/initialize-db {:db {}
                              :event [::events/initialize-db]})
-      (dissoc :dispatch :dispatch-n :storage/set :metafacture-playground.effects/unset-url-query-params)))
+      (dissoc :dispatch :fx :storage/set :metafacture-playground.effects/unset-url-query-params)))
 
 ; db with one input-field not empty
 (def db1

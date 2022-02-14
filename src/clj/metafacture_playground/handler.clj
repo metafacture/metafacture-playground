@@ -36,21 +36,47 @@
     (catch Exception e
       (exception-handler e uri))))
 
+(defn- files-content [dir]
+  (let [files (->> (io/file dir)
+                      .listFiles
+                      (filter #(.isFile %)))]
+    (reduce
+     (fn [result file]
+       (assoc result (.getName file) (slurp file)))
+     {}
+     files)))
+
+(defn- versions-from-files []
+  (let  [dependencies (-> "project.clj" slurp read-string (nth 6))]
+    (reduce
+     (fn [result [file-name file-content]]
+       (if-let [matching-label (-> (filter #(= (-> % first name)
+                                               file-name)
+                                           dependencies)
+                                   first
+                                   second)]
+           (assoc result file-name {:version-label matching-label
+                                    :link file-content})
+         result))
+     {}
+     (files-content "resources/versions/"))))
+
 (defroutes routes
   (GET "/" [] (resource-response "index.html" {:root "public"}))
   (GET "/process" [data flux fix morph uri]
     (process-request data flux fix morph uri))
   (GET "/examples" request
     (try
-      (let [files (->> (io/file "resources/examples/")
-                      .listFiles
-                      (filter #(.isFile %)))
-            files-content (reduce
-                           (fn [result file]
-                             (assoc result (.getName file) (slurp file)))
-                           {}
-                           files)]
-        (response (json/write-str files-content)))
+      (-> (files-content "resources/examples/")
+          json/write-str
+          response)
+      (catch Exception e
+        (exception-handler e (:uri request)))))
+  (GET "/versions" request
+    (try
+      (-> (versions-from-files)
+          json/write-str
+          response)
       (catch Exception e
         (exception-handler e (:uri request)))))
   (POST "/process" request
