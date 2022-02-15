@@ -374,7 +374,7 @@
                         (case file-extension
                           ".flux" (let [flux-content (import-flux->playground-flux content files)]
                                     (cond-> (update result :dispatch-n conj [:dispatch [::edit-input-value :flux flux-content]])
-                                      (not= flux-content content) (assoc :message "The flux content has been adapted to work in the playground.")))
+                                      (not= flux-content content) (assoc :message "The flux content has been adapted to work in the playground. Additional adjustments could be necessary.")))
                           ".fix" (update result :dispatch-n concat [[:dispatch [::edit-input-value :fix content]]
                                                         [:dispatch [::switch-editor :fix]]])
                           ".morph" (update result :dispatch-n concat [[:dispatch [::edit-input-value :morph content]]
@@ -431,11 +431,11 @@
                                            :type :warning})
                 db)}
          (cond-> {}
-           (not (clj-str/blank? data)) (update ::effects/export-workflow conj [data "playground.data"])
+           (not (clj-str/blank? data)) (update ::effects/export-files conj [data "playground.data"])
            (not (clj-str/blank? flux)) (#(let [flux (playground-flux->export-flux flux "playground.data" "playground.fix" "playground.morph")]
-                                         (update % ::effects/export-workflow conj [flux "playground.flux"])))
-           (not (clj-str/blank? fix)) (update ::effects/export-workflow conj [fix "playground.fix"])
-           (not (clj-str/blank? morph)) (update ::effects/export-workflow conj [morph "playground.morph"]))))
+                                         (update % ::effects/export-files conj [flux "playground.flux"])))
+           (not (clj-str/blank? fix)) (update ::effects/export-files conj [fix "playground.fix"])
+           (not (clj-str/blank? morph)) (update ::effects/export-files conj [morph "playground.morph"]))))
 
 (re-frame/reg-event-fx
  ::export-workflow
