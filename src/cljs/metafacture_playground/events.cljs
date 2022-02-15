@@ -1,14 +1,16 @@
 (ns metafacture-playground.events
   (:require
-   [re-frame.core :as re-frame]
-   [day8.re-frame.fetch-fx]
-   [lambdaisland.uri :refer [uri join assoc-query* query-encode]]
    [metafacture-playground.db :as db]
    [metafacture-playground.effects :as effects]
    [metafacture-playground.utils :as utils]
+   [re-frame.core :as re-frame]
+   [day8.re-frame.fetch-fx]
+   [jtk-dvlp.re-frame.readfile-fx]
+   [lambdaisland.uri :refer [uri join assoc-query* query-encode]]
    [com.degel.re-frame.storage]
    [clojure.string :as clj-str]
-   [cognitect.transit :as transit]))
+   [cognitect.transit :as transit]
+   [goog.object :as g]))
 
 ;;; Utils for web storage use
 
@@ -320,9 +322,102 @@
  ::generate-links
  generate-links)
 
+;;; Import workflow
+
+(defn- find-filename [files file-extension]
+  (->> files
+       (mapv :name)
+       (keep #(-> (str "(?i).*\\." file-extension)
+                  re-pattern
+                  (re-matches %)))
+       first))
+
+(defn- ->pattern [transformation-type filename]
+  (-> (str "\\|(\\s|\\n)*"
+           transformation-type
+           "(\\s|\\n)*\\(\\s*FLUX_DIR\\s*\\+\\s*\\\""
+           filename
+           "\\\"\\s*\\)(\\n|\\s)*\\|")
+      re-pattern))
+
+(defn- replace-filename [flux files transformation-type]
+  (if-let [filename (find-filename files transformation-type)]
+    (clj-str/replace flux
+                     (->pattern transformation-type filename)
+                     (str "|" transformation-type "\n|"))
+    flux))
+
+(defn- replace-data-filename [flux files]
+  (if-let [data-filename (->> files
+                              (mapv :name)
+                              (keep #(re-matches #"(?i).*\.(?!morph)(?!fix)(?!flux).*" %))
+                              first)]
+    (let [pattern (-> (str "FLUX_DIR\\s*\\+\\s*\\\""
+                           data-filename
+                           "\\\"(\\s|\\n)*\\|\\s*open-file(\\s|\\n)*\\|")
+                      re-pattern)]
+      (clj-str/replace flux pattern "PG_DATA\n|"))
+      flux))
+
+(defn- import-flux->playground-flux [flux files]
+  (-> flux
+      (replace-filename files "fix")
+      (replace-filename files "morph")
+      (replace-data-filename files)))
+
+(defn import-editor-content
+  [{db :db} [_ files]]
+  (let [result (reduce
+                    (fn [result {:keys [name content]}]
+                      (let [file-extension (re-find #"\.[0-9a-zA-Z]+$" name)]
+                        (case file-extension
+                          ".flux" (let [flux-content (import-flux->playground-flux content files)]
+                                    (cond-> (update result :dispatch-n conj [:dispatch [::edit-input-value :flux flux-content]])
+                                      (not= flux-content content) (assoc :message "The flux content has been adapted to work in the playground. Additional adjustments could be necessary.")))
+                          ".fix" (update result :dispatch-n concat [[:dispatch [::edit-input-value :fix content]]
+                                                        [:dispatch [::switch-editor :fix]]])
+                          ".morph" (update result :dispatch-n concat [[:dispatch [::edit-input-value :morph content]]
+                                                          [:dispatch [::switch-editor :morph]]])
+                          (update result :dispatch-n conj [:dispatch [::edit-input-value :data content]]))))
+                    {:dispatch-n []}
+                    files)]
+     {:db (assoc db :message {:content (concat [(:message result)]
+                                               ["Imported workflow with files: "]
+                                               (map :name files))
+                              :type :info})
+      :fx (:dispatch-n result)}))
+
+(re-frame/reg-event-fx
+ ::import-editor-content
+ import-editor-content)
+
+(defn read-file-list-error
+  [{db :db} [_ results]]
+  {:db (assoc db :message {:content (concat ["Upload failed for files:"]
+                                            (map (fn [{:keys [file error]}]
+                                                   (str (g/getValueByKeys file "name") ": " error))
+                                                 results))
+                           :type :error})})
+
+(re-frame/reg-event-fx
+ ::read-file-list-error
+ read-file-list-error)
+
+(defn on-read-file-list
+  [{db :db} [_ file-list]]
+  {:db db
+   :fx [[:readfile {:files file-list
+                    :charsets "utf-8"
+                    :on-success [::import-editor-content]
+                    :on-error [::read-file-list-error]}]]})
+
+(re-frame/reg-event-fx
+ ::on-read-file-list
+ on-read-file-list)
+
 ;;; Export workflow
 
-(defn- prepare-flux [flux data-filename fix-filename morph-filename]
+(defn- playground-flux->export-flux [flux data-filename fix-filename morph-filename]
   (-> flux
       (clj-str/replace #"PG_DATA\s*\|" (str "FLUX_DIR + \"" data-filename "\"\n|open-file\n|"))
       (clj-str/replace #"\|\s*fix\s*\|" (str "|fix( FLUX_DIR + \"" fix-filename "\" )\n|"))
@@ -336,7 +431,7 @@
                 db)}
          (cond-> {}
            (not (clj-str/blank? data)) (update ::effects/export-files conj [data "playground.data"])
-           (not (clj-str/blank? flux)) (#(let [flux (prepare-flux flux "playground.data" "playground.fix" "playground.morph")]
+           (not (clj-str/blank? flux)) (#(let [flux (playground-flux->export-flux flux "playground.data" "playground.fix" "playground.morph")]
                                          (update % ::effects/export-files conj [flux "playground.flux"])))
            (not (clj-str/blank? fix)) (update ::effects/export-files conj [fix "playground.fix"])
            (not (clj-str/blank? morph)) (update ::effects/export-files conj [morph "playground.morph"]))))
