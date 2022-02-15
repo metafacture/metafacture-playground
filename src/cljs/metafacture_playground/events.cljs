@@ -324,29 +324,28 @@
 
 ;;; Import workflow
 
-(defn- replace-fix-filename [flux files]
-  (if-let [fix-filename (->> files
-                             (mapv :name)
-                             (keep #(re-matches #"(?i).*\.fix" %))
-                             first)]
-    (let [pattern (-> (str "\\|(\\s|\\n)*fix(\\s|\\n)*\\(\\s*FLUX_DIR\\s*\\+\\s*\\\""
-                               fix-filename
-                               "\\\"\\s*\\)(\\n|\\s)*\\|")
-                          re-pattern)]
-      (clj-str/replace flux pattern "|fix\n|"))
-      flux))
+(defn- find-filename [files file-extension]
+  (->> files
+       (mapv :name)
+       (keep #(-> (str "(?i).*\\." file-extension)
+                  re-pattern
+                  (re-matches %)))
+       first))
 
-(defn- replace-morph-filename [flux files]
-  (if-let [morph-filename (->> files
-                               (mapv :name)
-                               (keep #(re-matches #"(?i).*\.morph" %))
-                               first)]
-    (let [pattern (-> (str "\\|(\\s|\\n)*morph(\\s|\\n)*\\(\\s*FLUX_DIR\\s*\\+\\s*\\\""
-                           morph-filename
-                           "\\\"\\s*\\)(\\n|\\s)*\\|")
-                      re-pattern)]
-      (clj-str/replace flux pattern "|morph\n|"))
-      flux))
+(defn- ->pattern [transformation-type filename]
+  (-> (str "\\|(\\s|\\n)*"
+           transformation-type
+           "(\\s|\\n)*\\(\\s*FLUX_DIR\\s*\\+\\s*\\\""
+           filename
+           "\\\"\\s*\\)(\\n|\\s)*\\|")
+      re-pattern))
+
+(defn- replace-filename [flux files transformation-type]
+  (if-let [filename (find-filename files transformation-type)]
+    (clj-str/replace flux
+                     (->pattern transformation-type filename)
+                     (str "|" transformation-type "\n|"))
+    flux))
 
 (defn- replace-data-filename [flux files]
   (if-let [data-filename (->> files
@@ -362,8 +361,8 @@
 
 (defn- import-flux->playground-flux [flux files]
   (-> flux
-      (replace-fix-filename files)
-      (replace-morph-filename files)
+      (replace-filename files "fix")
+      (replace-filename files "morph")
       (replace-data-filename files)))
 
 (defn import-editor-content
