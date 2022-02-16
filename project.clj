@@ -19,6 +19,7 @@
                  [com.cognitect/transit-cljs "0.8.269"]
                  [org.clojure/data.json "2.4.0"]
                  [com.degel/re-frame-storage-fx "0.1.1"]
+                 [jtk-dvlp/re-frame-readfile-fx "2.0.0"]
                  [org.metafacture/metafacture-commons "5.3.1"]
                  [org.metafacture/metafacture-framework "5.3.1"]
                  [org.metafacture/metafacture-flowcontrol "5.3.1"]

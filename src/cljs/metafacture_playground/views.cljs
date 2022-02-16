@@ -114,7 +114,7 @@
            :for for}
    (clj-str/capitalize name)])
 
-(defn simple-button [{:keys [content dispatch-fn icon-name fluid style]}]
+(defn simple-button [{:keys [content dispatch-fn icon-name fluid style as htmlFor]}]
   [:> button
    (merge {:id (-> content (clj-str/replace " " "-") (str "-button"))
            :basic basic-buttons?
@@ -123,7 +123,11 @@
           (when dispatch-fn
             {:onClick #(re-frame/dispatch dispatch-fn)})
           (when style
-            {:style style}))
+            {:style style})
+          (when as
+            {:as as})
+          (when htmlFor
+            {:htmlFor htmlFor}))
    (when icon-name
      [:> icon {:name icon-name}])
    content])
@@ -279,6 +283,16 @@
    [simple-button {:content "Clear" :dispatch-fn [::events/clear-all] :icon-name "erase" :style {:margin-left "0.3em"}}]
    [process-button]
    [share-button]
+   [simple-button {:content "Import Workflow"
+                   :icon-name "upload"
+                   :as "label"
+                   :htmlFor "files"}]
+   [:> input {:type "file"
+              :id "files"
+              :name "files"
+              :style {:display "none"}
+              :multiple true
+              :on-change #(re-frame/dispatch [::events/on-read-file-list (g/getValueByKeys % "target" "files")])}]
    [simple-button {:content "Export Workflow"
                    :dispatch-fn [::events/export-workflow
                                  @(re-frame/subscribe [::subs/field-value :data])

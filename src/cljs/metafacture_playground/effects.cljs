@@ -1,7 +1,6 @@
 (ns metafacture-playground.effects
   (:require [re-frame.core :as re-frame]
-            [clojure.string :as clj-str]
-            [cljs.pprint :as pp]))
+            [clojure.string :as clj-str]))
 
 (re-frame/reg-fx
  ::copy-to-clipboard
