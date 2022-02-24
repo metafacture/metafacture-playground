@@ -26,6 +26,7 @@ chmod a+x ~/bin/lein
 ### Install Metafacture Fix
 
 This project depends on [metafacture-fix](https://github.com/metafacture/metafacture-fix), which is work in progress.
+It is possible to display the current version of dependencies in the UI. To display the version, please read this [section](#show-dependency-versions-in-ui). This is especially reasonable when installing on a server.
 
 Clone and install metafacture-fix:
 ```bash
@@ -79,6 +80,22 @@ Browse to http://localhost:3000.
 Run workflows on the web server, passing `data`, `flux`, and `fix`:
 
 [http://localhost:3000/process?data='1'{'a': '5', 'z': 10}&flux=as-lines|decode-formeta|fix|encode-formeta(style="multiline")&fix=map(a,b) map(_else)](http://localhost:3000/process?data=%271%27{%27a%27:%20%275%27,%20%27z%27:%2010}&flux=as-lines|decode-formeta|fix|encode-formeta(style=%22multiline%22)&fix=map(a,c)%20map(_else))
+
+### Show dependency versions in UI
+
+When installing the Metafacture Playground to a server it's important for users to know which version of Metafacture Core and Metafacture Fix are used to process the workflows in the playground.
+
+![Display versions of dependencies](/resources/img/displayVersions.JPG)
+
+To display these versions (or any other dependency of the playground) you have to put a file with the corresponding dependency name into the folder ```resources/versions```, e.g. the dependency of Metafacture Fix is named ```org.metafacture/metafix``` in the project.clj, so we need a file named ```metafix``` in the folder ```resources/versions``` to display the version used in the project.clj in the UI.
+The content of this file is a URI that should link to the corresponding version or branch commit and should be adapted manually. In the future the content of these files should be adapted automatically when installing Metafacture Fix or Metafacture Core on the server where the playground is running.
+To display the Metafacture Core dependency we use ```org.metafacture/metafacture-framework```.
+
+#### Use a release version
+If a released version is used, the content of the file contains the link to the release, e.g. [https://github.com/metafacture/metafacture-core/releases/tag/metafacture-core-5.3.1](https://github.com/metafacture/metafacture-core/releases/tag/metafacture-core-5.3.1).
+
+#### Use Master/Main or other branch
+If the master/main or another branch is used, the content of the file should contain a link to the commit like [https://github.com/metafacture/metafacture-fix/commit/b36fcb9](https://github.com/metafacture/metafacture-fix/commit/b36fcb9) (Please use the short hash link).
 
 ### Run tests
 

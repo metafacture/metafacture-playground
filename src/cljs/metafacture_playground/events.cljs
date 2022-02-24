@@ -9,6 +9,7 @@
    [lambdaisland.uri :refer [uri join assoc-query* query-encode]]
    [com.degel.re-frame.storage]
    [clojure.string :as clj-str]
+   [clojure.walk :as walk]
    [cognitect.transit :as transit]
    [goog.object :as g]))
 
@@ -172,12 +173,12 @@
     {:db (-> db
              (assoc :result nil)
              (assoc-in [:ui :dropdown :active-item] dropdown-value))
-     :dispatch-n (conj
-                  (mapv
-                   (fn [editor]
-                     [::edit-input-value editor (get sample editor "")])
-                   [:data :flux :fix :morph])
-                  [::switch-editor (:active-editor sample)])
+     :fx (conj
+          (mapv
+           (fn [editor]
+             [:dispatch [::edit-input-value editor (get sample editor "")]])
+           [:data :flux :fix :morph])
+          [:dispatch [::switch-editor (:active-editor sample)]])
      :storage/set {:session? true
                    :name (->storage-key [:ui :dropdown :active-item])
                    :value dropdown-value}})
@@ -541,6 +542,30 @@
  ::load-samples
  load-samples)
 
+(defn versions-response
+  [{db :db} [_ {:keys [body]}]]
+  (let [body (-> (transit/read (transit/reader :json) body)
+                  walk/keywordize-keys)]
+    {:db (assoc db :versions body)}))
+
+(re-frame/reg-event-fx
+ ::versions-response
+ versions-response)
+
+(defn get-backend-versions
+  [{db :db} _]
+  {:db db
+   :fetch {:method                 :get
+           :url                    "versions"
+           :timeout                10000
+           :response-content-types {#"application/.*json" :json}
+           :on-success             [::versions-response]
+           :on-failure             [::bad-response]}})
+
+(re-frame/reg-event-fx
+ ::get-backend-versions
+ get-backend-versions)
+
 (defn deep-merge [a & maps]
   (if (map? a)
     (apply merge-with deep-merge a maps)
@@ -563,16 +588,18 @@
             db/default-db
             (restore-db web-storage)
             {:ui {:height window-height}})
-       :dispatch [::load-samples]}
+       :fx [[:dispatch [::load-samples]]
+            [:dispatch [::get-backend-versions]]]}
       {:db (-> db/default-db
                (assoc-in [:ui :height] window-height))
-       :dispatch-n (cond->
-                    (mapv
-                     (fn [editor]
-                       [::edit-input-value editor (get query-params editor "")])
-                     [:data :flux :fix :morph])
-                     true (conj [::load-samples])
-                     (get query-params :active-editor) (conj [::switch-editor (-> query-params :active-editor keyword)]))
+       :fx (cond->
+            (mapv
+             (fn [editor]
+               [:dispatch [::edit-input-value editor (get query-params editor "")]])
+             [:data :flux :fix :morph])
+             true (conj [:dispatch [::load-samples]])
+             true (conj [:dispatch [::get-backend-versions]])
+             (get query-params :active-editor) (conj [:dispatch [::switch-editor (-> query-params :active-editor keyword)]]))
        :storage/set {:session? true
                      :pairs (-> (assoc-query-params {} query-params)
                                 generate-pairs)}

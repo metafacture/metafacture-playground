@@ -44,7 +44,6 @@
                  [org.metafacture/metafacture-json "5.3.1"]
                  [org.metafacture/metafacture-linkeddata "5.3.1"]
                  [org.metafacture/metafacture-flux "5.3.1"]
-                 [org.metafacture/metafacture-framework "5.3.1"]
                  [org.metafacture/metafacture-runner "5.3.1"]
                  [org.metafacture/metamorph-api "5.3.1"]
                  [org.metafacture/metamorph "5.3.1"]

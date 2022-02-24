@@ -82,6 +82,12 @@
 
 ;;; Utils
 
+(defn link-label [name href]
+  [:> label {:content name
+             :as "a"
+             :href href
+             :target "_blank"}])
+
 (defn title-label [name]
   [:> menu-item
    {:id (str name "-label")
@@ -155,7 +161,12 @@
    [:> image {:alt "Metafacture Ant"
               :src "images/metafacture-logo.png"}]
    "Metafacture Playground"
-   [:> label {:color color :content "beta"}]])
+   [:> label {:color color
+              :content "beta"}]
+    (let [backend-versions (re-frame/subscribe [::subs/backend-versions])]
+      (for [[version-name {:keys [version-label link]}] @backend-versions]
+        ^{:key version-name}
+        [link-label (str (name version-name) " " version-label) link]))])
 
 ;;; Message Panel
 
