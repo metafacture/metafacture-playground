@@ -227,13 +227,14 @@
 
 (defn switch-editor
   [{db :db} [_ editor]]
-  (merge
-   {:db (assoc-in db [:input-fields :switch :active] editor)
-    :storage/set {:session? true
-                  :name (->storage-key [:input-fields :switch :active])
-                  :value (when editor (name editor))}}
-   (when editor
-     {:dispatch [::update-width editor (get-in db [:input-fields editor :content])]})))
+  (let [editor (or editor :fix)]
+    (merge
+     {:db (assoc-in db [:input-fields :switch :active] editor)
+      :storage/set {:session? true
+                    :name (->storage-key [:input-fields :switch :active])
+                    :value (when editor (name editor))}}
+     (when editor
+       {:dispatch [::update-width editor (get-in db [:input-fields editor :content])]}))))
 
 (re-frame/reg-event-fx
  ::switch-editor
