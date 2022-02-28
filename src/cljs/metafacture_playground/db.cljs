@@ -56,4 +56,4 @@
    :message {:content str
              :type keyword}
    :ui {:height parseBoolean
-        :dropdown {:active-item str}}})
+        :dropdown {:active-item #(if (= "" %) nil (str %))}}})
