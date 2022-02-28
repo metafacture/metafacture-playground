@@ -36,30 +36,33 @@
     (catch Exception e
       (exception-handler e uri))))
 
-(defn- files-content [dir]
-  (let [files (->> (io/file dir)
-                      .listFiles
-                      (filter #(.isFile %)))]
-    (reduce
-     (fn [result file]
-       (assoc result (.getName file) (slurp file)))
-     {}
-     files)))
+(defn- files->content [entries]
+  (reduce
+   (fn [result item]
+     (cond
+       (.isFile item) (assoc result (.getName item) (slurp item))
+       (.isDirectory item) (assoc result (.getName item) (files->content (.listFiles item)))
+       :else result))
+   {}
+   entries))
 
 (defn- versions-from-files []
   (let  [dependencies (-> "project.clj" slurp read-string (nth 6))]
-    (reduce
-     (fn [result [file-name file-content]]
-       (if-let [matching-label (-> (filter #(= (-> % first name)
-                                               file-name)
-                                           dependencies)
-                                   first
-                                   second)]
-           (assoc result file-name {:version-label matching-label
-                                    :link file-content})
-         result))
-     {}
-     (files-content "resources/versions/"))))
+    (->> (io/file "resources/versions/")
+         .listFiles
+         (filter #(.isFile %))
+         files->content
+         (reduce
+          (fn [result [file-name file-content]]
+            (if-let [matching-label (-> (filter #(= (-> % first name)
+                                                    file-name)
+                                                dependencies)
+                                        first
+                                        second)]
+              (assoc result file-name {:version-label matching-label
+                                       :link file-content})
+              result))
+          {}))))
 
 (defroutes routes
   (GET "/" [] (resource-response "index.html" {:root "public"}))
@@ -67,9 +70,11 @@
     (process-request data flux fix morph uri))
   (GET "/examples" request
     (try
-      (-> (files-content "resources/examples/")
-          json/write-str
-          response)
+      (->> (io/file "resources/examples/")
+           .listFiles
+           files->content
+           json/write-str
+           response)
       (catch Exception e
         (exception-handler e (:uri request)))))
   (GET "/versions" request

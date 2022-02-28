@@ -161,8 +161,8 @@
  edit-value)
 
 (defn open-dropdown
-  [{db :db} [_ status]]
-  {:db (assoc-in db [:ui :dropdown :open?] status)})
+  [{db :db} [_ folder status]]
+  {:db (assoc-in db [:ui :dropdown folder :open?] status)})
 
 (re-frame/reg-event-fx
  ::open-dropdown

@@ -45,6 +45,8 @@
 (def menu (component "Menu"))
 (def menu-item (component "Menu" "Item"))
 (def dropdown (component "Dropdown"))
+(def dropdown-menu (component "Dropdown" "Menu"))
+(def dropdown-item (component "Dropdown" "Item"))
 
 ;;; Using monaco editor react component
 
@@ -196,30 +198,51 @@
 
 ;;; Control Panel
 
+(defn is-group? [entry]
+  (try
+    (when (-> entry val :display-name) false)
+    (catch :default _
+      true)))
+
+(defn dropdown-entries [entries]
+  [:> dropdown-menu
+   (doall
+    (for [entry entries]
+      (if (is-group? entry)
+        (let [dropdown-open? (re-frame/subscribe [::subs/dropdown-open? (key entry)])]
+          ^{:key (key entry)}
+           [:> dropdown {:text (key entry)
+                         :open @dropdown-open?
+                         :item true
+                         :on-click #(re-frame/dispatch [::events/open-dropdown (key entry) (not @dropdown-open?)])}
+            (dropdown-entries (val entry))])
+        (let [[k v] entry
+              display-name (:display-name v)
+              value (:value v)
+              dropdown-value (re-frame/subscribe [::subs/dropdown-active-item])]
+          ^{:key k}
+          [:> dropdown-item
+           {:key k
+            :text display-name
+            :value display-name
+            :active (= display-name @dropdown-value)
+            :selected (= display-name @dropdown-value)
+            :onClick #(re-frame/dispatch [::events/load-sample display-name value])}]))))])
+
 (defn examples-dropdown []
   [:> button-group {:color color
                     :basic true}
    (let [dropdown-value (re-frame/subscribe [::subs/dropdown-active-item])
-         dropdown-open? (re-frame/subscribe [::subs/dropdown-open?])]
+         dropdown-open? (re-frame/subscribe [::subs/dropdown-open? "main"])]
      [:> dropdown
       {:className "icon"
        :button true
        :labeled true
-       :search true
-       :placeholder "Load example"
-       :value (or @dropdown-value "")
+       :text (or @dropdown-value "Load Examples")
        :open @dropdown-open?
-       :options (mapv
-                 (fn [[k {:keys [display-name value]}]]
-                   {:key k
-                    :text display-name
-                    :value display-name
-                    :active (= display-name @dropdown-value)
-                    :selected (= display-name @dropdown-value)
-                    :onClick #(re-frame/dispatch [::events/load-sample display-name value])})
-                 @(re-frame/subscribe [::subs/examples]))
-       :on-blur #(re-frame/dispatch [::events/open-dropdown false])
-       :on-click #(re-frame/dispatch [::events/open-dropdown (not @dropdown-open?)])}])])
+       :on-blur #(re-frame/dispatch [::events/open-dropdown "main" false])
+       :on-click #(re-frame/dispatch [::events/open-dropdown "main" (not @dropdown-open?)])}
+      (dropdown-entries @(re-frame/subscribe [::subs/examples]))])])
 
 (defn process-button []
   (let [data (re-frame/subscribe [::subs/field-value :data])

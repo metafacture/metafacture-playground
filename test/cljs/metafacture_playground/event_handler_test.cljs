@@ -87,7 +87,7 @@
                  (:flux sample-data)))
           (is (= @(re-frame/subscribe [::subs/field-value :fix])
                  (:fix sample-data)))
-          (is (not @(re-frame/subscribe [::subs/dropdown-open?])))
+          (is (not @(re-frame/subscribe [::subs/dropdown-open? "main"])))
           (is (= @(re-frame/subscribe [::subs/dropdown-active-item])
                  "sample data"))))))
 
