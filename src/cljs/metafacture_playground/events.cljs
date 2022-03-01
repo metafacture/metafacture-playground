@@ -379,9 +379,9 @@
                                     (cond-> (update result :dispatch-n conj [:dispatch [::edit-input-value :flux flux-content]])
                                       (not= flux-content content) (assoc :message "The flux content has been adapted to work in the playground. Additional adjustments could be necessary.")))
                           ".fix" (update result :dispatch-n concat [[:dispatch [::edit-input-value :fix content]]
-                                                        [:dispatch [::switch-editor :fix]]])
+                                                                    [:dispatch [::switch-editor :fix]]])
                           ".morph" (update result :dispatch-n concat [[:dispatch [::edit-input-value :morph content]]
-                                                          [:dispatch [::switch-editor :morph]]])
+                                                                      [:dispatch [::switch-editor :morph]]])
                           (update result :dispatch-n conj [:dispatch [::edit-input-value :data content]]))))
                     {:dispatch-n []}
                     files)]
