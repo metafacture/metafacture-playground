@@ -26,7 +26,7 @@
              :type nil}
    :ui {:height nil
         :dropdown {:active-item nil
-                   :open? false}}})
+                   "main" {:open? false}}}})
 
 (defn- parseBoolean [val]
   (if (= val "true")
@@ -56,4 +56,4 @@
    :message {:content str
              :type keyword}
    :ui {:height parseBoolean
-        :dropdown {:active-item str}}})
+        :dropdown {:active-item #(if (= "" %) nil (str %))}}})

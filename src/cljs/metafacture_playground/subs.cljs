@@ -28,19 +28,27 @@
 
 (re-frame/reg-sub
  ::dropdown-open?
- (fn [db _]
-   (get-in db [:ui :dropdown :open?])))
+ (fn [db [_ folder]]
+   (get-in db [:ui :dropdown folder :open?])))
 
 (defn- display-name [str]
   (clj-str/replace str "_" " "))
+
+(defn- examples->dropdown-entries []
+  (map
+   (fn [[k v]]
+     (if (map? v)
+       {k (into (sorted-map)
+                (examples->dropdown-entries)
+                v)}
+       {k {:display-name (display-name k)
+           :value (utils/parse-url v)}}))))
 
 (re-frame/reg-sub
  ::examples
  (fn [db _]
    (into (sorted-map)
-         (map (fn [[k v]]
-                {k {:display-name (display-name k)
-                    :value (utils/parse-url v)}}))
+         (examples->dropdown-entries)
          (get db :examples))))
 
 (re-frame/reg-sub

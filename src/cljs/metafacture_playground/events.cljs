@@ -129,7 +129,7 @@
 ;;; Editing input fields
 
 (defn edit-value
-  [{db :db} [_ field-name new-value]]
+  [{db :db} [_ field-name new-value & is-example-data?]]
   (let [db-path [:input-fields field-name :content]
         disable-editors (when (= field-name :flux)
                           (let [val (-> new-value
@@ -141,19 +141,21 @@
                             {[:input-fields :data :disabled?] (not data-used?)
                              [:input-fields :morph :disabled?] (not morph-used?)
                              [:input-fields :fix :disabled?] (not fix-used?)}))]
-    {:db (-> (reduce
-              (fn [db [path v]]
-                (assoc-in db path v))
-              db
-              disable-editors)
-             (assoc-in db-path new-value))
+    {:db (cond-> (reduce
+                  (fn [db [path v]]
+                    (assoc-in db path v))
+                  db
+                  disable-editors)
+           true (assoc-in db-path new-value)
+           (not is-example-data?) (assoc-in [:ui :dropdown :active-item] nil))
      :storage/set {:session? true
                    :pairs (conj
                            (mapv
                             (fn [[db-path v]]
                               {:name (->storage-key db-path) :value v})
                             disable-editors)
-                           {:name (->storage-key db-path) :value new-value})}
+                           {:name (->storage-key db-path) :value new-value}
+                           (when-not is-example-data? {:name (->storage-key [:ui :dropdown :active-item]) :value nil}))}
      :dispatch [::update-width field-name new-value]}))
 
 (re-frame/reg-event-fx
@@ -161,8 +163,8 @@
  edit-value)
 
 (defn open-dropdown
-  [{db :db} [_ status]]
-  {:db (assoc-in db [:ui :dropdown :open?] status)})
+  [{db :db} [_ folder status]]
+  {:db (assoc-in db [:ui :dropdown folder :open?] status)})
 
 (re-frame/reg-event-fx
  ::open-dropdown
@@ -176,7 +178,7 @@
      :fx (conj
           (mapv
            (fn [editor]
-             [:dispatch [::edit-input-value editor (get sample editor "")]])
+             [:dispatch [::edit-input-value editor (get sample editor "") true]])
            [:data :flux :fix :morph])
           [:dispatch [::switch-editor (:active-editor sample)]])
      :storage/set {:session? true
@@ -205,7 +207,8 @@
                         [[:input-fields :switch :width] nil]]
         storage-set [[[:input-fields :data :disabled?] true]
                      [[:input-fields :fix :disabled?] true]
-                     [[:input-fields :morph :disabled?] true]]
+                     [[:input-fields :morph :disabled?] true]
+                     [[:ui :dropdown :active-item] nil]]
         other [[[:result :content] nil]
                [[:links :api-call] nil]
                [[:links :workflow] nil]]]
@@ -224,13 +227,14 @@
 
 (defn switch-editor
   [{db :db} [_ editor]]
-  (merge
-   {:db (assoc-in db [:input-fields :switch :active] editor)
-    :storage/set {:session? true
-                  :name (->storage-key [:input-fields :switch :active])
-                  :value (when editor (name editor))}}
-   (when editor
-     {:dispatch [::update-width editor (get-in db [:input-fields editor :content])]})))
+  (let [editor (or editor :fix)]
+    (merge
+     {:db (assoc-in db [:input-fields :switch :active] editor)
+      :storage/set {:session? true
+                    :name (->storage-key [:input-fields :switch :active])
+                    :value (when editor (name editor))}}
+     (when editor
+       {:dispatch [::update-width editor (get-in db [:input-fields editor :content])]}))))
 
 (re-frame/reg-event-fx
  ::switch-editor
