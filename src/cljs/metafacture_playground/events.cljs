@@ -506,7 +506,7 @@
                                                                    :flux flux
                                                                    :fix fix
                                                                    :morph morph}))
-             :timeout                10000
+             :timeout                100000
              :response-content-types {"text/plain" :text
                                       #"application/.*json" :json}
              :on-success             [::process-response]
