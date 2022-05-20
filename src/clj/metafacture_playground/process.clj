@@ -66,7 +66,7 @@
 
 (defn- process-flux [file-path out-path]
   (Flux/main (into-array [file-path]))
-  (println "Processed flux file.")
+  (println (str "Processed flux file: " file-path))
   (slurp out-path))
 
 (defn process [data flux fix morph]

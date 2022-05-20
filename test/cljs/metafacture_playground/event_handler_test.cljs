@@ -174,23 +174,12 @@
            (is (= (-> workflow-link :query query-string->map :morph) morph))
            (is (= (:path workflow-link) "/playground/")))))
 
-  (testing "Test not generating links if parameters are too long"
-    (let [db' (-> empty-db
-                  (events/edit-value [:edit-value :flux (generate-random-string 1537)]))
-          flux (get-in db' [:db :input-fields :flux :content])
-          db'' (-> db'
-                   (events/generate-links [:generate-links "http://test.metafacture.org/playground/" nil flux nil nil :fix])
-                   :db)]
-      (and (is (= (get-in db'' [:message :content]) "Share links for large workflows are not supported yet"))
-           (is (nil? (get-in db'' [:links :api-call])))
-           (is (nil? (get-in db'' [:links :workflow]))))))
-
   (testing "Test not generating links if url is too long"
-    (let [extra-long-test-url (str "http://test.metafacture.org/playground/" (generate-random-string 1671) "/")
+    (let [extra-long-test-url (str "http://test.metafacture.org/playground/" (generate-random-string 66000) "/")
           db'' (-> empty-db
                    (events/generate-links [:generate-links extra-long-test-url (:data sample-data) (:flux sample-data) (:fix sample-data) "" :fix])
                    :db)]
-      (and (is (= (get-in db'' [:message :content]) "Share links for large workflows are not supported yet"))
+      (and (is (get-in db'' [:message :content]))
            (is (nil? (get-in db'' [:links :api-call])))
            (is (nil? (get-in db'' [:links :workflow])))))))
 

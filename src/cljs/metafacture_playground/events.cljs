@@ -6,7 +6,7 @@
    [re-frame.core :as re-frame]
    [day8.re-frame.fetch-fx]
    [jtk-dvlp.re-frame.readfile-fx]
-   [lambdaisland.uri :refer [uri join assoc-query* query-encode]]
+   [lambdaisland.uri :refer [uri join assoc-query*]]
    [com.degel.re-frame.storage]
    [clojure.string :as clj-str]
    [clojure.walk :as walk]
@@ -267,61 +267,60 @@
         data-in-flux? (merge {:data data})))
     {}))
 
-(defn- count-query-string [params]
-  (reduce
-   (fn [result [k v]]
-     (if v
-       (+ result
-          (-> k name count)
-          2                ;; '&' before key + '=' after key
-          (-> v query-encode count))
-       result))
-   0
-   params))
+(def max-url-string 65536) ; maximum displayable URL length in Firefox
 
-(defn- query-string-too-long? [params maximum]
-  (try
-    (> (count-query-string params)
-       maximum)
-    (catch js/RangeError _
-      true)))
+(defn- url-too-long? [url]
+  (if-not (:error url)
+    (> (count url) max-url-string)
+    true))
 
 (defn generate-link [url path query-params]
   (let [inputs (-> query-params
                    (dissoc :active-editor)
                    vals)]
     (when-not (every? clj-str/blank? inputs)
-      (-> (uri url)
-          (join path)
-          (assoc-query* query-params)
-          str))))
+      (try
+        (-> (uri url)
+            (join path)
+            (assoc-query* query-params)
+            str)
+        (catch js/Error _
+          {:error true})))))
+
+(defn add-error-message [result name url]
+  (if (:error url)
+    (conj result (str "It occured an JS Error generating the " name"."))
+    (conj result (str "The " name " is "
+                      (- max-url-string (count url))
+                      " characters too long (Maximum: " max-url-string ")"))))
+
+(defn firefox-used? []
+  (> (-> js/navigator .-userAgent (.indexOf "Firefox"))
+     -1))
 
 (defn generate-links
   [{db :db} [_ url data flux fix morph active-editor]]
-  (let [max-query-string 1536
-        max-url-string 2048
-        api-call-params (when flux
+  (let [api-call-params (when flux
                           (merge
                            {:flux flux}
                            (get-used-params flux fix morph data)))
         workflow-params (merge api-call-params
                                (when active-editor
                                  {:active-editor (name active-editor)}))
-        api-call-query-string-too-long? (query-string-too-long? api-call-params max-query-string)
-        workflow-query-string-too-long? (query-string-too-long? workflow-params max-query-string)
-        api-call-link (when (and api-call-params (not api-call-query-string-too-long?))
-                        (generate-link url "./process" api-call-params))
-        workflow-link (when (and workflow-params (not workflow-query-string-too-long?))
-                        (generate-link url "" workflow-params))
-        url-string-too-long? (or (> (count api-call-link) max-url-string)
-                                 (> (count workflow-link) max-url-string))
-        message (when (or api-call-query-string-too-long? workflow-query-string-too-long? url-string-too-long?)
-                  {:content "Share links for large workflows are not supported yet"
+        api-call-link (when api-call-params (generate-link url "./process" api-call-params))
+        workflow-link (when workflow-params (generate-link url "" workflow-params))
+        api-call-link-too-long? (url-too-long? api-call-link)
+        workflow-link-too-long? (url-too-long? workflow-link)
+        message (when (or api-call-link-too-long? workflow-link-too-long?)
+                  {:content (cond-> ["There was a problem generating the share links:"]
+                              api-call-link-too-long? (add-error-message "api call link" api-call-link)
+                              workflow-link-too-long? (add-error-message "workflow link" workflow-link)
+                              (not (firefox-used?)) (conj "Consider using Firefox."))
                    :type :warning})]
     {:db (-> db
              (assoc :message message)
-             (assoc-in [:links :api-call] (when-not url-string-too-long? api-call-link))
-             (assoc-in [:links :workflow] (when-not url-string-too-long? workflow-link)))}))
+             (assoc-in [:links :api-call] (when-not api-call-link-too-long? api-call-link))
+             (assoc-in [:links :workflow] (when-not workflow-link-too-long? workflow-link)))}))
 
 (re-frame/reg-event-fx
  ::generate-links
@@ -380,9 +379,9 @@
                                     (cond-> (update result :dispatch-n conj [:dispatch [::edit-input-value :flux flux-content]])
                                       (not= flux-content content) (assoc :message "The flux content has been adapted to work in the playground. Additional adjustments could be necessary.")))
                           ".fix" (update result :dispatch-n concat [[:dispatch [::edit-input-value :fix content]]
-                                                        [:dispatch [::switch-editor :fix]]])
+                                                                    [:dispatch [::switch-editor :fix]]])
                           ".morph" (update result :dispatch-n concat [[:dispatch [::edit-input-value :morph content]]
-                                                          [:dispatch [::switch-editor :morph]]])
+                                                                      [:dispatch [::switch-editor :morph]]])
                           (update result :dispatch-n conj [:dispatch [::edit-input-value :data content]]))))
                     {:dispatch-n []}
                     files)]
@@ -507,7 +506,7 @@
                                                                    :flux flux
                                                                    :fix fix
                                                                    :morph morph}))
-             :timeout                10000
+             :timeout                100000
              :response-content-types {"text/plain" :text
                                       #"application/.*json" :json}
              :on-success             [::process-response]
