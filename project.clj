@@ -45,6 +45,7 @@
                  [org.metafacture/metafacture-linkeddata "5.3.2"]
                  [org.metafacture/metafacture-flux "5.3.2"]
                  [org.metafacture/metafacture-runner "5.3.2"]
+                 [org.metafacture/metafacture-yaml "5.3.2"]
                  [org.metafacture/metamorph-api "5.3.2"]
                  [org.metafacture/metamorph "5.3.2"]
                  [org.metafacture/metamorph-test "5.3.2"]
