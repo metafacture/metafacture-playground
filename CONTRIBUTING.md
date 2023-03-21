@@ -98,7 +98,7 @@ We test the Metafacture Playground against Mozilla Firefox and Google Chrome. Th
 
 ### Board and Issues
 
-We use the [Metafacture Fix and Playground Board](https://github.com/orgs/metafacture/projects/2) to track the progress of issues of the Metafacture Playground. In the following we describe when issues are ready and what stages to pass to make a issue done.
+We use the [Metafacture Board](https://github.com/orgs/metafacture/projects/3/views/4) to track the progress of issues of the Metafacture Playground. In the following we describe when issues are ready and what stages to pass to make a issue done.
 
 ### From Backlog to Done
 
