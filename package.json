@@ -1,7 +1,7 @@
 {
 	"name": "metafacture-playground",
 	"dependencies": {
-		"@monaco-editor/react": "^4.1.3",
+		"@monaco-editor/react": "^4.4.6",
 		"react": "16.13.0",
 		"react-dom": "16.13.0",
 		"semantic-ui-css": "^2.4.1",
