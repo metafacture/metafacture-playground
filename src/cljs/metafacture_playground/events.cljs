@@ -129,7 +129,7 @@
 ;;; Editing input fields
 
 (defn edit-value
-  [{db :db} [_ field-name new-value & is-example-data?]]
+  [{db :db} [_ field-name new-value & triggered-by-button?]]
   (let [db-path [:input-fields field-name :content]
         disable-editors (when (= field-name :flux)
                           (let [val (-> new-value
@@ -147,7 +147,8 @@
                   db
                   disable-editors)
            true (assoc-in db-path new-value)
-           (not is-example-data?) (assoc-in [:ui :dropdown :active-item] nil))
+           triggered-by-button? (update-in [:input-fields field-name :key-count] inc)
+           (not triggered-by-button?) (assoc-in [:ui :dropdown :active-item] nil))
      :storage/set {:session? true
                    :pairs (conj
                            (mapv
@@ -155,7 +156,7 @@
                               {:name (->storage-key db-path) :value v})
                             disable-editors)
                            {:name (->storage-key db-path) :value new-value}
-                           (when-not is-example-data? {:name (->storage-key [:ui :dropdown :active-item]) :value nil}))}
+                           (when-not triggered-by-button? {:name (->storage-key [:ui :dropdown :active-item]) :value nil}))}
      :dispatch [::update-width field-name new-value]}))
 
 (re-frame/reg-event-fx
@@ -188,42 +189,6 @@
 (re-frame/reg-event-fx
   ::load-sample
   load-sample)
-
-(defn- clear-db [db paths]
-  (reduce
-   (fn [db [path v]]
-     (assoc-in db path v))
-   db
-   paths))
-
-(defn clear-all
-  [{db :db} _]
-  (let [storage-remove [[[:input-fields :data :content] nil]
-                        [[:input-fields :flux :content] nil]
-                        [[:input-fields :fix :content] nil]
-                        [[:input-fields :morph :content] nil]
-                        [[:input-fields :data :width] nil]
-                        [[:input-fields :flux :width] nil]
-                        [[:input-fields :switch :width] nil]]
-        storage-set [[[:input-fields :data :disabled?] true]
-                     [[:input-fields :fix :disabled?] true]
-                     [[:input-fields :morph :disabled?] true]
-                     [[:ui :dropdown :active-item] nil]]
-        other [[[:result :content] nil]
-               [[:links :api-call] nil]
-               [[:links :workflow] nil]]]
-       {:db (clear-db db (concat storage-remove other storage-set))
-        :storage/remove {:session? true
-                         :names (mapv #(->storage-key (first %)) storage-remove)}
-        :storage/set {:session? true
-                      :pairs (mapv (fn [[path v]]
-                                     {:name (->storage-key path)
-                                      :value v})
-                                   storage-set)}}))
-
-(re-frame/reg-event-fx
- ::clear-all
- clear-all)
 
 (defn switch-editor
   [{db :db} [_ editor]]

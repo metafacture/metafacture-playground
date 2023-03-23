@@ -9,7 +9,8 @@
    [cljsjs.semantic-ui-react]
    [goog.object :as g]
    [re-pressed.core :as rp]
-   ["@monaco-editor/react" :as monaco-react]))
+   ["@monaco-editor/react" :as monaco-react]
+   [cljs.pprint :as pprint]))
 
 ;;; Using semantic ui react components
 
@@ -123,7 +124,8 @@
            :color color
            :fluid fluid}
           (when dispatch-fn
-            {:onClick #(re-frame/dispatch dispatch-fn)})
+            {:onClick #(doseq [fn dispatch-fn]
+                         (re-frame/dispatch fn))})
           (when style
             {:style style})
           (when as
@@ -303,7 +305,13 @@
 (defn control-panel []
   [:> segment {:raised true}
    [examples-dropdown]
-   [simple-button {:content "Clear" :dispatch-fn [::events/clear-all] :icon-name "erase" :style {:margin-left "0.3em"}}]
+   [simple-button {:content "Clear"
+                   :dispatch-fn [[::events/edit-input-value :data "" true]
+                                 [::events/edit-input-value :flux "" true]
+                                 [::events/edit-input-value :fix "" true]
+                                 [::events/edit-input-value :morph "" true]]
+                   :icon-name "erase"
+                   :style {:margin-left "0.3em"}}]
    [process-button]
    [share-button]
    [simple-button {:content "Import Workflow"
@@ -354,18 +362,20 @@
 (defn editor [{:keys [name language height-divider]}]
   (let [editor-name (keyword name)
         value (re-frame/subscribe [::subs/field-value editor-name])
-        height (re-frame/subscribe [::subs/editor-height editor-name 5 (font-size) height-divider])]
+        height (re-frame/subscribe [::subs/editor-height editor-name 5 (font-size) height-divider])
+        k (re-frame/subscribe [::subs/editor-key editor-name])]
     [screenreader-label name (str name "-editor")]
     [:> monaco-editor
-     {:className (str name "-editor")
-      :value (or @value "")
+     {:key @k
+      :className (str name "-editor")
+      :default-value (or @value "")
       :on-mount (partial set-up-editor (= name focused-editor))
       :language language
       :height @height
       :theme "light"
       :options {:dragAndDrop true
                 :minimap {:enabled false}}
-      :on-change #(re-frame/dispatch-sync [::events/edit-input-value (keyword name) %])}]))
+      :on-change #(re-frame/dispatch [::events/edit-input-value (keyword name) %])}]))
 
 (defn editor-panel [config]
   (let [editor-name (-> config :name keyword)
