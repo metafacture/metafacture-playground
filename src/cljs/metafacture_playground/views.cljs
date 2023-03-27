@@ -117,14 +117,14 @@
            :for for}
    (clj-str/capitalize name)])
 
-(defn simple-button [{:keys [content dispatch-fn icon-name fluid style as htmlFor]}]
+(defn simple-button [{:keys [content dispatch-fns icon-name fluid style as htmlFor]}]
   [:> button
    (merge {:id (-> content (clj-str/replace " " "-") (str "-button"))
            :basic basic-buttons?
            :color color
            :fluid fluid}
-          (when dispatch-fn
-            {:onClick #(doseq [fn dispatch-fn]
+          (when dispatch-fns
+            {:onClick #(doseq [fn dispatch-fns]
                          (re-frame/dispatch fn))})
           (when style
             {:style style})
@@ -258,7 +258,7 @@
                                     [:> label {:size "tiny"} "Ctrl + Enter"]])
       :on "hover"
       :trigger (reagent/as-element (simple-button {:content "Process"
-                                                   :dispatch-fn [::events/process @data @flux @fix @morph @active-editor]
+                                                   :dispatch-fns [[::events/process @data @flux @fix @morph @active-editor]]
                                                    :icon-name "play"
                                                    :style {:margin-left "0.1em"}}))
       :position "bottom left"}]))
@@ -300,16 +300,16 @@
       :wide "very"
       :trigger (reagent/as-element (simple-button {:content "Share"
                                                    :icon-name "share alternate"
-                                                   :dispatch-fn [::events/generate-links uri @data @flux @fix @morph @active-editor]}))}]))
+                                                   :dispatch-fns [[::events/generate-links uri @data @flux @fix @morph @active-editor]]}))}]))
 
 (defn control-panel []
   [:> segment {:raised true}
    [examples-dropdown]
    [simple-button {:content "Clear"
-                   :dispatch-fn [[::events/edit-input-value :data "" true]
-                                 [::events/edit-input-value :flux "" true]
-                                 [::events/edit-input-value :fix "" true]
-                                 [::events/edit-input-value :morph "" true]]
+                   :dispatch-fns [[::events/edit-input-value :data "" true]
+                                  [::events/edit-input-value :flux "" true]
+                                  [::events/edit-input-value :fix "" true]
+                                  [::events/edit-input-value :morph "" true]]
                    :icon-name "erase"
                    :style {:margin-left "0.3em"}}]
    [process-button]
@@ -325,11 +325,11 @@
               :multiple true
               :on-change #(re-frame/dispatch [::events/on-read-file-list (g/getValueByKeys % "target" "files")])}]
    [simple-button {:content "Export Workflow"
-                   :dispatch-fn [::events/export-workflow
-                                 @(re-frame/subscribe [::subs/field-value :data])
-                                 @(re-frame/subscribe [::subs/field-value :flux])
-                                 @(re-frame/subscribe [::subs/field-value :fix])
-                                 @(re-frame/subscribe [::subs/field-value :morph])]
+                   :dispatch-fns [[::events/export-workflow
+                                   @(re-frame/subscribe [::subs/field-value :data])
+                                   @(re-frame/subscribe [::subs/field-value :flux])
+                                   @(re-frame/subscribe [::subs/field-value :fix])
+                                   @(re-frame/subscribe [::subs/field-value :morph])]]
                    :icon-name "download"}]])
 
 ;;; Input fields
