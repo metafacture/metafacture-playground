@@ -52,6 +52,11 @@
          (get db :examples))))
 
 (re-frame/reg-sub
+ ::editor-key
+ (fn [db [_ editor-name]]
+   (get-in db [:input-fields editor-name :key-count])))
+
+(re-frame/reg-sub
  ::field-value
  (fn [db [_ field-name]]
    (get-in db [:input-fields field-name :content])))

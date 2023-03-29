@@ -1,16 +1,20 @@
 (ns metafacture-playground.db)
 
 (def default-db
-  {:input-fields {:data {:content nil
+  {:input-fields {:data {:key-count 0
+                         :content nil
                          :collapsed? false
                          :width nil
                          :disabled? true}
-                  :flux {:content nil
+                  :flux {:key-count 0
+                         :content nil
                          :collapsed? false
                          :width nil}
-                  :fix {:content nil
+                  :fix {:key-count 0
+                        :content nil
                         :disabled? true}
-                  :morph {:content nil
+                  :morph {:key-count 0
+                          :content nil
                           :disabled? true}
                   :switch {:collapsed? false
                            :active :fix

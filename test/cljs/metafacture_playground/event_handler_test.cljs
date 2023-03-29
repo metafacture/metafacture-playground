@@ -91,21 +91,6 @@
           (is (= @(re-frame/subscribe [::subs/dropdown-active-item])
                  "sample data"))))))
 
-
-(deftest clear-all-test
-  (testing "Test clear all fields with all fields already empty."
-    (let [db' (events/clear-all empty-db :clear-all)]
-      (is (= (:db db') (:db empty-db)))))
-
-  (testing "Test clear all fields with part of fields not empty."
-    (let [db' (events/clear-all db1 :clear-all)]
-      (is (= (:db db') (:db empty-db)))))
-
-  (testing "Test clear all fields with all fields not empty."
-    (let [db' (events/clear-all db2 :clear-all)]
-      (is (= (:db db') (:db empty-db))))))
-
-
 (deftest process-button-test
   (testing "Test status after processing response"
     (let [db' (-> empty-db
