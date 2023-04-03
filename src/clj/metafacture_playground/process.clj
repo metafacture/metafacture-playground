@@ -36,16 +36,11 @@
 
 (defn- flux->flux-content [flux fix morph output]
   (-> flux
-      (clj-str/replace #"(^|\s)//.*\n" "")
-      (clj-str/replace #"\n*\|" "|")
-      (clj-str/replace #"\s*\|\s*" "|")
-      (clj-str/replace #"\n*;" ";")
-      (clj-str/replace #"\s*;\s*" ";")
-      (clj-str/replace "PG_DATA|" "")
-      (clj-str/replace "|fix|" fix)
-      (clj-str/replace "|morph|" morph)
-      (clj-str/replace #"\|write\(\".*\"\);" output)
-      (clj-str/replace "|print;" output)))
+      (clj-str/replace #"PG_DATA(\s*|\n*)\|" "")
+      (clj-str/replace #"\|(\s*|\n*)fix(\s*|\n*)\|" fix)
+      (clj-str/replace #"\|(\s*|\n*)morph(\s*|\n*)\|" morph)
+      (clj-str/replace #"\|write\(\".*\"\)(\s*|\n*);" output)
+      (clj-str/replace #"\|(\s*|\n*)print(\s*|\n*);" output)))
 
 (defn- flux-output []
   (let [temp-file-path (content->tempfile-path "" ".txt")]
@@ -72,6 +67,6 @@
 
 (defn process [data flux fix morph]
   (let [[out-path flux-content] (->flux-content data flux fix morph)]
-       (-> flux-content
-           (content->tempfile-path ".flux")
-           (process-flux out-path))))
+    (-> flux-content
+        (content->tempfile-path ".flux")
+        (process-flux out-path))))
