@@ -1,7 +1,8 @@
 (ns metafacture-playground.process
   (:require
    [clojure.java.io :as jio]
-   [clojure.string :as clj-str])
+   [clojure.string :as clj-str]
+   [clojure.tools.logging :as log])
   (:import
    (java.io File)
    (org.metafacture.runner Flux)))
@@ -12,7 +13,10 @@
      (binding [*out* file]
        (print content)))
     (.deleteOnExit temp-file)
-    (clj-str/replace (.getAbsolutePath temp-file) "\\" "/")))
+    (let [file-path (clj-str/replace (.getAbsolutePath temp-file) "\\" "/")]
+      (log/info "Wrote content to temp file:" file-path)
+      (log/trace "Content" content)
+      file-path)))
 
 (defn- data->flux-content [data]
   (if data
@@ -54,15 +58,16 @@
   (let [fix (fix->flux-content fix)
         morph (morph->flux-content morph)
         [out-path output] (flux-output)
-        data-via-playground? (re-find #"PG_DATA" flux)]
-    [out-path
-     (str
-      (when data-via-playground? (data->flux-content data))
-      (flux->flux-content flux fix morph output))]))
+        data-via-playground? (re-find #"PG_DATA" flux)
+        flux-content (str
+                      (when data-via-playground? (data->flux-content data))
+                      (flux->flux-content flux fix morph output))]
+    (log/info "Converted input data to flux content.")
+    [out-path flux-content]))
 
 (defn- process-flux [file-path out-path]
   (Flux/main (into-array [file-path]))
-  (println (str "Processed flux file: " file-path))
+  (log/info "Processed a flux file:" file-path)
   (slurp out-path))
 
 (defn process [data flux fix morph]

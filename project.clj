@@ -5,6 +5,7 @@
                   :exclusions [com.google.javascript/closure-compiler-unshaded
                                org.clojure/google-closure-library
                                org.clojure/google-closure-library-third-party]]
+                 [org.clojure/tools.logging "1.2.4"]
                  [cljsjs/semantic-ui-react "0.88.1-0"]
                  [thheller/shadow-cljs "2.11.7"]
                  [reagent "0.10.0"]
