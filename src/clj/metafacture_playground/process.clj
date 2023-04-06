@@ -39,7 +39,7 @@
       (clj-str/replace #"PG_DATA(\s*|\n*)\|" "")
       (clj-str/replace #"\|(\s*|\n*)fix(\s*|\n*)\|" fix)
       (clj-str/replace #"\|(\s*|\n*)morph(\s*|\n*)\|" morph)
-      (clj-str/replace #"\|write\(\".*\"\)(\s*|\n*);" output)
+      (clj-str/replace #"\|(\s*|\n*)write\(\".*\"\)(\s*|\n*);" output)
       (clj-str/replace #"\|(\s*|\n*)print(\s*|\n*);" output)))
 
 (defn- flux-output []
