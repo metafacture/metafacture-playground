@@ -336,25 +336,26 @@
 
 (defn import-editor-content
   [{db :db} [_ files]]
-  (let [result (reduce
-                    (fn [result {:keys [name content]}]
-                      (let [file-extension (re-find #"\.[0-9a-zA-Z]+$" name)]
-                        (case file-extension
-                          ".flux" (let [flux-content (import-flux->playground-flux content files)]
-                                    (cond-> (update result :dispatch-n conj [:dispatch [::edit-input-value :flux flux-content]])
-                                      (not= flux-content content) (assoc :message "The flux content has been adapted to work in the playground. Additional adjustments could be necessary.")))
-                          ".fix" (update result :dispatch-n concat [[:dispatch [::edit-input-value :fix content]]
-                                                                    [:dispatch [::switch-editor :fix]]])
-                          ".morph" (update result :dispatch-n concat [[:dispatch [::edit-input-value :morph content]]
-                                                                      [:dispatch [::switch-editor :morph]]])
-                          (update result :dispatch-n conj [:dispatch [::edit-input-value :data content]]))))
-                    {:dispatch-n []}
-                    files)]
+  (let [triggered-by-button? true
+        result (reduce
+                (fn [result {:keys [name content]}]
+                  (let [file-extension (re-find #"\.[0-9a-zA-Z]+$" name)]
+                    (case file-extension
+                      ".flux" (let [flux-content (import-flux->playground-flux content files)]
+                                (cond-> (update result :fx conj [:dispatch [::edit-input-value :flux flux-content triggered-by-button?]])
+                                  (not= flux-content content) (assoc :message "The flux content has been adapted to work in the playground. Additional adjustments could be necessary.")))
+                      ".fix" (update result :fx concat [[:dispatch [::edit-input-value :fix content triggered-by-button?]]
+                                                        [:dispatch [::switch-editor :fix]]])
+                      ".morph" (update result :fx concat [[:dispatch [::edit-input-value :morph content triggered-by-button?]]
+                                                          [:dispatch [::switch-editor :morph]]])
+                      (update result :fx conj [:dispatch [::edit-input-value :data content triggered-by-button?]]))))
+                {:fx []}
+                files)]
      {:db (assoc db :message {:content (concat [(:message result)]
                                                ["Imported workflow with files: "]
                                                (map :name files))
                               :type :info})
-      :fx (:dispatch-n result)}))
+      :fx (:fx result)}))
 
 (re-frame/reg-event-fx
  ::import-editor-content
