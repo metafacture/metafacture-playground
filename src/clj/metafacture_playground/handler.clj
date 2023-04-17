@@ -9,7 +9,8 @@
    [ring.util.request :refer [body-string]]
    [clojure.data.json :as json]
    [clojure.stacktrace :as st]
-   [clojure.java.io :as io]))
+   [clojure.java.io :as io]
+   [clojure.tools.logging :as log]))
 
 (defn wrap-body-string [handler]
   (fn [request]
@@ -34,6 +35,7 @@
           (header response "Content-Disposition" (str "attachment; filename=\"" file-name "\""))
         response))
     (catch Exception e
+      (log/warn "Could not properly respond to request: " e)
       (exception-handler e uri))))
 
 (defn- files->content [entries]
@@ -67,8 +69,10 @@
 (defroutes routes
   (GET "/" [] (resource-response "index.html" {:root "public"}))
   (GET "/process" [data flux fix morph uri]
+    (log/info "------------------ GET/PROCESS REQUEST ------------------")
     (process-request data flux fix morph uri))
   (GET "/examples" request
+    (log/info "------------------ EXAMPLES REQUEST ------------------")
     (try
       (->> (io/file "resources/examples/")
            .listFiles
@@ -78,6 +82,7 @@
       (catch Exception e
         (exception-handler e (:uri request)))))
   (GET "/versions" request
+    (log/info "------------------ VERSIONS REQUEST ------------------")
     (try
       (-> (versions-from-files)
           json/write-str
@@ -85,6 +90,7 @@
       (catch Exception e
         (exception-handler e (:uri request)))))
   (POST "/process" request
+    (log/info "------------------ POST/PROCESS REQUEST ------------------")
     (let [body (-> request :body (json/read-str :key-fn keyword))
           {:keys [data flux fix morph]} body]
       (process-request data flux fix morph (:uri request))))
