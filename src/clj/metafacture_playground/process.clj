@@ -8,7 +8,8 @@
    (org.metafacture.runner Flux)))
 
 (defn- content->tempfile-path [content file-extension]
-  (let [temp-file (File/createTempFile "metafix" file-extension)]
+  (let [home (System/getProperty "user.home")
+        temp-file (File/createTempFile "metafix" file-extension (File. home))]
    (with-open [file (jio/writer temp-file)]
      (binding [*out* file]
        (print content)))
