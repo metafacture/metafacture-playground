@@ -8,16 +8,21 @@
    (org.metafacture.runner Flux)))
 
 (defn- content->tempfile-path [content file-extension]
-  (let [home (System/getProperty "user.home")
-        temp-file (File/createTempFile "metafix" file-extension (File. home))]
-   (with-open [file (jio/writer temp-file)]
-     (binding [*out* file]
-       (print content)))
-    (.deleteOnExit temp-file)
-    (let [file-path (clj-str/replace (.getAbsolutePath temp-file) "\\" "/")]
-      (log/info "Wrote content to temp file:" file-path)
-      (log/trace "Content" content)
-      file-path)))
+  (let [tmp-directory (-> (System/getProperty "user.dir")
+                          (str File/separator "tmp")
+                          (File.))]
+    (when-not (.exists tmp-directory)
+      (log/info "Created directory: " (.getAbsolutePath tmp-directory))
+      (.mkdir tmp-directory))
+    (let [temp-file (File/createTempFile "metafix" file-extension tmp-directory)]
+      (with-open [file (jio/writer temp-file)]
+        (binding [*out* file]
+          (print content)))
+      (.deleteOnExit temp-file)
+      (let [file-path (clj-str/replace (.getAbsolutePath temp-file) "\\" "/")]
+        (log/info "Wrote content to temp file:" file-path)
+        (log/trace "Content" content)
+        file-path))))
 
 (defn- data->flux-content [data]
   (if data
