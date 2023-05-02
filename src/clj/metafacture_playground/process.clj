@@ -12,7 +12,7 @@
                           (str File/separator "tmp")
                           (File.))]
     (when-not (.exists tmp-directory)
-      (log/info "Created directory: " (.getAbsolutePath tmp-directory))
+      (log/info "Creating directory: " (.getAbsolutePath tmp-directory))
       (.mkdir tmp-directory))
     (let [temp-file (File/createTempFile "metafix" file-extension tmp-directory)]
       (with-open [file (jio/writer temp-file)]
