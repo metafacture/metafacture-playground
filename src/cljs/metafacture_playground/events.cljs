@@ -412,6 +412,11 @@
 
 ;;; Processing
 
+(re-frame/reg-event-fx
+ ::clear-result
+ (fn [cofx _]
+   (assoc-in cofx [:db :result :content] nil)))
+
 (defn process-response
   [{db :db} [_ {:keys [headers body]}]]
   (if-let [content-disposition (:content-disposition headers)]

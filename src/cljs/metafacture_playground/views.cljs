@@ -36,7 +36,6 @@
 (def form (component "Form"))
 (def form-field (component "Form" "Field"))
 (def loader (component "Loader"))
-(def textarea (component "Form" "TextArea"))
 (def label (component "Label"))
 (def icon (component "Icon"))
 (def image (component "Image"))
@@ -81,7 +80,9 @@
      :language "text/plain"})
 
 (def result-config
-  {:width 16})
+  {:name "result"
+   :width 16
+   :language "text/plain"})
 
 ;;; Utils
 
@@ -309,7 +310,8 @@
                    :dispatch-fns [[::events/edit-input-value :data "" true]
                                   [::events/edit-input-value :flux "" true]
                                   [::events/edit-input-value :fix "" true]
-                                  [::events/edit-input-value :morph "" true]]
+                                  [::events/edit-input-value :morph "" true]
+                                  [::events/clear-result]]
                    :icon-name "erase"
                    :style {:margin-left "0.3em"}}]
    [process-button]
@@ -432,34 +434,37 @@
 
 ;;; Result field
 
-(defn result []
+(defn result [{:keys [name language]}]
   (let [content (re-frame/subscribe [::subs/process-result])
         loading? (re-frame/subscribe [::subs/result-loading?])
-        collapsed? (re-frame/subscribe [::subs/collapsed? [:result]])]
+        collapsed? (re-frame/subscribe [::subs/collapsed? [:result]])
+        height (-> @content (clj-str/split #"\r?\n" -1) count (* 19))]
     (when-not @collapsed?
       (if @loading?
         [:> segment {:basic true}
          [:> loader {:active true
                      :style {:padding "1.5em"}}]]
-        [:> form
-         [screenreader-label "Result" "result-panel"]
-         [:> textarea {:id "result-panel"
-                       :placeholder "No result"
-                       :value (or @content "")
-                       :rows (count (clj-str/split-lines @content))
-                       :fluid "true"
-                       :style {:border "none"}
-                       :readOnly true}]]))))
+        [:div
+         [screenreader-label name (str name "-editor")]
+         [:> monaco-editor
+          {:className (str name "-editor")
+           :value (or @content "No Result")
+           :language language
+           :height height
+           :theme "light"
+           :options {:minimap {:enabled false}
+                     :readOnly true
+                     :scrollBeyondLastLine false}}]]))))
 
-(defn result-panel [width]
-  [:> grid-column {:width width}
+(defn result-panel [config]
+  [:> grid-column {:width (:width config)}
    [:> segment {:raised true}
     [:> menu
      {:color color
       :stackable true}
      [title-label "Result"]
      [collapse-label [:result]]]
-    [result]]])
+    [result config]]])
 
 ;;; Main panel
 
@@ -487,4 +492,4 @@
 
      [switch-editor-panel switch-config]
 
-     [result-panel (:width result-config)]]]])
+     [result-panel result-config]]]])
