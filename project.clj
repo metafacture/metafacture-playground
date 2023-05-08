@@ -1,4 +1,4 @@
-(defproject metafacture-playground "0.1.0"
+(defproject metafacture-playground "0.2.0-SNAPSHOT"
   :description "Web application to play around with workflows using Metafacture languages Fix and Flux"
   :dependencies [[org.clojure/clojure "1.10.1"]
                  [org.clojure/clojurescript "1.10.773"
