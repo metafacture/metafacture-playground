@@ -166,8 +166,6 @@
    [:> image {:alt "Metafacture Ant"
               :src "images/metafacture-logo.png"}]
    "Metafacture Playground"
-   [:> label {:color color
-              :content "beta"}]
     (let [backend-versions (re-frame/subscribe [::subs/backend-versions])]
       (for [[version-name {:keys [version-label link]}] @backend-versions]
         ^{:key version-name}
