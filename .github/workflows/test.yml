@@ -13,7 +13,7 @@ jobs:
       with:
         path: metafacture-fix
         repository: metafacture/metafacture-fix
-        ref: 0.4.0
+        ref: 0.5.1
     - name: Install metafacture-fix
       working-directory: metafacture-fix
       run: ./gradlew install

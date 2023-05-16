@@ -30,7 +30,7 @@ It is possible to display the current version of dependencies in the UI. To disp
 
 Clone and install metafacture-fix:
 ```bash
-$ git clone https://github.com/metafacture/metafacture-fix.git -b 0.4.0
+$ git clone https://github.com/metafacture/metafacture-fix.git -b 0.5.1
 $ cd metafacture-fix
 ```
 
