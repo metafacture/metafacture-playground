@@ -51,7 +51,7 @@
                  [org.metafacture/metamorph-api "5.5.0"]
                  [org.metafacture/metamorph "5.5.0"]
                  [org.metafacture/metamorph-test "5.5.0"]
-                 [org.metafacture/metafix "0.5.1" :exclusions [[org.eclipse.xtext/xtext-dev-bom]]]]
+                 [org.metafacture/metafix "0.6.0-rc1" :exclusions [[org.eclipse.xtext/xtext-dev-bom]]]]
 
   :plugins [[lein-shadow "0.4.0"]
 
