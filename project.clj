@@ -39,7 +39,7 @@
                  [org.metafacture/metafacture-statistics "5.5.0"]
                  [org.metafacture/metafacture-io "5.5.0"]
                  [org.metafacture/metafacture-biblio "5.5.0"]
-                 [org.metafacture/metafacture-csv "5.5.0"]
+                 [org.metafacture/metafacture-csv "5.5.2-rc1-SNAPSHOT"]
                  [org.metafacture/metafacture-elasticsearch "5.5.0"]
                  [org.metafacture/metafacture-files "5.5.0"]
                  [org.metafacture/metafacture-jdom "5.5.0"]
