@@ -23,6 +23,7 @@
                  [com.degel/re-frame-storage-fx "0.1.1"]
                  [jtk-dvlp/re-frame-readfile-fx "2.0.0"]
                  [org.metafacture/metafacture-commons "5.5.0"]
+                 [org.metafacture/metafacture-csv "5.5.2-rc1"]
                  [org.metafacture/metafacture-framework "5.5.0"]
                  [org.metafacture/metafacture-flowcontrol "5.5.0"]
                  [org.metafacture/metafacture-mangling "5.5.0"]
@@ -39,7 +40,6 @@
                  [org.metafacture/metafacture-statistics "5.5.0"]
                  [org.metafacture/metafacture-io "5.5.0"]
                  [org.metafacture/metafacture-biblio "5.5.0"]
-                 [org.metafacture/metafacture-csv "5.5.0"]
                  [org.metafacture/metafacture-elasticsearch "5.5.0"]
                  [org.metafacture/metafacture-files "5.5.0"]
                  [org.metafacture/metafacture-jdom "5.5.0"]
@@ -65,8 +65,6 @@
 
   :clean-targets ^{:protect false} ["resources/public/js/compiled" "target"
                                     "test/js"]
-
-
   :shadow-cljs {:nrepl {:port 8777}
 
                 :builds {:app {:target :browser
