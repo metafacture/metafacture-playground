@@ -138,4 +138,4 @@
              :prep-tasks   ["compile" ["release"]]}}
 
   :prep-tasks []
-  :jvm-opts ["-Dclojure.tools.logging.factory=clojure.tools.logging.impl/slf4j-factory -Xmx5.6g"])
+  :jvm-opts ["-Dclojure.tools.logging.factory=clojure.tools.logging.impl/slf4j-factory" "-Xmx6g"])
