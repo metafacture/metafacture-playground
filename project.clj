@@ -39,7 +39,7 @@
                  [org.metafacture/metafacture-statistics "5.5.0"]
                  [org.metafacture/metafacture-io "5.5.0"]
                  [org.metafacture/metafacture-biblio "5.5.0"]
-                 [org.metafacture/metafacture-csv "5.5.2-rc1-SNAPSHOT"]
+                 [org.metafacture/metafacture-csv "5.5.0"]
                  [org.metafacture/metafacture-elasticsearch "5.5.0"]
                  [org.metafacture/metafacture-files "5.5.0"]
                  [org.metafacture/metafacture-jdom "5.5.0"]
@@ -51,7 +51,7 @@
                  [org.metafacture/metamorph-api "5.5.0"]
                  [org.metafacture/metamorph "5.5.0"]
                  [org.metafacture/metamorph-test "5.5.0"]
-                 [org.metafacture/metafix "0.6.0-rc1" :exclusions [[org.eclipse.xtext/xtext-dev-bom]]]]
+                 [org.metafacture/metafix "0.6.0-rc2" :exclusions [[org.eclipse.xtext/xtext-dev-bom]]]]
 
   :plugins [[lein-shadow "0.4.0"]
 
@@ -138,4 +138,4 @@
              :prep-tasks   ["compile" ["release"]]}}
 
   :prep-tasks []
-  :jvm-opts ["-Dclojure.tools.logging.factory=clojure.tools.logging.impl/slf4j-factory"])
+  :jvm-opts ["-Dclojure.tools.logging.factory=clojure.tools.logging.impl/slf4j-factory -Xmx5.6g"])
