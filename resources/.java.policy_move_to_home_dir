@@ -73,7 +73,7 @@ grant {
         permission java.lang.RuntimePermission "accessClassInPackage.sun.misc";
         
         permission java.net.SocketPermission "localhost:1024-", "accept, listen, resolve";
-        permission java.net.SocketPermission "*", "accept, resolve";
+        permission java.net.SocketPermission "*", "accept, connect, resolve";
 };
 
 
