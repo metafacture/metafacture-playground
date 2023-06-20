@@ -71,6 +71,8 @@ grant {
         permission java.lang.RuntimePermission "getContextClassLoader";
         permission java.lang.RuntimePermission "accessDeclaredMembers";
         permission java.lang.RuntimePermission "accessClassInPackage.sun.misc";
+        permission java.lang.RuntimePermission "classLoader";
+        permission java.lang.RuntimePermission "accessClassInPackage.jdk.internal.loader";
         
         permission java.net.SocketPermission "localhost:1024-", "accept, listen, resolve";
         permission java.net.SocketPermission "*", "accept, connect, resolve";
