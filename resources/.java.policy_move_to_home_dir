@@ -52,7 +52,7 @@ grant {
         permission java.io.FilePermission "${java.io.tmpdir}/-", "write, read, delete";
         permission java.io.FilePermission "${user.home}/-", "read";
         
-        // Please adapt these pathes to all parents pathes of your user home directory
+        // Please adapt these paths to all parent paths of your user home directory
         // Some Fix Code searches a .project file to determine an encoding
         // It's no problem, when there's no .project file but it's a problem,
         // when there's no access in generell to this file
