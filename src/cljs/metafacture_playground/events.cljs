@@ -129,7 +129,7 @@
 ;;; Editing input fields
 
 (defn edit-value
-  [{db :db} [_ field-name new-value & triggered-by-button?]]
+  [{db :db} [_ field-name new-value & [triggered-by-code?]]]
   (let [db-path [:input-fields field-name :content]
         disable-editors (when (= field-name :flux)
                           (let [val (-> new-value
@@ -140,15 +140,23 @@
                                 fix-used? (boolean (re-find #"\|fix\|" val))]
                             {[:input-fields :data :disabled?] (not data-used?)
                              [:input-fields :morph :disabled?] (not morph-used?)
-                             [:input-fields :fix :disabled?] (not fix-used?)}))]
+                             [:input-fields :fix :disabled?] (not fix-used?)}))
+        db (cond-> (reduce
+                    (fn [db [path v]]
+                      (assoc-in db path v))
+                    db
+                    disable-editors)
+             true (assoc-in db-path new-value)
+             triggered-by-code? (update-in [:input-fields field-name :key-count] inc)
+             (not triggered-by-code?) (assoc-in [:ui :dropdown :active-item] nil))]
     {:db (cond-> (reduce
                   (fn [db [path v]]
                     (assoc-in db path v))
                   db
                   disable-editors)
            true (assoc-in db-path new-value)
-           triggered-by-button? (update-in [:input-fields field-name :key-count] inc)
-           (not triggered-by-button?) (assoc-in [:ui :dropdown :active-item] nil))
+           triggered-by-code? (update-in [:input-fields field-name :key-count] inc)
+           (not triggered-by-code?) (assoc-in [:ui :dropdown :active-item] nil))
      :storage/set {:session? true
                    :pairs (conj
                            (mapv
@@ -156,7 +164,7 @@
                               {:name (->storage-key db-path) :value v})
                             disable-editors)
                            {:name (->storage-key db-path) :value new-value}
-                           (when-not triggered-by-button? {:name (->storage-key [:ui :dropdown :active-item]) :value nil}))}
+                           (when-not triggered-by-code? {:name (->storage-key [:ui :dropdown :active-item]) :value nil}))}
      :dispatch [::update-width field-name new-value]}))
 
 (re-frame/reg-event-fx
@@ -171,24 +179,43 @@
  ::open-dropdown
  open-dropdown)
 
-(defn load-sample
-  [{db :db} [_ dropdown-value sample]]
-    {:db (-> db
-             (assoc :result nil)
-             (assoc-in [:ui :dropdown :active-item] dropdown-value))
-     :fx (conj
-          (mapv
-           (fn [editor]
-             [:dispatch [::edit-input-value editor (get sample editor "") true]])
-           [:data :flux :fix :morph])
-          [:dispatch [::switch-editor (:active-editor sample)]])
-     :storage/set {:session? true
-                   :name (->storage-key [:ui :dropdown :active-item])
-                   :value dropdown-value}})
+(defn- find-example-data [example-name data]
+  (some #(cond
+           (and (map? (val %))
+                (= (-> % key utils/display-name) example-name))
+           (val %)
+
+           (and (map? (val %))
+                (not-any? #{:data :flux :fix :morph} (keys (val %))))
+           (find-example-data example-name (val %))
+
+           :else false)
+        data))
+
+(defn load-example
+  [{db :db} [_ example-name]]
+  (let [example-data (find-example-data example-name (:examples db))]
+    (if example-data
+      {:db (-> db
+               (assoc :result nil)
+               (assoc-in [:ui :dropdown :active-item] example-name))
+       :fx (conj
+            (mapv
+             (fn [editor]
+               [:dispatch [::edit-input-value editor (get example-data editor "") true]])
+             [:data :flux :fix :morph])
+            [:dispatch [::switch-editor (:active-editor example-data)]])
+       :storage/set {:session? true
+                     :name (->storage-key [:ui :dropdown :active-item])
+                     :value example-name}
+       ::effects/set-url-query-params example-name}
+      {:db (assoc db :message {:content (str "Could not find example with name \"" example-name "\".")
+                               :type :warning})
+       ::effects/unset-url-query-params nil})))
 
 (re-frame/reg-event-fx
-  ::load-sample
-  load-sample)
+  ::load-example
+  load-example)
 
 (defn switch-editor
   [{db :db} [_ editor]]
@@ -493,28 +520,44 @@
 
 ;;; Initialize-db
 
+(defn- links->examples []
+  (map
+   (fn [[k v]]
+     (if (map? v)
+       {k (into (sorted-map)
+                (links->examples)
+                v)}
+       {(utils/display-name k) (utils/parse-url v)}))))
+
 (defn examples-response
-  [{db :db} [_ {:keys [body]}]]
+  [{db :db} [_ initial-example {:keys [body]}]]
   (let [body (transit/read (transit/reader :json) body)]
-    {:db (assoc db :examples body)}))
+    (if initial-example
+      {:db (assoc db :examples (into (sorted-map)
+                                     (links->examples)
+                                     body))
+       :fx [[:dispatch [::load-example initial-example]]]}
+      {:db (assoc db :examples (into (sorted-map)
+                                     (links->examples)
+                                     body))})))
 
 (re-frame/reg-event-fx
  ::examples-response
  examples-response)
 
-(defn load-samples
-  [{db :db} _]
+(defn load-examples
+  [{db :db} [_ initial-example]]
   {:db db
    :fetch {:method                 :get
            :url                    "examples"
            :timeout                10000
            :response-content-types {#"application/.*json" :json}
-           :on-success             [::examples-response]
+           :on-success             [::examples-response initial-example]
            :on-failure             [::bad-response]}})
 
 (re-frame/reg-event-fx
- ::load-samples
- load-samples)
+ ::load-examples
+ load-examples)
 
 (defn versions-response
   [{db :db} [_ {:keys [body]}]]
@@ -556,28 +599,34 @@
 (defn initialize-db
   [{[_ href window-height] :event
     web-storage :storage/all}]
-  (let [query-params (utils/parse-url href)]
-    (if (empty? query-params)
-      {:db (deep-merge
-            db/default-db
-            (restore-db web-storage)
-            {:ui {:height window-height}})
-       :fx [[:dispatch [::load-samples]]
-            [:dispatch [::get-backend-versions]]]}
-      {:db (-> db/default-db
-               (assoc-in [:ui :height] window-height))
-       :fx (cond->
-            (mapv
-             (fn [editor]
-               [:dispatch [::edit-input-value editor (get query-params editor "")]])
-             [:data :flux :fix :morph])
-             true (conj [:dispatch [::load-samples]])
-             true (conj [:dispatch [::get-backend-versions]])
-             (get query-params :active-editor) (conj [:dispatch [::switch-editor (-> query-params :active-editor keyword)]]))
-       :storage/set {:session? true
-                     :pairs (-> (assoc-query-params {} query-params)
-                                generate-pairs)}
-       ::effects/unset-url-query-params href})))
+  (let [query-params (utils/parse-url href)
+        fx [[:dispatch [::get-backend-versions]]]]
+    (cond
+      (empty? query-params) {:db (deep-merge
+                                  db/default-db
+                                  (restore-db web-storage)
+                                  {:ui {:height window-height}})
+                             :fx (conj fx [:dispatch [::load-examples]])}
+      (:example query-params) {:db (-> db/default-db
+                                       (assoc-in [:ui :height] window-height))
+                               :fx (conj fx [:dispatch [::load-examples (get query-params :example)]])
+                               :storage/set {:session? true
+                                             :pairs (-> (assoc-query-params {} query-params)
+                                                        generate-pairs)}}
+      :else {:db (-> db/default-db
+                     (assoc-in [:ui :height] window-height))
+             :fx (concat fx
+                     [[:dispatch [::load-examples]]]
+                     (mapv
+                      (fn [editor]
+                        [:dispatch [::edit-input-value editor (get query-params editor "")]])
+                      [:data :flux :fix :morph])
+                     (when-let [active-editor (get query-params :active-editor)]
+                       [[:dispatch [::switch-editor (keyword active-editor)]]]))
+             :storage/set {:session? true
+                           :pairs (-> (assoc-query-params {} query-params)
+                                      generate-pairs)}
+             ::effects/unset-url-query-params href})))
 
 (re-frame/reg-event-fx
  ::initialize-db
