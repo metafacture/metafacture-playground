@@ -54,7 +54,7 @@ grant {
         
         // Please adapt these paths to all parent paths of your user home directory
         // Some Fix Code searches a .project file to determine an encoding
-        // It's no problem, when there's no .project file but it's a problem,
+        // It's no problem when there's no .project file, but it's a problem
         // when there's no access in generell to this file
         permission java.io.FilePermission "/Users/.project", "read";
         permission java.io.FilePermission "/.project", "read";
