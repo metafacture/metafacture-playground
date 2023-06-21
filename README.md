@@ -51,6 +51,13 @@ $ git clone https://github.com/metafacture/metafacture-playground.git
 $ cd metafacture-playground
 ```
 
+### Move Java policy file
+
+The Metafacture Playground uses the [Java Security Manager](https://docs.oracle.com/javase/tutorial/essential/environment/security.html), so you need to configure proper permissions to run the Metafacture Playground.
+Please move `.java.policy_move_to_home_dir` from the project's resources to your user's home directory and remove the suffix '_move_to_home_dir'.
+Please adapt in the Java policy the lines concerning the file '.project' like described in the policy.
+If there are problems starting and/or running the Playground, to find the problem it may help to add in the project.clj under the key ':jvm-opts' the entry '"-Djava.security.debug=access"' to see if a permission is missing.
+
 ### Start in development mode
 
 When using development mode you don't have to restart when changing files. They will be reloaded automatically.
