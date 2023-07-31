@@ -15,7 +15,9 @@
   (->> (repeat length \a)
        (apply str)))
 
-(def sample-data (-> (rc/inline "examples/Local_formeta_to_XML_(fix)")
+(def example-name "Local formeta to XML (fix)")
+
+(def example-data (-> (rc/inline "examples/Local_formeta_to_XML_(fix)")
                      utils/parse-url))
 
 ; Initilized db = empty db
@@ -23,17 +25,6 @@
   (-> (events/initialize-db {:db {}
                              :event [::events/initialize-db]})
       (dissoc :dispatch :fx :storage/set :metafacture-playground.effects/unset-url-query-params)))
-
-; db with one input-field not empty
-(def db1
-  (events/edit-value empty-db [:edit-value :data (:data sample-data)]))
-
-; db with no empty input-fields
-(def db2
-  (-> empty-db
-      (events/edit-value [:edit-value :data (:data sample-data)])
-      (events/edit-value [:edit-value :flux (:flux sample-data)])
-      (events/edit-value [:edit-value :fix  (:fix sample-data)])))
 
 (deftest initialize-db
   (testing "Test initializing of db without values"
@@ -77,24 +68,33 @@
          (is (true? (get-in db' [:db :input-fields :fix :disabled?])))
          (is (false? (get-in db' [:db :input-fields :morph :disabled?]))))))
 
-(deftest load-sample-test
-  (testing "Test loading sample"
+(defn test-fixtures
+  []
+  (re-frame/reg-event-fx
+   ::test-fixtures
+   (fn [cofx _]
+     (assoc-in cofx [:db :examples] {example-name example-data}))))
+
+(deftest load-example-test
+  (testing "Test loading example"
     (rf-test/run-test-sync
-     (re-frame/dispatch [::events/load-sample "sample data" sample-data])
+     (test-fixtures)
+     (re-frame/dispatch [::test-fixtures])
+     (re-frame/dispatch [::events/load-example example-name])
      (and (is (= @(re-frame/subscribe [::subs/field-value :data])
-                 (:data sample-data)))
+                 (:data example-data)))
           (is (= @(re-frame/subscribe [::subs/field-value :flux])
-                 (:flux sample-data)))
+                 (:flux example-data)))
           (is (= @(re-frame/subscribe [::subs/field-value :fix])
-                 (:fix sample-data)))
+                 (:fix example-data)))
           (is (not @(re-frame/subscribe [::subs/dropdown-open? "main"])))
           (is (= @(re-frame/subscribe [::subs/dropdown-active-item])
-                 "sample data"))))))
+                 example-name))))))
 
 (deftest process-button-test
   (testing "Test status after processing response"
     (let [db' (-> empty-db
-                  (events/load-sample [:load-sample sample-data]))
+                  (events/load-example [:load-example example-data]))
           {:keys [fix flux data morph]} (get-in db' [:db :input-fields])
           db'' (events/process db' [:process (:content data) (:content flux) (:content fix) (:content morph) :fix])]
       (is (get-in db'' [:db :result :loading?])))))
@@ -138,9 +138,9 @@
 (deftest generate-links-test
   (testing "Test generating share links"
     (let [db' (-> empty-db
-                  (events/edit-value [:edit-value :data (:data sample-data)])
-                  (events/edit-value [:edit-value :fix (:fix sample-data)])
-                  (events/edit-value [:edit-value :flux (:flux sample-data)]))
+                  (events/edit-value [:edit-value :data (:data example-data)])
+                  (events/edit-value [:edit-value :fix (:fix example-data)])
+                  (events/edit-value [:edit-value :flux (:flux example-data)]))
           data (get-in db' [:db :input-fields :data :content])
           fix (get-in db' [:db :input-fields :fix :content])
           flux (get-in db' [:db :input-fields :flux :content])
@@ -162,7 +162,7 @@
   (testing "Test not generating links if url is too long"
     (let [extra-long-test-url (str "http://test.metafacture.org/playground/" (generate-random-string 66000) "/")
           db'' (-> empty-db
-                   (events/generate-links [:generate-links extra-long-test-url (:data sample-data) (:flux sample-data) (:fix sample-data) "" :fix])
+                   (events/generate-links [:generate-links extra-long-test-url (:data example-data) (:flux example-data) (:fix example-data) "" :fix])
                    :db)]
       (and (is (get-in db'' [:message :content]))
            (is (nil? (get-in db'' [:links :api-call])))

@@ -1,6 +1,7 @@
 (ns metafacture-playground.effects
   (:require [re-frame.core :as re-frame]
-            [clojure.string :as clj-str]))
+            [clojure.string :as clj-str]
+            [lambdaisland.uri :refer [uri assoc-query*]]))
 
 (re-frame/reg-fx
  ::copy-to-clipboard
@@ -14,9 +15,17 @@
 
 (re-frame/reg-fx
  ::unset-url-query-params
- (fn [href]
-   (let [new-href (clj-str/replace href #"\?.*" "")]
+ (fn [& [href]]
+   (let [href (or href (-> js/window .-location .-href))
+         new-href (clj-str/replace href #"\?.*" "")]
      (-> js/window .-history (.replaceState {} "" new-href)))))
+
+(re-frame/reg-fx
+ ::set-url-query-params
+ (fn [example]
+   (let [href (-> js/window .-location .-href)
+         href-with-params (-> href uri (assoc-query* {:example example}))]
+     (-> js/window .-history (.replaceState {} "" href-with-params)))))
 
 (defn- file-blob [datamap mimetype]
   (js/Blob. [datamap] {"type" mimetype}))

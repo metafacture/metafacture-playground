@@ -10,7 +10,7 @@
    [goog.object :as g]
    [re-pressed.core :as rp]
    ["@monaco-editor/react" :as monaco-react]
-   [cljs.pprint :as pprint]))
+   [metafacture-playground.utils :as utils]))
 
 ;;; Using semantic ui react components
 
@@ -201,7 +201,10 @@
 
 (defn is-group? [entry]
   (try
-    (when (-> entry val :display-name) false)
+    (when (or (-> entry val :data)
+              (-> entry val :flux)
+              (-> entry val :fix)
+              (-> entry val :morph)) false)
     (catch :default _
       true)))
 
@@ -217,9 +220,8 @@
                          :item true
                          :on-click #(re-frame/dispatch [::events/open-dropdown (key entry) (not @dropdown-open?)])}
             (dropdown-entries (val entry))])
-        (let [[k v] entry
-              display-name (:display-name v)
-              value (:value v)
+        (let [[k _] entry
+              display-name (utils/display-name k)
               dropdown-value (re-frame/subscribe [::subs/dropdown-active-item])]
           ^{:key k}
           [:> dropdown-item
@@ -228,7 +230,7 @@
             :value display-name
             :active (= display-name @dropdown-value)
             :selected (= display-name @dropdown-value)
-            :onClick #(re-frame/dispatch [::events/load-sample display-name value])}]))))])
+            :onClick #(re-frame/dispatch [::events/load-example display-name])}]))))])
 
 (defn examples-dropdown []
   [:> button-group {:color color
