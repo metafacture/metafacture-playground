@@ -11,7 +11,8 @@
    [clojure.string :as clj-str]
    [clojure.walk :as walk]
    [cognitect.transit :as transit]
-   [goog.object :as g]))
+   [goog.object :as g]
+   [cljs.pprint :as cljs-pprint]))
 
 ;;; Utils for web storage use
 
@@ -69,18 +70,22 @@
                                    current-max))
                                0
                                lines)
-        full-width (when (> max-row-length visible-chars) 16)
-        editor (if (or (= editor :fix) (= editor :morph))
-                 :switch
-                 editor)]
-    (if full-width
-      {:db (assoc-in db [:input-fields editor :width] full-width)
+        width (if (> max-row-length visible-chars)
+                16
+                (or (get-in db [:editors editor :default-width])
+                    (get-in db [:editors editor :width])))]
+      {:db (cond->
+            (assoc-in db [:editors editor :width] width)
+             (= editor :flux) (assoc-in [:editors :transformation :width] width)
+             (= editor :transformation) (assoc-in [:editors :flux :width] width))
        :storage/set {:session? true
-                     :name (->storage-key [:input-fields editor :width])
-                     :value full-width}}
-      {:db (update-in db [:input-fields editor] dissoc :width)
-       :storage/remove {:session? true
-                        :name (->storage-key [:input-fields editor :width])}})))
+                     :pairs (cond->
+                             [{:name (->storage-key [:editors editor :width])
+                              :value width}]
+                              (= editor :flux) (conj {:name (->storage-key [:editors :transformation :width])
+                                                      :value width})
+                              (= editor :transformation) (conj {:name (->storage-key [:editors :flux :width])
+                                                                :value width}))}}))
 
 (re-frame/reg-event-fx
  ::update-width
@@ -115,8 +120,8 @@
 ;;; Collapsing panels
 
 (defn collapse-panel
-  [{:keys [db]} [_ path status]]
-  (let [db-path (conj path :collapsed?)
+  [{:keys [db]} [_ editor status]]
+  (let [db-path [:editors editor :collapsed?]
         new-value (not status)]
     {:db (assoc-in db db-path new-value)
      :storage/set {:session? true
@@ -128,48 +133,43 @@
 
 ;;; Editing input fields
 
-(defn edit-value
-  [{db :db} [_ field-name new-value & [triggered-by-code?]]]
-  (let [db-path [:input-fields field-name :content]
-        disable-editors (when (= field-name :flux)
-                          (let [val (-> new-value
-                                        (clj-str/replace #"\n*\|" "|")
-                                        (clj-str/replace #"\s*\|\s*" "|"))
-                                data-used? (boolean (re-find #"PG_DATA" val))
-                                morph-used? (boolean (re-find #"\|morph\|" val))
-                                fix-used? (boolean (re-find #"\|fix\|" val))]
-                            {[:input-fields :data :disabled?] (not data-used?)
-                             [:input-fields :morph :disabled?] (not morph-used?)
-                             [:input-fields :fix :disabled?] (not fix-used?)}))
-        db (cond-> (reduce
-                    (fn [db [path v]]
-                      (assoc-in db path v))
-                    db
-                    disable-editors)
-             true (assoc-in db-path new-value)
-             triggered-by-code? (update-in [:input-fields field-name :key-count] inc)
-             (not triggered-by-code?) (assoc-in [:ui :dropdown :active-item] nil))]
-    {:db (cond-> (reduce
-                  (fn [db [path v]]
-                    (assoc-in db path v))
-                  db
-                  disable-editors)
-           true (assoc-in db-path new-value)
-           triggered-by-code? (update-in [:input-fields field-name :key-count] inc)
-           (not triggered-by-code?) (assoc-in [:ui :dropdown :active-item] nil))
-     :storage/set {:session? true
-                   :pairs (conj
-                           (mapv
-                            (fn [[db-path v]]
-                              {:name (->storage-key db-path) :value v})
-                            disable-editors)
-                           {:name (->storage-key db-path) :value new-value}
-                           (when-not triggered-by-code? {:name (->storage-key [:ui :dropdown :active-item]) :value nil}))}
-     :dispatch [::update-width field-name new-value]}))
+(defn- disable-editor? [db editor content]
+  (let [variable (get-in db [:editors editor :file-variable])]
+    (-> variable
+        re-pattern
+        (re-find content)
+        boolean
+        not)))
+
+(defn edit-editor-content
+  [{db :db} [_ editor new-value & [triggered-by-code?]]]
+  (let [disable-editors (when (= editor :flux)
+                          (mapv (fn [editor]
+                                  [editor (disable-editor? db editor new-value)])
+                                [:data :transformation]))]
+    (merge
+     {:db (cond-> (reduce
+                   (fn [db [editor v]]
+                     (assoc-in db [:editors editor :disabled?] v))
+                   db
+                   disable-editors)
+            true (assoc-in [:editors editor :content] new-value)
+            triggered-by-code? (update-in [:editors editor :key-count] inc)
+            (not triggered-by-code?) (assoc-in [:ui :dropdown :active-item] nil))
+      :storage/set {:session? true
+                    :pairs (conj
+                            (mapv
+                             (fn [[editor v]]
+                               {:name (->storage-key [:editors editor :disabled?]) :value v})
+                             disable-editors)
+                            {:name (->storage-key [:editors editor :content]) :value new-value}
+                            (when-not triggered-by-code? {:name (->storage-key [:ui :dropdown :active-item]) :value nil}))}}
+     (when-not (= editor :result)
+       {:dispatch [::update-width editor new-value]}))))
 
 (re-frame/reg-event-fx
- ::edit-input-value
- edit-value)
+ ::edit-editor-content
+ edit-editor-content)
 
 (defn open-dropdown
   [{db :db} [_ folder status]]
@@ -199,12 +199,10 @@
       {:db (-> db
                (assoc :result nil)
                (assoc-in [:ui :dropdown :active-item] example-name))
-       :fx (conj
-            (mapv
+       :fx (mapv
              (fn [editor]
-               [:dispatch [::edit-input-value editor (get example-data editor "") true]])
-             [:data :flux :fix :morph])
-            [:dispatch [::switch-editor (:active-editor example-data)]])
+               [:dispatch [::edit-editor-content editor (get example-data editor "") true]])
+             [:data :flux :transformation])
        :storage/set {:session? true
                      :name (->storage-key [:ui :dropdown :active-item])
                      :value example-name}
@@ -216,21 +214,6 @@
 (re-frame/reg-event-fx
   ::load-example
   load-example)
-
-(defn switch-editor
-  [{db :db} [_ editor]]
-  (let [editor (or editor :fix)]
-    (merge
-     {:db (assoc-in db [:input-fields :switch :active] editor)
-      :storage/set {:session? true
-                    :name (->storage-key [:input-fields :switch :active])
-                    :value (when editor (name editor))}}
-     (when editor
-       {:dispatch [::update-width editor (get-in db [:input-fields editor :content])]}))))
-
-(re-frame/reg-event-fx
- ::switch-editor
- switch-editor)
 
 ;;; Copy to clipboard
 
@@ -245,18 +228,14 @@
 
 ;;; Share links
 
-(defn- get-used-params [flux fix morph data]
-  (if flux
-    (let [flux (-> flux
-                   (clj-str/replace #"\n\|" "|")
-                   (clj-str/replace #"\s*\|\s*" "|"))
-          fix-in-flux? (re-find #"\|fix\|" flux)
-          morph-in-flux? (re-find #"\|morph\|" flux)
-          data-in-flux? (re-find #"PG_DATA" flux)]
-      (cond-> {}
-        fix-in-flux? (merge {:fix fix})
-        morph-in-flux? (merge {:morph morph})
-        data-in-flux? (merge {:data data})))
+(defn- variable-used? [content variable]
+  (re-find (re-pattern variable) content))
+
+(defn- get-used-params [params]
+  (if-let [flux (get-in params [:flux :content])]
+    (cond-> {:flux flux}
+      (variable-used? flux (get-in params [:transformation :variable])) (merge {:transformation (get-in params [:transformation :content])})
+      (variable-used? flux (get-in params [:data :variable])) (merge {:data (get-in params [:data :content])}))
     {}))
 
 (def max-url-string 65536) ; maximum displayable URL length in Firefox
@@ -267,9 +246,7 @@
     true))
 
 (defn generate-link [url path query-params]
-  (let [inputs (-> query-params
-                   (dissoc :active-editor)
-                   vals)]
+  (let [inputs (vals query-params)]
     (when-not (every? clj-str/blank? inputs)
       (try
         (-> (uri url)
@@ -291,16 +268,13 @@
      -1))
 
 (defn generate-links
-  [{db :db} [_ url data flux fix morph active-editor]]
-  (let [api-call-params (when flux
-                          (merge
-                           {:flux flux}
-                           (get-used-params flux fix morph data)))
+  [{db :db} [_ uri uri-params]]
+  (let [api-call-params (get-used-params uri-params)
         workflow-params (merge api-call-params
-                               (when active-editor
+                               (when-let [active-editor (get uri-params :active-editor)]
                                  {:active-editor (name active-editor)}))
-        api-call-link (when api-call-params (generate-link url "./process" api-call-params))
-        workflow-link (when workflow-params (generate-link url "" workflow-params))
+        api-call-link (when api-call-params (generate-link uri "./process" api-call-params))
+        workflow-link (when workflow-params (generate-link uri "" workflow-params))
         api-call-link-too-long? (url-too-long? api-call-link)
         workflow-link-too-long? (url-too-long? workflow-link)
         message (when (or api-call-link-too-long? workflow-link-too-long?)
@@ -369,13 +343,13 @@
                   (let [file-extension (re-find #"\.[0-9a-zA-Z]+$" name)]
                     (case file-extension
                       ".flux" (let [flux-content (import-flux->playground-flux content files)]
-                                (cond-> (update result :fx conj [:dispatch [::edit-input-value :flux flux-content triggered-by-button?]])
+                                (cond-> (update result :fx conj [:dispatch [::edit-editor-content :flux flux-content triggered-by-button?]])
                                   (not= flux-content content) (assoc :message "The flux content has been adapted to work in the playground. Additional adjustments could be necessary.")))
-                      ".fix" (update result :fx concat [[:dispatch [::edit-input-value :fix content triggered-by-button?]]
+                      ".fix" (update result :fx concat [[:dispatch [::edit-editor-content :fix content triggered-by-button?]]
                                                         [:dispatch [::switch-editor :fix]]])
-                      ".morph" (update result :fx concat [[:dispatch [::edit-input-value :morph content triggered-by-button?]]
+                      ".morph" (update result :fx concat [[:dispatch [::edit-editor-content :morph content triggered-by-button?]]
                                                           [:dispatch [::switch-editor :morph]]])
-                      (update result :fx conj [:dispatch [::edit-input-value :data content triggered-by-button?]]))))
+                      (update result :fx conj [:dispatch [::edit-editor-content :data content triggered-by-button?]]))))
                 {:fx []}
                 files)]
      {:db (assoc db :message {:content (concat [(:message result)]
@@ -439,11 +413,6 @@
 
 ;;; Processing
 
-(re-frame/reg-event-fx
- ::clear-result
- (fn [cofx _]
-   (assoc-in cofx [:db :result :content] nil)))
-
 (defn process-response
   [{db :db} [_ {:keys [headers body]}]]
   (if-let [content-disposition (:content-disposition headers)]
@@ -493,26 +462,18 @@
  bad-response)
 
 (defn process
-  [{db :db} [_ data flux fix morph active-editor]]
-  (let [active-editor-in-flux? (when (and active-editor flux)
-                                 (re-find (re-pattern (str "\\|(\\s|\\n)*" (name active-editor) "(\\s|\\n)*\\|")) flux))
-        message (when (and active-editor (not active-editor-in-flux?))
-                  (str "Flux does not use selected " (name active-editor) "."))]
+  [{db :db} [_ data flux transformation]]
     {:fetch {:method                 :post
              :url                    "process"
              :body                   (.stringify js/JSON (clj->js {:data data
                                                                    :flux flux
-                                                                   :fix fix
-                                                                   :morph morph}))
+                                                                   :transformation transformation}))
              :timeout                100000
              :response-content-types {"text/plain" :text
                                       #"application/.*json" :json}
              :on-success             [::process-response]
              :on-failure             [::bad-response]}
-     :db (-> db
-             (assoc-in [:result :loading?] true)
-             (assoc :message {:content message
-                              :type :warning}))}))
+     :db (assoc-in db [:result :loading?] true)})
 
 (re-frame/reg-event-fx
  ::process
@@ -588,13 +549,11 @@
     (apply merge-with deep-merge a maps)
     (apply merge-with deep-merge maps)))
 
-(defn- assoc-query-params [start-db {:keys [data flux fix morph active-editor]}]
+(defn- assoc-query-params [start-db {:keys [data flux transformation]}]
   (cond-> start-db
-    data (assoc-in [:input-fields :data :content] data)
-    flux (assoc-in [:input-fields :flux :content] flux)
-    fix (assoc-in [:input-fields :fix :content] fix)
-    morph (assoc-in [:input-fields :morph :content] morph)
-    active-editor (assoc-in [:input-fields :switch :active] (keyword active-editor))))
+    data (assoc-in [:editors :data :content] data)
+    flux (assoc-in [:editors :flux :content] flux)
+    transformation (assoc-in [:editors :morph :content] transformation)))
 
 (defn initialize-db
   [{[_ href window-height] :event
@@ -619,10 +578,8 @@
                      [[:dispatch [::load-examples]]]
                      (mapv
                       (fn [editor]
-                        [:dispatch [::edit-input-value editor (get query-params editor "")]])
-                      [:data :flux :fix :morph])
-                     (when-let [active-editor (get query-params :active-editor)]
-                       [[:dispatch [::switch-editor (keyword active-editor)]]]))
+                        [:dispatch [::edit-editor-content editor (get query-params editor "")]])
+                      [:data :flux :transformation]))
              :storage/set {:session? true
                            :pairs (-> (assoc-query-params {} query-params)
                                       generate-pairs)}

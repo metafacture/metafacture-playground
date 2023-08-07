@@ -45,28 +45,28 @@
   (testing "Test editing values."
     (let [new-value "I am a new value"
           db' (-> empty-db
-                  (events/edit-value [:edit-input-value :fix new-value])
-                  (update-in [:db :input-fields] dissoc :result)
+                  (events/edit-editor-content [:edit-input-value :fix new-value])
+                  (update-in [:db :editors] dissoc :result)
                   (dissoc :storage/set))]
       (and (is (not= db' empty-db))
-           (is (= (get-in db' [:db :input-fields :fix :content])
+           (is (= (get-in db' [:db :editors :fix :content])
                   new-value))
-           (is (true? (get-in db' [:db :input-fields :data :disabled?])))
-           (is (true? (get-in db' [:db :input-fields :fix :disabled?])))
-           (is (true? (get-in db' [:db :input-fields :morph :disabled?]))))))
+           (is (true? (get-in db' [:db :editors :data :disabled?])))
+           (is (true? (get-in db' [:db :editors :fix :disabled?])))
+           (is (true? (get-in db' [:db :editors :morph :disabled?]))))))
   
 (testing "Test disabling editor depending on editing values")
   (let [new-value "I use the input PG_DATA and a | morph | "
         db' (-> empty-db
-                (events/edit-value [:edit-input-value :flux new-value])
-                (update-in [:db :input-fields] dissoc :result)
+                (events/edit-editor-content [:edit-input-value :flux new-value])
+                (update-in [:db :editors] dissoc :result)
                 (dissoc :storage/set))]
     (and (is (not= db' empty-db))
-         (is (= (get-in db' [:db :input-fields :flux :content])
+         (is (= (get-in db' [:db :editors :flux :content])
                 new-value))
-         (is (false? (get-in db' [:db :input-fields :data :disabled?])))
-         (is (true? (get-in db' [:db :input-fields :fix :disabled?])))
-         (is (false? (get-in db' [:db :input-fields :morph :disabled?]))))))
+         (is (false? (get-in db' [:db :editors :data :disabled?])))
+         (is (true? (get-in db' [:db :editors :fix :disabled?])))
+         (is (false? (get-in db' [:db :editors :morph :disabled?]))))))
 
 (defn test-fixtures
   []
@@ -95,24 +95,24 @@
   (testing "Test status after processing response"
     (let [db' (-> empty-db
                   (events/load-example [:load-example example-data]))
-          {:keys [fix flux data morph]} (get-in db' [:db :input-fields])
+          {:keys [fix flux data morph]} (get-in db' [:db :editors])
           db'' (events/process db' [:process (:content data) (:content flux) (:content fix) (:content morph) :fix])]
       (is (get-in db'' [:db :result :loading?])))))
 
 (deftest collapse-panel-test
   (testing "Test collapse behaviour"
     (let [db' (-> empty-db
-                  (events/collapse-panel [:collapse-panel [:input-fields :flux] false]))]
-      (and (is (get-in db' [:db :input-fields :flux :collapsed?]))
-           (is (not (get-in db' [:db :input-fields :fix :collapsed?])))
-           (is (not (get-in db' [:db :input-fields :data :collapsed?])))
+                  (events/collapse-panel [:collapse-panel [:editors :flux] false]))]
+      (and (is (get-in db' [:db :editors :flux :collapsed?]))
+           (is (not (get-in db' [:db :editors :transformation :collapsed?])))
+           (is (not (get-in db' [:db :editors :data :collapsed?])))
            (is (not (get-in db' [:db :result :collapsed?]))))))
 
   (testing "Test collapsing and expanding a panel"
     (let [db' (-> empty-db
-                  (events/collapse-panel [:collapse-panel [:input-fields :flux] false])
-                  (events/collapse-panel [:collapse-panel [:input-fields :flux] true]))]
-      (is (not (get-in db' [:db :input-fields :flux :collapsed?]))))))
+                  (events/collapse-panel [:collapse-panel [:editors :flux] false])
+                  (events/collapse-panel [:collapse-panel [:editors :flux] true]))]
+      (is (not (get-in db' [:db :editors :flux :collapsed?]))))))
 
 (deftest message-test
   (testing "Test dismissing message"
@@ -138,13 +138,13 @@
 (deftest generate-links-test
   (testing "Test generating share links"
     (let [db' (-> empty-db
-                  (events/edit-value [:edit-value :data (:data example-data)])
-                  (events/edit-value [:edit-value :fix (:fix example-data)])
-                  (events/edit-value [:edit-value :flux (:flux example-data)]))
-          data (get-in db' [:db :input-fields :data :content])
-          fix (get-in db' [:db :input-fields :fix :content])
-          flux (get-in db' [:db :input-fields :flux :content])
-          morph (get-in db' [:db :input-fields :morph :content])
+                  (events/edit-editor-content [:edit-editor-content :data (:data example-data)])
+                  (events/edit-editor-content [:edit-editor-content :fix (:fix example-data)])
+                  (events/edit-editor-content [:edit-editor-content :flux (:flux example-data)]))
+          data (get-in db' [:db :editors :data :content])
+          fix (get-in db' [:db :editors :fix :content])
+          flux (get-in db' [:db :editors :flux :content])
+          morph (get-in db' [:db :editors :morph :content])
           test-url "http://test.metafacture.org/playground/"
           db'' (events/generate-links db' [:generate-links test-url data flux fix morph :fix])
           api-call-link (uri (get-in db'' [:db :links :api-call]))
@@ -176,8 +176,9 @@
                              |encode-xml (rootTag= \"collection25481354555465645645654\")"
           db' (-> empty-db
                   (events/update-width [:update-width :flux long-flux-content]))]
-      (and (is (= (get-in db' [:db :input-fields :flux :width]) 16))
-           (is (nil? (get-in db' [:input-fields :switch :width])))))
+      (and (is (= (get-in db' [:db :editors :flux :width]) 16))
+           (is (= (get-in db' [:editors :transformation :width]) 16))
+           (is (= (get-in db' [:editors :fix :width]) 16))))
 
     (testing "Test updating the width of fix editor"
       (let [long-fix-content "move_field(_id, id)\n
@@ -186,26 +187,17 @@
                               /*vacuum()*/"
             db' (-> empty-db
                     (events/update-width [:update-width :fix long-fix-content]))]
-        (and (is (= (get-in db' [:db :input-fields :switch :width]) 16))
-             (is (nil? (get-in db' [:db :input-fields :flux :width]))))))
+        (and (is (= (get-in db' [:db :editors :transformation :width]) 8))
+             (is (= (get-in db' [:db :editors :flux :width]) 8))
+             (is (= (get-in db' [:db :editors :fix]) 16)))))
     
-(testing "Test updating the width of fix editor"
-  (let [long-flux-content "as-lines\n
-                             |decode-formeta\n
-                             |fix\n
-                             |encode-xml (rootTag= \"collection25481354555465645656454\")"
-        long-fix-content "map(_id, id)\n
-                              move_field(a,title)\n
-                              move_field(b.n,authooooooooooooooooooooooooooooooooooor)\n
-                              /*vacuum()*/"
+(testing "Test updating the width of transformation editor"
+  (let [long-transformation-content "as-lines\n
+                                     |decode-formeta\n
+                                     |fix\n
+                                     |encode-xml (rootTag= \"collection25481354555465645656454\")"
         db' (-> empty-db
-                (events/update-width [:update-width :flux long-flux-content])
-                (events/update-width [:update-width :fix long-fix-content]))]
-    (and (is (= (get-in db' [:db :input-fields :switch :width]) 16))
-         (is (= (get-in db' [:db :input-fields :flux :width]) 16)))))))
-
-(deftest switch-editor-test
-  (testing "Test switching between fix and morph editor"
-    (let [db' (-> empty-db
-                  (events/switch-editor [:switch-editor :morph]))]
-      (is (= (get-in db' [:db :input-fields :switch :active]) :morph)))))
+                (events/update-width [:update-width :flux long-transformation-content]))]
+    (and (is (= (get-in db' [:db :editors :transformation :width]) 16))
+         (is (= (get-in db' [:db :editors :flux :width]) 16))
+         (is (= (get-in db' [:db :editors :fix :width]) 16)))))))
