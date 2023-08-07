@@ -41,9 +41,9 @@
 
 (deftest processing-test
   (testing "Process sample data (with fix) correctly."
-    (let [result (process (:data test-data) (:flux-with-fix test-data) (:fix test-data) (:morph test-data))]
+    (let [result (process (:flux-with-fix test-data) (:data test-data) (:fix test-data))]
       (is (= result (:result test-data)))))
 
   (testing "Process sample data (with morph) correctly."
-    (let [result (process (:data test-data) (:flux-with-morph test-data) (:fix test-data) (:morph test-data))]
+    (let [result (process (:flux-with-morph test-data) (:data test-data) (:morph test-data))]
       (is (= result (:result test-data))))))
