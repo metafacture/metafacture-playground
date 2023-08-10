@@ -59,30 +59,7 @@
 
 ; Config of input fields
 
-(def focused-editor "data")
-
-(def data-config
-  {:name "data"
-   :width 16
-   :language "text/plain"
-   :height-divider 3})
-
-(def switch-config
-  {:common {:width 8}
-   :different {:fix {:name "fix"
-                     :language "text/plain"}
-               :morph {:name "morph"
-                       :language "text/plain"}}})
-
-  (def flux-config
-    {:name "flux"
-     :width 8
-     :language "text/plain"})
-
-(def result-config
-  {:name "result"
-   :width 16
-   :language "text/plain"})
+(def focused-editor :data)
 
 ;;; Utils
 
@@ -99,12 +76,12 @@
     :color color
     :style {:font-weight "bold"}
     :active true}
-   (clj-str/capitalize name)])
+   name])
 
-(defn collapse-label [panel-path]
-  (let [collapsed? (re-frame/subscribe [::subs/collapsed? panel-path])]
+(defn collapse-label [editor]
+  (let [collapsed? (re-frame/subscribe [::subs/collapsed? editor])]
     [:> menu-item
-     {:on-click #(re-frame/dispatch [::events/collapse-panel panel-path @collapsed?])
+     {:on-click #(re-frame/dispatch [::events/collapse-panel editor @collapsed?])
       :icon (if @collapsed? "chevron down" "chevron up")
       :active true
       :position "right"
@@ -147,13 +124,11 @@
 ;;; Register keydown rules
 
 (defn register-keydown-rules []
-  (let [data (re-frame/subscribe [::subs/field-value :data])
-        flux (re-frame/subscribe [::subs/field-value :flux])
-        fix (re-frame/subscribe [::subs/field-value :fix])
-        morph (re-frame/subscribe [::subs/field-value :morph])
-        active-editor (re-frame/subscribe [::subs/active-editor])]
+  (let [data (re-frame/subscribe [::subs/editor-content :data])
+        flux (re-frame/subscribe [::subs/editor-content :flux])
+        transformation (re-frame/subscribe [::subs/editor-content :transformation])]
     (re-frame/dispatch
-     [::rp/set-keydown-rules {:event-keys [[[::events/process @data @flux @fix @morph @active-editor]
+     [::rp/set-keydown-rules {:event-keys [[[::events/process @data @flux @transformation]
                                             [{:ctrlKey true
                                               :keyCode 13}]]]
                               :always-listen-keys [{:ctrlKey true
@@ -203,8 +178,7 @@
   (try
     (when (or (-> entry val :data)
               (-> entry val :flux)
-              (-> entry val :fix)
-              (-> entry val :morph)) false)
+              (-> entry val :transformation)) false)
     (catch :default _
       true)))
 
@@ -248,18 +222,16 @@
       (dropdown-entries @(re-frame/subscribe [::subs/examples]))])])
 
 (defn process-button []
-  (let [data (re-frame/subscribe [::subs/field-value :data])
-        flux (re-frame/subscribe [::subs/field-value :flux])
-        fix  (re-frame/subscribe [::subs/field-value :fix])
-        morph (re-frame/subscribe [::subs/field-value :morph])
-        active-editor (re-frame/subscribe [::subs/active-editor])]
+  (let [data (re-frame/subscribe [::subs/editor-content :data])
+        flux (re-frame/subscribe [::subs/editor-content :flux])
+        transformation  (re-frame/subscribe [::subs/editor-content :transformation])]
     [:> popup
      {:content (reagent/as-element [:div
                                     "Shortcut: "
                                     [:> label {:size "tiny"} "Ctrl + Enter"]])
       :on "hover"
       :trigger (reagent/as-element (simple-button {:content "Process"
-                                                   :dispatch-fns [[::events/process @data @flux @fix @morph @active-editor]]
+                                                   :dispatch-fns [[::events/process @data @flux @transformation]]
                                                    :icon-name "play"
                                                    :style {:margin-left "0.1em"}}))
       :position "bottom left"}]))
@@ -289,11 +261,11 @@
 
 (defn share-button []
   (let [uri (-> js/window .-location .-href uri (assoc :query nil))
-        data (re-frame/subscribe [::subs/field-value :data])
-        flux (re-frame/subscribe [::subs/field-value :flux])
-        fix (re-frame/subscribe [::subs/field-value :fix])
-        morph (re-frame/subscribe [::subs/field-value :morph])
-        active-editor (re-frame/subscribe [::subs/active-editor])]
+        data (re-frame/subscribe [::subs/editor-content :data])
+        data-variable (re-frame/subscribe [::subs/file-variable :data])
+        flux (re-frame/subscribe [::subs/editor-content :flux])
+        transformation (re-frame/subscribe [::subs/editor-content :transformation])
+        transformation-variable (re-frame/subscribe [::subs/file-variable :transformation])]
     [:> popup
      {:children (reagent/as-element [share-links])
       :on "click"
@@ -301,17 +273,22 @@
       :wide "very"
       :trigger (reagent/as-element (simple-button {:content "Share"
                                                    :icon-name "share alternate"
-                                                   :dispatch-fns [[::events/generate-links uri @data @flux @fix @morph @active-editor]]}))}]))
+                                                   :dispatch-fns [[::events/generate-links
+                                                                   uri
+                                                                   {:data {:variable @data-variable
+                                                                           :content @data}
+                                                                    :flux {:content @flux}
+                                                                    :transformation {:variable @transformation-variable
+                                                                                     :content @transformation}}]]}))}]))
 
 (defn control-panel []
   [:> segment {:raised true}
    [examples-dropdown]
    [simple-button {:content "Clear"
-                   :dispatch-fns [[::events/edit-input-value :data "" true]
-                                  [::events/edit-input-value :flux "" true]
-                                  [::events/edit-input-value :fix "" true]
-                                  [::events/edit-input-value :morph "" true]
-                                  [::events/clear-result]]
+                   :dispatch-fns [[::events/edit-editor-content :data "" true]
+                                  [::events/edit-editor-content :flux "" true]
+                                  [::events/edit-editor-content :transformation "" true]
+                                  [::events/edit-editor-content :result "" true]]
                    :icon-name "erase"
                    :style {:margin-left "0.3em"}}]
    [process-button]
@@ -328,13 +305,12 @@
               :on-change #(re-frame/dispatch [::events/on-read-file-list (g/getValueByKeys % "target" "files")])}]
    [simple-button {:content "Export Workflow"
                    :dispatch-fns [[::events/export-workflow
-                                   @(re-frame/subscribe [::subs/field-value :data])
-                                   @(re-frame/subscribe [::subs/field-value :flux])
-                                   @(re-frame/subscribe [::subs/field-value :fix])
-                                   @(re-frame/subscribe [::subs/field-value :morph])]]
+                                   @(re-frame/subscribe [::subs/editor-content :data])
+                                   @(re-frame/subscribe [::subs/editor-content :flux])
+                                   @(re-frame/subscribe [::subs/editor-content :transformation])]]
                    :icon-name "download"}]])
 
-;;; Input fields
+;;; Editors
 
 (defn set-end-of-line [editor]
   (let [lf 0]
@@ -348,11 +324,9 @@
     (js-invoke editor "addAction" (clj->js {:id "process"
                                             :label "Process Workflow"
                                             :run  #(re-frame/dispatch [::events/process
-                                                                       @(re-frame/subscribe [::subs/field-value :data])
-                                                                       @(re-frame/subscribe [::subs/field-value :flux])
-                                                                       @(re-frame/subscribe [::subs/field-value :fix])
-                                                                       @(re-frame/subscribe [::subs/field-value :morph])
-                                                                       @(re-frame/subscribe [::subs/active-editor])])
+                                                                       @(re-frame/subscribe [::subs/editor-content :data])
+                                                                       @(re-frame/subscribe [::subs/editor-content :flux])
+                                                                       @(re-frame/subscribe [::subs/editor-content :transformation])])
                                             :keybindings [(bit-or control-command enter)
                                                           (chord-fn (bit-or control-command enter))]}))))
 
@@ -361,83 +335,47 @@
   (add-keydown-rules monaco editor)
   (when focus-on-load (js-invoke editor "focus")))
 
-(defn editor [{:keys [name language height-divider]}]
-  (let [editor-name (keyword name)
-        value (re-frame/subscribe [::subs/field-value editor-name])
-        height (re-frame/subscribe [::subs/editor-height editor-name 5 (font-size) height-divider])
-        k (re-frame/subscribe [::subs/editor-key editor-name])]
-    [screenreader-label name (str name "-editor")]
+(defn editor [editor-k]
+  (let [value (re-frame/subscribe [::subs/editor-content editor-k])
+        height (re-frame/subscribe [::subs/height editor-k 5 (font-size)])
+        k (re-frame/subscribe [::subs/key-count editor-k])
+        language (re-frame/subscribe [::subs/monaco-language editor-k])]
+    [screenreader-label (str (name editor-k) "-editor")]
     [:> monaco-editor
      {:key @k
-      :className (str name "-editor")
+      :className (str (name editor-k) "-editor")
       :default-value (or @value "")
-      :on-mount (partial set-up-editor (= name focused-editor))
-      :language language
+      :on-mount (partial set-up-editor (= editor-k focused-editor))
+      :language @language
       :height @height
       :theme "light"
       :options {:dragAndDrop true
                 :minimap {:enabled false}}
-      :on-change #(re-frame/dispatch [::events/edit-input-value (keyword name) %])}]))
+      :on-change #(re-frame/dispatch [::events/edit-editor-content editor-k %])}]))
 
-(defn editor-panel [config]
-  (let [editor-name (-> config :name keyword)
-        path [:input-fields editor-name]
-        collapsed? (re-frame/subscribe [::subs/collapsed? path])
-        disabled? (re-frame/subscribe [::subs/disabled? editor-name])
-        width (re-frame/subscribe [::subs/editor-width editor-name])]
-    [:> grid-column {:width (or @width (:width config))}
+(defn editor-panel [editor-k]
+  (let [collapsed? (re-frame/subscribe [::subs/collapsed? editor-k])
+        disabled? (re-frame/subscribe [::subs/disabled? editor-k])
+        width (re-frame/subscribe [::subs/width editor-k])
+        label (re-frame/subscribe [::subs/label editor-k])]
+    [:> grid-column {:width @width}
      [:> segment {:raised true
                   :disabled @disabled?}
       [:> menu
        {:color color
         :stackable true}
-       [title-label (:name config)]
-       [collapse-label path]]
+       [title-label @label]
+       [collapse-label editor-k]]
       (when-not @collapsed?
-        [editor config])]]))
-
-(defn editor-menu-item [config editor]
-  (let [current-editor (re-frame/subscribe [::subs/active-editor])]
-    [:> popup
-     {:content (str (-> editor name clj-str/capitalize)
-                    "-Transformation. Needs a "
-                    (name editor)
-                    "-function in your flux.")
-      :trigger (reagent/as-element
-                [:> menu-item
-                 {:active (= @current-editor editor)
-                  :on-click #(re-frame/dispatch [::events/switch-editor editor])
-                  :style (if (= @current-editor editor)
-                           {:font-weight "bold"}
-                           {:color "#2185d0c4"})}
-                 (clj-str/capitalize (get-in config [:different editor :name]))])}]))
-
-(defn switch-editor-panel [config]
-  (let [path [:input-fields :switch]
-        collapsed? (re-frame/subscribe [::subs/collapsed? path])
-        current-editor (re-frame/subscribe [::subs/active-editor])
-        disabled? (re-frame/subscribe [::subs/disabled? @current-editor])
-        editor-config (merge (get-in config [:different @current-editor])
-                             (:common config))
-        width (re-frame/subscribe [::subs/editor-width :switch])]
-    [:> grid-column {:width (or @width (-> config :common :width))}
-     [:> segment {:raised true
-                  :disabled @disabled?}
-      [:> menu
-       {:color color
-        :stackable true}
-       [editor-menu-item config :fix]
-       [editor-menu-item config :morph]
-       [collapse-label path]]
-      (when-not @collapsed?
-        [editor editor-config])]]))
+        [editor editor-k])]]))
 
 ;;; Result field
 
-(defn result [{:keys [name language]}]
+(defn result []
   (let [content (re-frame/subscribe [::subs/process-result])
         loading? (re-frame/subscribe [::subs/result-loading?])
-        collapsed? (re-frame/subscribe [::subs/collapsed? [:result]])
+        collapsed? (re-frame/subscribe [::subs/collapsed? :result])
+        language (re-frame/subscribe [::subs/monaco-language :result])
         height (-> @content (clj-str/split #"\r?\n" -1) count (* 19))]
     (when-not @collapsed?
       (if @loading?
@@ -445,26 +383,28 @@
          [:> loader {:active true
                      :style {:padding "1.5em"}}]]
         [:div
-         [screenreader-label name (str name "-editor")]
+         [screenreader-label "result-editor"]
          [:> monaco-editor
-          {:className (str name "-editor")
+          {:className "result-editor"
            :value (or @content "No Result")
-           :language language
+           :language @language
            :height height
            :theme "light"
            :options {:minimap {:enabled false}
                      :readOnly true
                      :scrollBeyondLastLine false}}]]))))
 
-(defn result-panel [config]
-  [:> grid-column {:width (:width config)}
+(defn result-panel []
+  (let [width (re-frame/subscribe [::subs/width :result])
+        label (re-frame/subscribe [::subs/label :result])]
+  [:> grid-column {:width @width}
    [:> segment {:raised true}
     [:> menu
      {:color color
       :stackable true}
-     [title-label "Result"]
+     [title-label @label]
      [collapse-label [:result]]]
-    [result config]]])
+    [result]]]))
 
 ;;; Main panel
 
@@ -486,10 +426,10 @@
 
     [:> grid {:stackable true}
 
-     [editor-panel data-config]
+     [editor-panel :data]
 
-     [editor-panel flux-config]
+     [editor-panel :flux]
 
-     [switch-editor-panel switch-config]
+     [editor-panel :transformation]
 
-     [result-panel result-config]]]])
+     [result-panel]]]])
