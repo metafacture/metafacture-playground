@@ -13,6 +13,8 @@
    [cognitect.transit :as transit]
    [goog.object :as g]
    [cljs.pprint :as cljs-pprint]))
+   [goog.object :as g]
+   [cljs.pprint :as cljs-pprint]))
 
 ;;; Utils for web storage use
 
@@ -186,7 +188,7 @@
            (val %)
 
            (and (map? (val %))
-                (not-any? #{:data :flux :fix :morph} (keys (val %))))
+                (not-any? #{:data :flux :transformation} (keys (val %))))
            (find-example-data example-name (val %))
 
            :else false)
@@ -195,21 +197,26 @@
 (defn load-example
   [{db :db} [_ example-name]]
   (let [example-data (find-example-data example-name (:examples db))]
+    (println "i found example data with example name" example-name)
+    (println example-data)
     (if example-data
-      {:db (-> db
-               (assoc :result nil)
-               (assoc-in [:ui :dropdown :active-item] example-name))
-       :fx (mapv
-             (fn [editor]
-               [:dispatch [::edit-editor-content editor (get example-data editor "") true]])
-             [:data :flux :transformation])
-       :storage/set {:session? true
-                     :name (->storage-key [:ui :dropdown :active-item])
-                     :value example-name}
-       ::effects/set-url-query-params example-name}
-      {:db (assoc db :message {:content (str "Could not find example with name \"" example-name "\".")
-                               :type :warning})
-       ::effects/unset-url-query-params nil})))
+      (let [db-new (-> db
+                       (assoc :result nil)
+                       (assoc-in [:ui :dropdown :active-item] example-name))]
+        (println "i am in if clause")
+        {:db db-new
+         :fx (mapv
+              (fn [editor]
+                [:dispatch [::edit-editor-content editor (get example-data editor "") true]])
+              [:data :flux :transformation])
+         :storage/set {:session? true
+                       :name (->storage-key [:ui :dropdown :active-item])
+                       :value example-name}
+         ::effects/set-url-query-params example-name})
+      (let [_ (println "else clause")]
+        {:db (assoc db :message {:content (str "Could not find example with name \"" example-name "\".")
+                                 :type :warning})
+         ::effects/unset-url-query-params nil}))))
 
 (re-frame/reg-event-fx
   ::load-example
@@ -269,12 +276,9 @@
 
 (defn generate-links
   [{db :db} [_ uri uri-params]]
-  (let [api-call-params (get-used-params uri-params)
-        workflow-params (merge api-call-params
-                               (when-let [active-editor (get uri-params :active-editor)]
-                                 {:active-editor (name active-editor)}))
-        api-call-link (when api-call-params (generate-link uri "./process" api-call-params))
-        workflow-link (when workflow-params (generate-link uri "" workflow-params))
+  (let [params (get-used-params uri-params)
+        api-call-link (when params (generate-link uri "./process" params))
+        workflow-link (when params (generate-link uri "" params))
         api-call-link-too-long? (url-too-long? api-call-link)
         workflow-link-too-long? (url-too-long? workflow-link)
         message (when (or api-call-link-too-long? workflow-link-too-long?)

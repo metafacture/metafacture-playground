@@ -4,7 +4,6 @@
   {:editors {:data {:key-count 0
                     :content nil
                     :collapsed? false
-                         ;:width nil
                     :disabled? true
                     :label "Content of file \"infile\""
                     :file-variable "infile"
