@@ -285,10 +285,10 @@
   [:> segment {:raised true}
    [examples-dropdown]
    [simple-button {:content "Clear"
-                   :dispatch-fns [[::events/edit-editor-content :data "" true]
-                                  [::events/edit-editor-content :flux "" true]
-                                  [::events/edit-editor-content :transformation "" true]
-                                  [::events/edit-editor-content :result "" true]]
+                   :dispatch-fns [[::events/edit-editor-content :data "" :other]
+                                  [::events/edit-editor-content :flux "" :other]
+                                  [::events/edit-editor-content :transformation "" :other]
+                                  [::events/edit-editor-content :result "" :other]]
                    :icon-name "erase"
                    :style {:margin-left "0.3em"}}]
    [process-button]
@@ -305,9 +305,11 @@
               :on-change #(re-frame/dispatch [::events/on-read-file-list (g/getValueByKeys % "target" "files")])}]
    [simple-button {:content "Export Workflow"
                    :dispatch-fns [[::events/export-workflow
-                                   @(re-frame/subscribe [::subs/editor-content :data])
-                                   @(re-frame/subscribe [::subs/editor-content :flux])
-                                   @(re-frame/subscribe [::subs/editor-content :transformation])]]
+                                   {:data {:content @(re-frame/subscribe [::subs/editor-content :data])
+                                           :variable @(re-frame/subscribe [::subs/file-variable :data])}
+                                    :flux {:content @(re-frame/subscribe [::subs/editor-content :flux])}
+                                    :transformation {:content @(re-frame/subscribe [::subs/editor-content :transformation])
+                                                     :variable @(re-frame/subscribe [::subs/file-variable :transformation])}}]]
                    :icon-name "download"}]])
 
 ;;; Editors

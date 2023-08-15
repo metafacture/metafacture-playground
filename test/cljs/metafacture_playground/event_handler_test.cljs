@@ -7,8 +7,7 @@
             [metafacture-playground.subs :as subs]
             [metafacture-playground.utils :as utils]
             [lambdaisland.uri :refer [uri query-string->map]]
-            [shadow.resource :as rc]
-            [cljs.pprint :as cljs-pprint]))
+            [shadow.resource :as rc]))
 
 ; Utils
 
@@ -72,7 +71,9 @@
   (re-frame/reg-event-fx
    ::test-fixtures
    (fn [cofx _]
-     (assoc-in cofx [:db :examples] {example-name example-data}))))
+     (-> cofx
+         (assoc :db db/default-db)
+         (assoc-in [:db :examples] {example-name example-data})))))
 
 (deftest load-example-test
   (testing "Test loading example"

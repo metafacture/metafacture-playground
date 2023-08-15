@@ -11,10 +11,7 @@
    [clojure.string :as clj-str]
    [clojure.walk :as walk]
    [cognitect.transit :as transit]
-   [goog.object :as g]
-   [cljs.pprint :as cljs-pprint]))
-   [goog.object :as g]
-   [cljs.pprint :as cljs-pprint]))
+   [goog.object :as g]))
 
 ;;; Utils for web storage use
 
@@ -144,7 +141,7 @@
         not)))
 
 (defn edit-editor-content
-  [{db :db} [_ editor new-value & [triggered-by-code?]]]
+  [{db :db} [_ editor new-value & [code-trigger]]]
   (let [disable-editors (when (= editor :flux)
                           (mapv (fn [editor]
                                   [editor (disable-editor? db editor new-value)])
@@ -155,9 +152,16 @@
                      (assoc-in db [:editors editor :disabled?] v))
                    db
                    disable-editors)
-            true (assoc-in [:editors editor :content] new-value)
-            triggered-by-code? (update-in [:editors editor :key-count] inc)
-            (not triggered-by-code?) (assoc-in [:ui :dropdown :active-item] nil))
+            
+            true
+            (assoc-in [:editors editor :content] new-value)
+            
+            code-trigger
+            (update-in [:editors editor :key-count] inc)
+            
+            (or (= code-trigger :other)
+                (not code-trigger))
+            (assoc-in [:ui :dropdown :active-item] nil))
       :storage/set {:session? true
                     :pairs (conj
                             (mapv
@@ -165,9 +169,12 @@
                                {:name (->storage-key [:editors editor :disabled?]) :value v})
                              disable-editors)
                             {:name (->storage-key [:editors editor :content]) :value new-value}
-                            (when-not triggered-by-code? {:name (->storage-key [:ui :dropdown :active-item]) :value nil}))}}
+                            (when-not code-trigger {:name (->storage-key [:ui :dropdown :active-item]) :value nil}))}}
      (when-not (= editor :result)
-       {:dispatch [::update-width editor new-value]}))))
+       {:dispatch [::update-width editor new-value]})
+     (when (or (= code-trigger :other)
+               (not code-trigger)) 
+       {::effects/unset-url-query-params nil}))))
 
 (re-frame/reg-event-fx
  ::edit-editor-content
@@ -197,26 +204,21 @@
 (defn load-example
   [{db :db} [_ example-name]]
   (let [example-data (find-example-data example-name (:examples db))]
-    (println "i found example data with example name" example-name)
-    (println example-data)
     (if example-data
-      (let [db-new (-> db
-                       (assoc :result nil)
-                       (assoc-in [:ui :dropdown :active-item] example-name))]
-        (println "i am in if clause")
-        {:db db-new
+        {:db (-> db
+                 (assoc :result nil)
+                 (assoc-in [:ui :dropdown :active-item] example-name))
          :fx (mapv
               (fn [editor]
-                [:dispatch [::edit-editor-content editor (get example-data editor "") true]])
+                [:dispatch [::edit-editor-content editor (get example-data editor "") :example]])
               [:data :flux :transformation])
          :storage/set {:session? true
                        :name (->storage-key [:ui :dropdown :active-item])
                        :value example-name}
-         ::effects/set-url-query-params example-name})
-      (let [_ (println "else clause")]
+         ::effects/set-url-query-params example-name}
         {:db (assoc db :message {:content (str "Could not find example with name \"" example-name "\".")
                                  :type :warning})
-         ::effects/unset-url-query-params nil}))))
+         ::effects/unset-url-query-params nil})))
 
 (re-frame/reg-event-fx
   ::load-example
@@ -341,19 +343,18 @@
 
 (defn import-editor-content
   [{db :db} [_ files]]
-  (let [triggered-by-button? true
-        result (reduce
+  (let [result (reduce
                 (fn [result {:keys [name content]}]
                   (let [file-extension (re-find #"\.[0-9a-zA-Z]+$" name)]
                     (case file-extension
                       ".flux" (let [flux-content (import-flux->playground-flux content files)]
-                                (cond-> (update result :fx conj [:dispatch [::edit-editor-content :flux flux-content triggered-by-button?]])
+                                (cond-> (update result :fx conj [:dispatch [::edit-editor-content :flux flux-content :other]])
                                   (not= flux-content content) (assoc :message "The flux content has been adapted to work in the playground. Additional adjustments could be necessary.")))
-                      ".fix" (update result :fx concat [[:dispatch [::edit-editor-content :fix content triggered-by-button?]]
+                      ".fix" (update result :fx concat [[:dispatch [::edit-editor-content :fix content :other]]
                                                         [:dispatch [::switch-editor :fix]]])
-                      ".morph" (update result :fx concat [[:dispatch [::edit-editor-content :morph content triggered-by-button?]]
+                      ".morph" (update result :fx concat [[:dispatch [::edit-editor-content :morph content :other]]
                                                           [:dispatch [::switch-editor :morph]]])
-                      (update result :fx conj [:dispatch [::edit-editor-content :data content triggered-by-button?]]))))
+                      (update result :fx conj [:dispatch [::edit-editor-content :data content :other]]))))
                 {:fx []}
                 files)]
      {:db (assoc db :message {:content (concat [(:message result)]
@@ -392,24 +393,20 @@
 
 ;;; Export workflow
 
-(defn- playground-flux->export-flux [flux data-filename fix-filename morph-filename]
+(defn- playground-flux->export-flux [flux data-filename transformation-filename]
   (-> flux
       (clj-str/replace #"PG_DATA\s*\|" (str "FLUX_DIR + \"" data-filename "\"\n|open-file\n|"))
-      (clj-str/replace #"\|\s*fix\s*\|" (str "|fix( FLUX_DIR + \"" fix-filename "\" )\n|"))
-      (clj-str/replace #"\|\s*morph\s*\|" (str "|morph( FLUX_DIR + \"" morph-filename "\" ) \n|"))))
+      (clj-str/replace #"\|\s*fix\s*\|" (str "|fix( FLUX_DIR + \"" transformation-filename "\" )\n|"))))
 
 (defn export-workflow
-  [{:keys [db]} [_ data flux fix morph]]
-  (merge {:db (if (every? clj-str/blank? [data flux fix morph])
-                (update db :message merge {:content "Nothing to export. All fields are empty."
-                                           :type :warning})
-                db)}
-         (cond-> {}
-           (not (clj-str/blank? data)) (update ::effects/export-files conj [data "playground.data"])
-           (not (clj-str/blank? flux)) (#(let [flux (playground-flux->export-flux flux "playground.data" "playground.fix" "playground.morph")]
-                                         (update % ::effects/export-files conj [flux "playground.flux"])))
-           (not (clj-str/blank? fix)) (update ::effects/export-files conj [fix "playground.fix"])
-           (not (clj-str/blank? morph)) (update ::effects/export-files conj [morph "playground.morph"]))))
+  [{:keys [db]} [_ {:keys [data flux transformation]}]]
+  (cond-> {:db db}
+    (every? #(clj-str/blank? (:content %)) [data flux transformation]) (update-in [:db :message] merge {:content "Nothing to export. All fields are empty."
+                                                                                                        :type :warning})
+    (not (clj-str/blank? (:content data))) (update ::effects/export-files conj [data "playground.data"])
+    (not (clj-str/blank? (:content flux))) (#(let [flux (playground-flux->export-flux flux "playground.data" "playground.fix")]
+                                    (update % ::effects/export-files conj [flux "playground.flux"])))
+    (not (clj-str/blank? (:content transformation))) (update ::effects/export-files conj [transformation "playground.fix"])))
 
 (re-frame/reg-event-fx
  ::export-workflow
