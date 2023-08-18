@@ -161,15 +161,19 @@
             
             (or (= code-trigger :other)
                 (not code-trigger))
-            (assoc-in [:ui :dropdown :active-item] nil))
-      :storage/set {:session? true
-                    :pairs (conj
-                            (mapv
-                             (fn [[editor v]]
-                               {:name (->storage-key [:editors editor :disabled?]) :value v})
-                             disable-editors)
-                            {:name (->storage-key [:editors editor :content]) :value new-value}
-                            (when-not code-trigger {:name (->storage-key [:ui :dropdown :active-item]) :value nil}))}}
+            (assoc-in [:ui :dropdown :active-item] nil))}
+     (if (= new-value "")
+       {:storage/remove {:session? true
+                         :names [(->storage-key [:editors editor :content])
+                                 (->storage-key [:ui :dropdown :active-item])]}}
+       {:storage/set {:session? true
+                     :pairs (conj
+                             (mapv
+                              (fn [[editor v]]
+                                {:name (->storage-key [:editors editor :disabled?]) :value v})
+                              disable-editors)
+                             {:name (->storage-key [:editors editor :content]) :value new-value}
+                             (when-not code-trigger {:name (->storage-key [:ui :dropdown :active-item]) :value nil}))}})
      (when-not (= editor :result)
        {:dispatch [::update-width editor new-value]})
      (when (or (= code-trigger :other)
@@ -300,63 +304,23 @@
 
 ;;; Import workflow
 
-(defn- find-filename [files file-extension]
-  (->> files
-       (mapv :name)
-       (keep #(-> (str "(?i).*\\." file-extension)
-                  re-pattern
-                  (re-matches %)))
-       first))
-
-(defn- ->pattern [transformation-type filename]
-  (-> (str "\\|(\\s|\\n)*"
-           transformation-type
-           "(\\s|\\n)*\\(\\s*FLUX_DIR\\s*\\+\\s*\\\""
-           filename
-           "\\\"\\s*\\)(\\n|\\s)*\\|")
-      re-pattern))
-
-(defn- replace-filename [flux files transformation-type]
-  (if-let [filename (find-filename files transformation-type)]
-    (clj-str/replace flux
-                     (->pattern transformation-type filename)
-                     (str "|" transformation-type "\n|"))
-    flux))
-
-(defn- replace-data-filename [flux files]
-  (if-let [data-filename (->> files
-                              (mapv :name)
-                              (keep #(re-matches #"(?i).*\.(?!morph)(?!fix)(?!flux).*" %))
-                              first)]
-    (let [pattern (-> (str "FLUX_DIR\\s*\\+\\s*\\\""
-                           data-filename
-                           "\\\"(\\s|\\n)*\\|\\s*open-file(\\s|\\n)*\\|")
-                      re-pattern)]
-      (clj-str/replace flux pattern "PG_DATA\n|"))
-      flux))
-
-(defn- import-flux->playground-flux [flux files]
+(defn- import-flux->playground-flux [flux]
   (-> flux
-      (replace-filename files "fix")
-      (replace-filename files "morph")
-      (replace-data-filename files)))
+      (clj-str/replace #"default.*;" "")
+      (clj-str/trim)))
 
 (defn import-editor-content
   [{db :db} [_ files]]
   (let [result (reduce
                 (fn [result {:keys [name content]}]
                   (let [file-extension (re-find #"\.[0-9a-zA-Z]+$" name)]
-                    (case file-extension
-                      ".flux" (let [flux-content (import-flux->playground-flux content files)]
-                                (cond-> (update result :fx conj [:dispatch [::edit-editor-content :flux flux-content :other]])
-                                  (not= flux-content content) (assoc :message "The flux content has been adapted to work in the playground. Additional adjustments could be necessary.")))
-                      ".fix" (update result :fx concat [[:dispatch [::edit-editor-content :fix content :other]]
-                                                        [:dispatch [::switch-editor :fix]]])
-                      ".morph" (update result :fx concat [[:dispatch [::edit-editor-content :morph content :other]]
-                                                          [:dispatch [::switch-editor :morph]]])
-                      (update result :fx conj [:dispatch [::edit-editor-content :data content :other]]))))
-                {:fx []}
-                files)]
+                    (cond
+                      (= file-extension ".flux") (let [flux-content (import-flux->playground-flux content)]
+                                                   (cond-> (update result :fx conj [:dispatch [::edit-editor-content :flux flux-content :other]])
+                                                     (not= flux-content content) (assoc :message "The flux content has been adapted to work in the playground. Additional adjustments could be necessary.")))
+                      (#{".fix" ".morph" ".xml"} file-extension) (update result :fx conj [:dispatch [::edit-editor-content :transformation content :other]])
+                      :else (update result :fx conj [:dispatch [::edit-editor-content :data content :other]]))))
+                {:fx []} files)]
      {:db (assoc db :message {:content (concat [(:message result)]
                                                ["Imported workflow with files: "]
                                                (map :name files))
@@ -393,20 +357,23 @@
 
 ;;; Export workflow
 
-(defn- playground-flux->export-flux [flux data-filename transformation-filename]
-  (-> flux
-      (clj-str/replace #"PG_DATA\s*\|" (str "FLUX_DIR + \"" data-filename "\"\n|open-file\n|"))
-      (clj-str/replace #"\|\s*fix\s*\|" (str "|fix( FLUX_DIR + \"" transformation-filename "\" )\n|"))))
+(defn- playground-flux->export-flux [flux [data-variable data-filename] [transformation-variable transformation-filename]]
+  (str "default " data-variable " = FLUX_DIR + \"" data-filename "\";\n"
+       "default " transformation-variable " = FLUX_DIR + \"" transformation-filename "\";\n"
+       flux))
 
 (defn export-workflow
   [{:keys [db]} [_ {:keys [data flux transformation]}]]
   (cond-> {:db db}
     (every? #(clj-str/blank? (:content %)) [data flux transformation]) (update-in [:db :message] merge {:content "Nothing to export. All fields are empty."
                                                                                                         :type :warning})
-    (not (clj-str/blank? (:content data))) (update ::effects/export-files conj [data "playground.data"])
-    (not (clj-str/blank? (:content flux))) (#(let [flux (playground-flux->export-flux flux "playground.data" "playground.fix")]
+    (not (clj-str/blank? (:content data))) (update ::effects/export-files conj [(:content data) "playground.data"])
+    (not (clj-str/blank? (:content flux))) (#(let [flux (playground-flux->export-flux
+                                                         (:content flux)
+                                                         [(:variable data) "playground.data"]
+                                                         [(:variable transformation)"playground.fix"])]
                                     (update % ::effects/export-files conj [flux "playground.flux"])))
-    (not (clj-str/blank? (:content transformation))) (update ::effects/export-files conj [transformation "playground.fix"])))
+    (not (clj-str/blank? (:content transformation))) (update ::effects/export-files conj [(:content transformation) "playground.fix"])))
 
 (re-frame/reg-event-fx
  ::export-workflow
