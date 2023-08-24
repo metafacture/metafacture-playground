@@ -4,8 +4,8 @@
 
 ; TODO: we should extract the samples here and in db.cljs to files
 (def sample-data {:data "1{a: Faust, b {n: Goethe, v: JW}, c: Weimar}\n2{a: Räuber, b {n: Schiller, v: F}, c: Weimar}"
-                  :flux-with-fix "PG_DATA\n|as-lines\n|decode-formeta\n|fix\n|encode-xml(rootTag=\"collection\")\n|print\n;"
-                  :flux-with-morph "PG_DATA\n|as-lines\n|decode-formeta\n|morph\n|encode-xml(rootTag=\"collection\")\n|print\n;"
+                  :flux-with-fix "infile|\nopen-file\n|as-lines\n|decode-formeta\n|fix(transformationfile)\n|encode-xml(rootTag=\"collection\")\n|print\n;"
+                  :flux-with-morph "infile|\nopen-file\n|as-lines\n|decode-formeta\n|morph(transformationfile)\n|encode-xml(rootTag=\"collection\")\n|print\n;"
                   :fix  "move_field(_id, id)\nmove_field(a, title)\npaste(author, b.v, b.n, '~aus', c)\nretain(id, title, author)"
                   :morph  (str "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                          "<metamorph xmlns=\"http://www.culturegraph.org/metamorph\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
