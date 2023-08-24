@@ -288,7 +288,7 @@
                    :dispatch-fns [[::events/edit-editor-content :data "" :other]
                                   [::events/edit-editor-content :flux "" :other]
                                   [::events/edit-editor-content :transformation "" :other]
-                                  [::events/edit-editor-content :result "" :other]]
+                                  [::events/edit-editor-content :result nil :other]]
                    :icon-name "erase"
                    :style {:margin-left "0.3em"}}]
    [process-button]
@@ -374,7 +374,8 @@
 ;;; Result field
 
 (defn result []
-  (let [content (re-frame/subscribe [::subs/process-result])
+  (let [k (re-frame/subscribe [::subs/key-count :result])
+        content (re-frame/subscribe [::subs/editor-content :result])
         loading? (re-frame/subscribe [::subs/result-loading?])
         collapsed? (re-frame/subscribe [::subs/collapsed? :result])
         language (re-frame/subscribe [::subs/monaco-language :result])
@@ -387,7 +388,8 @@
         [:div
          [screenreader-label "result-editor"]
          [:> monaco-editor
-          {:className "result-editor"
+          {:key @k
+           :className "result-editor"
            :value (or @content "No Result")
            :language @language
            :height height

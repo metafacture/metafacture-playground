@@ -37,7 +37,7 @@
        (and (is @(re-frame/subscribe [::subs/editor-content :data]))
             (is @(re-frame/subscribe [::subs/editor-content :flux]))
             (is @(re-frame/subscribe [::subs/editor-content :transformation]))
-            (is (not @(re-frame/subscribe [::subs/process-result])))
+            (is (not @(re-frame/subscribe [::subs/editor-content :result])))
             (is (not @(re-frame/subscribe [::subs/link :api-call])))
             (is (not @(re-frame/subscribe [::subs/link :workflow]))))))))
 

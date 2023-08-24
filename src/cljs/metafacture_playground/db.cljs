@@ -58,12 +58,14 @@
              :transformation {:content str
                               :disabled? parseBoolean
                               :collapsed? parseBoolean
-                              :width int}}
+                              :width int}
+             :result {:content str
+                      :disabled? parseBoolean
+                      :collapsed? parseBoolean
+                      :width int
+                      :loading? parseBoolean}}
    :links {:api-call str
            :workflow str}
-   :result {:loading? parseBoolean
-            :collapsed? parseBoolean
-            :content str}
    :message {:content str
              :type keyword}
    :ui {:height parseBoolean

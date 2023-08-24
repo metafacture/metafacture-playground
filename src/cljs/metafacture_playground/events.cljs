@@ -388,12 +388,12 @@
                          (re-find #"filename=\"(.*)\"")
                          second)]
       {:db (-> db
-               (assoc-in [:result :loading?] false)
-               (assoc-in [:result :content] nil))
+               (assoc-in [:editors :result :loading?] false)
+               (assoc-in [:editors :result :content] nil))
        ::effects/export-files [[body file-name]]})
     {:db (-> db
-             (assoc-in [:result :loading?] false)
-             (assoc-in [:result :content] body))}))
+             (assoc-in [:editors :result :loading?] false)
+             (assoc-in [:editors :result :content] body))}))
 
 (re-frame/reg-event-fx
  ::process-response

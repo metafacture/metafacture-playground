@@ -96,11 +96,6 @@
    (get-in db [:editors editor :disabled?])))
 
 (re-frame/reg-sub
- ::process-result
- (fn [db _]
-   (get-in db [:result :content])))
-
-(re-frame/reg-sub
  ::link
  (fn [db [_ type]]
    (get-in db [:links type])))
@@ -108,7 +103,7 @@
 (re-frame/reg-sub
  ::result-loading?
  (fn [db _]
-   (get-in db [:result :loading?])))
+   (get-in db [:editor :result :loading?])))
 
 (re-frame/reg-sub
  ::backend-versions
