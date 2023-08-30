@@ -5,8 +5,8 @@
                     :content nil
                     :collapsed? false
                     :disabled? true
-                    :label "Content of file \"infile\""
-                    :file-variable "infile"
+                    :label "\"inputFile\"-content"
+                    :file-variable "inputFile"
                     :width 16
                     :language "text/plain"
                     :height-divider 3}
@@ -23,8 +23,8 @@
                               :default-width 8
                               :width 8
                               :disabled? true
-                              :label "Content of file \"transformationfile\""
-                              :file-variable "transformationfile"
+                              :label "\"transformationFile\"-content"
+                              :file-variable "transformationFile"
                               :language "text/plain"}
              :result {:label "Result"
                       :loading? false

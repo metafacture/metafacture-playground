@@ -22,12 +22,12 @@
 
 
 (defn process [flux data transformation]
-  (let [infile (content->tempfile-path data ".data")
-        transformationfile (content->tempfile-path transformation ".fix") ;TODO: Matching file ending
+  (let [inputfile (content->tempfile-path data ".data")
+        transformationFile (content->tempfile-path transformation ".fix")
         out-path (content->tempfile-path "" ".txt")
         output (str "|write(\"" out-path "\");")
-        flux (-> (str "default infile = \"" infile "\";\n"
-                      "default transformationfile = \"" transformationfile "\";\n"
+        flux (-> (str "default inputFile = \"" inputfile "\";\n"
+                      "default transformationFile = \"" transformationFile "\";\n"
                       flux)
                  (clj-str/replace #"\|(\s*|\n*)write\(\".*\"\)(\s*|\n*);" output)
                  (clj-str/replace #"\|(\s*|\n*)print(\s*|\n*);" output))]

@@ -32,7 +32,7 @@
 
   (testing "Test initializing of db with values"
     (rf-test/run-test-sync
-     (let [href "/playground/?flux=infile%0A%7Cas-lines%0A%7Cdecode-formeta%0A%7Cfix%28transformationfile%29%0A%7Cencode-xml%28rootTag%3D%22collection%22%29%0A%7Cprint%0A%3B&transformation=move_field%28_id%2C+id%29%0Amove_field%28a%2C+title%29%0Apaste%28author%2C+b.v%2C+b.n%2C+%27~aus%27%2C+c%29%0Aretain%28id%2C+title%2C+author%29&data=1%7Ba%3A+Faust%2C+b+%7Bn%3A+Goethe%2C+v%3A+JW%7D%2C+c%3A+Weimar%7D%0A2%7Ba%3A+R%C3%A4uber%2C+b+%7Bn%3A+Schiller%2C+v%3A+F%7D%2C+c%3A+Weimar%7D"]
+     (let [href "/playground/?flux=inputFile%0A%7Cas-lines%0A%7Cdecode-formeta%0A%7Cfix%28transformationFile%29%0A%7Cencode-xml%28rootTag%3D%22collection%22%29%0A%7Cprint%0A%3B&transformation=move_field%28_id%2C+id%29%0Amove_field%28a%2C+title%29%0Apaste%28author%2C+b.v%2C+b.n%2C+%27~aus%27%2C+c%29%0Aretain%28id%2C+title%2C+author%29&data=1%7Ba%3A+Faust%2C+b+%7Bn%3A+Goethe%2C+v%3A+JW%7D%2C+c%3A+Weimar%7D%0A2%7Ba%3A+R%C3%A4uber%2C+b+%7Bn%3A+Schiller%2C+v%3A+F%7D%2C+c%3A+Weimar%7D"]
        (re-frame/dispatch [::events/initialize-db href])
        (and (is @(re-frame/subscribe [::subs/editor-content :data]))
             (is @(re-frame/subscribe [::subs/editor-content :flux]))
@@ -55,7 +55,7 @@
            (is (true? (get-in db' [:db :editors :transformation :disabled?]))))))
   
 (testing "Test disabling editor depending on editing values")
-  (let [new-value "I only use the infile"
+  (let [new-value "I only use the inputFile"
         db' (-> empty-db
                 (events/edit-editor-content [:edit-editor-content :flux new-value])
                 (update-in [:db :editors] dissoc :result)
