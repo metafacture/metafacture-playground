@@ -8,6 +8,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: Checkout metafacture-core (temporary)
+      uses: actions/checkout@v2
+      with:
+        path: metafacture-core
+        repository: metafacture/metafacture-core
+        ref: 5.5.1-rc1
+    - name: Install metafacture-core (temporary)
+      working-directory: metafacture-core
+      run: ./gradlew install
     - name: Checkout metafacture-fix
       uses: actions/checkout@v2
       with:
