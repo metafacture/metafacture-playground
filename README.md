@@ -7,7 +7,7 @@ The ***production deployment*** is available at [https://metafacture.org/playgro
 
 The current ***test deployment*** is available at [https://test.metafacture.org/playground/](https://test.metafacture.org/playground/).
 
-Both deployments provide a web application and and HTTP REST API
+Both deployments provide a web application and an HTTP API
 
 [Here](CONTRIBUTING.md) you can read about contributing to Metafacture Playground.
 
@@ -165,6 +165,6 @@ move_field(a, title)
 paste(author, b.v, b.n, '~aus', c)
 retain(id, title, author)
 ```
-The parameter values must be url encoded so the url looks looks like this:
+The parameter values must be URL-encoded so the URL looks like this:
 
 http://localhost:3000/process?flux=inputFile%0A%7Copen-file%0A%7Cas-lines%0A%7Cdecode-formeta%0A%7Cfix%28transformationFile%29%0A%7Cencode-xml%28rootTag%3D%22collection%22%29%0A%7Cprint%0A%3B&transformation=move_field%28_id%2C+id%29%0Amove_field%28a%2C+title%29%0Apaste%28author%2C+b.v%2C+b.n%2C+%27~aus%27%2C+c%29%0Aretain%28id%2C+title%2C+author%29&data=1%7Ba%3A+Faust%2C+b+%7Bn%3A+Goethe%2C+v%3A+JW%7D%2C+c%3A+Weimar%7D%0A2%7Ba%3A+R%C3%A4uber%2C+b+%7Bn%3A+Schiller%2C+v%3A+F%7D%2C+c%3A+Weimar%7D
