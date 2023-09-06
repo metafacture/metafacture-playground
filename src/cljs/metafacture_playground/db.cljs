@@ -5,7 +5,7 @@
                     :content nil
                     :collapsed? false
                     :disabled? true
-                    :label "\"inputFile\"-content"
+                    :label "inputFile-content"
                     :file-variable "inputFile"
                     :width 16
                     :language "text/plain"
@@ -23,7 +23,7 @@
                               :default-width 8
                               :width 8
                               :disabled? true
-                              :label "\"transformationFile\"-content"
+                              :label "transformationFile-content"
                               :file-variable "transformationFile"
                               :language "text/plain"}
              :result {:label "Result"
