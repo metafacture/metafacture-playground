@@ -36,14 +36,24 @@
    (get db :examples)))
 
 (re-frame/reg-sub
- ::editor-key
- (fn [db [_ editor-name]]
-   (get-in db [:input-fields editor-name :key-count])))
+ ::label
+ (fn [db [_ editor]]
+   (get-in db [:editors editor :label])))
 
 (re-frame/reg-sub
- ::field-value
- (fn [db [_ field-name]]
-   (get-in db [:input-fields field-name :content])))
+ ::file-variable
+ (fn [db [_ editor]]
+   (get-in db [:editors editor :file-variable])))
+
+(re-frame/reg-sub
+ ::key-count
+ (fn [db [_ editor-name]]
+   (get-in db [:editors editor-name :key-count])))
+
+(re-frame/reg-sub
+ ::editor-content
+ (fn [db [_ editor]]
+   (get-in db [:editors editor :content])))
 
 (defn- editor-height-maximum [height font-size height-divider]
   (-> height
@@ -52,11 +62,12 @@
       (- 10)))
 
 (re-frame/reg-sub
- ::editor-height
- (fn [db [_ editor-name min-editor-size font-size height-divider]]
-   (let [max-editor-size (-> (get-in db [:ui :height])
+ ::height
+ (fn [db [_ editor min-editor-size font-size]]
+   (let [height-divider (get-in db [:editors editor :height-divider])
+         max-editor-size (-> (get-in db [:ui :height])
                              (editor-height-maximum font-size height-divider))
-         calculated-size (-> (get-in db [:input-fields editor-name :content])
+         calculated-size (-> (get-in db [:editors editor :content])
                              (clj-str/split #"\r?\n" -1)
                              count
                              (+ 3))]
@@ -65,37 +76,24 @@
          (str "em")))))
 
 (re-frame/reg-sub
- ::editor-width
+ ::width
  (fn [db [_ editor]]
-   (let [width (get-in db [:input-fields editor :width])]
-     (case editor
-       :flux (if (= 16 (get-in db [:input-fields :switch :width]))
-               16
-               width)
-       :switch (if (= 16 (get-in db [:input-fields :flux :width]))
-              16
-              width)
-       width))))
+   (get-in db [:editors editor :width])))
+
+(re-frame/reg-sub
+ ::monaco-language
+ (fn [db [_ editor]]
+   (get-in db [:editors editor :language])))
 
 (re-frame/reg-sub
  ::collapsed?
- (fn [db [_ path]]
-   (get-in db (conj path :collapsed?))))
+ (fn [db [_ editor]]
+   (get-in db [:editors editor :collapsed?])))
 
 (re-frame/reg-sub
  ::disabled?
  (fn [db [_ editor]]
-   (get-in db [:input-fields editor :disabled?])))
-
-(re-frame/reg-sub
- ::active-editor
- (fn [db _]
-   (get-in db [:input-fields :switch :active])))
-
-(re-frame/reg-sub
- ::process-result
- (fn [db _]
-   (get-in db [:result :content])))
+   (get-in db [:editors editor :disabled?])))
 
 (re-frame/reg-sub
  ::link
@@ -105,7 +103,7 @@
 (re-frame/reg-sub
  ::result-loading?
  (fn [db _]
-   (get-in db [:result :loading?])))
+   (get-in db [:editor :result :loading?])))
 
 (re-frame/reg-sub
  ::backend-versions

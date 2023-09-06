@@ -7,6 +7,8 @@ The ***production deployment*** is available at [https://metafacture.org/playgro
 
 The current ***test deployment*** is available at [https://test.metafacture.org/playground/](https://test.metafacture.org/playground/).
 
+Both deployments provide a web application and an HTTP API
+
 [Here](CONTRIBUTING.md) you can read about contributing to Metafacture Playground.
 
 ## Installation
@@ -30,7 +32,7 @@ It is possible to display the current version of dependencies in the UI. To disp
 
 Clone and install metafacture-fix:
 ```bash
-$ git clone https://github.com/metafacture/metafacture-fix.git -b 0.5.1
+$ git clone https://github.com/metafacture/metafacture-fix.git -b 0.6.1
 $ cd metafacture-fix
 ```
 
@@ -83,10 +85,6 @@ lein run
 ```
 
 Browse to http://localhost:3000.
-
-Run workflows on the web server, passing `data`, `flux`, and `fix`:
-
-[http://localhost:3000/process?data='1'{'a': '5', 'z': 10}&flux=as-lines|decode-formeta|fix|encode-formeta(style="multiline")&fix=map(a,b) map(_else)](http://localhost:3000/process?data=%271%27{%27a%27:%20%275%27,%20%27z%27:%2010}&flux=as-lines|decode-formeta|fix|encode-formeta(style=%22multiline%22)&fix=map(a,c)%20map(_else))
 
 ### Show dependency versions in UI
 
@@ -142,6 +140,31 @@ lein test
 
 ## Run workflows on the web server
 
-Run workflows on the web server, passing `data`, `flux`, and `fix` as GET-Parameter:
+You also can run workflows on the web server without the web application, passing the GET parameters
 
-[http://localhost:3000/process?data='1'{'a': '5', 'z': 10}&flux=as-lines|decode-formeta|fix|encode-formeta(style="multiline")&fix=map(a,b) map(_else)](http://localhost:3000/process?data=%271%27{%27a%27:%20%275%27,%20%27z%27:%2010}&flux=as-lines|decode-formeta|fix|encode-formeta(style=%22multiline%22)&fix=map(a,c)%20map(_else))
+`data` with value
+```
+1{a: Faust, b {n: Goethe, v: JW}, c: Weimar}
+2{a: Räuber, b {n: Schiller, v: F}, c: Weimar}
+```
+,`flux` with value
+```
+inputFile
+|open-file
+|as-lines
+|decode-formeta
+|fix(transformationFile)
+|encode-xml(rootTag="collection")
+|print
+;
+```
+and `transformation` with value
+```
+move_field(_id, id)
+move_field(a, title)
+paste(author, b.v, b.n, '~aus', c)
+retain(id, title, author)
+```
+The parameter values must be URL-encoded so the URL looks like this:
+
+http://localhost:3000/process?flux=inputFile%0A%7Copen-file%0A%7Cas-lines%0A%7Cdecode-formeta%0A%7Cfix%28transformationFile%29%0A%7Cencode-xml%28rootTag%3D%22collection%22%29%0A%7Cprint%0A%3B&transformation=move_field%28_id%2C+id%29%0Amove_field%28a%2C+title%29%0Apaste%28author%2C+b.v%2C+b.n%2C+%27~aus%27%2C+c%29%0Aretain%28id%2C+title%2C+author%29&data=1%7Ba%3A+Faust%2C+b+%7Bn%3A+Goethe%2C+v%3A+JW%7D%2C+c%3A+Weimar%7D%0A2%7Ba%3A+R%C3%A4uber%2C+b+%7Bn%3A+Schiller%2C+v%3A+F%7D%2C+c%3A+Weimar%7D

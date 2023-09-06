@@ -1,29 +1,39 @@
 (ns metafacture-playground.db)
 
 (def default-db
-  {:input-fields {:data {:key-count 0
-                         :content nil
-                         :collapsed? false
-                         :width nil
-                         :disabled? true}
-                  :flux {:key-count 0
-                         :content nil
-                         :collapsed? false
-                         :width nil}
-                  :fix {:key-count 0
-                        :content nil
-                        :disabled? true}
-                  :morph {:key-count 0
-                          :content nil
-                          :disabled? true}
-                  :switch {:collapsed? false
-                           :active :fix
-                           :width nil}}
+  {:editors {:data {:key-count 0
+                    :content nil
+                    :collapsed? false
+                    :disabled? true
+                    :label "inputFile-content"
+                    :file-variable "inputFile"
+                    :width 16
+                    :language "text/plain"
+                    :height-divider 3}
+             :flux {:key-count 0
+                    :content nil
+                    :collapsed? false
+                    :default-width 8
+                    :width 8
+                    :label "Flux File"
+                    :language "text/plain"}
+             :transformation {:key-count 0
+                              :content nil
+                              :collapsed? false
+                              :default-width 8
+                              :width 8
+                              :disabled? true
+                              :label "transformationFile-content"
+                              :file-variable "transformationFile"
+                              :language "text/plain"}
+             :result {:label "Result"
+                      :loading? false
+                      :collapsed? false
+                      :content nil
+                      :width 16
+                      :language "text/plain"}}
    :links {:api-call nil
            :workflow nil}
-   :result {:loading? false
-            :collapsed? false
-            :content nil}
    :message {:content nil
              :details nil
              :show-details? false
@@ -38,25 +48,24 @@
     false))
 
 (def db-parse-fns
-  {:input-fields {:data {:content str
-                         :collapsed? parseBoolean
-                         :width int
-                         :disabled? parseBoolean}
-                  :flux {:content str
-                         :collapsed? parseBoolean
-                         :width int}
-                  :fix {:content str
-                        :disabled? parseBoolean}
-                  :morph {:content str
-                          :disabled? parseBoolean}
-                  :switch {:collapsed? parseBoolean
-                           :active keyword
-                           :width int}}
+  {:editors {:data {:content str
+                    :collapsed? parseBoolean
+                    :width int
+                    :disabled? parseBoolean}
+             :flux {:content str
+                    :collapsed? parseBoolean
+                    :width int}
+             :transformation {:content str
+                              :disabled? parseBoolean
+                              :collapsed? parseBoolean
+                              :width int}
+             :result {:content str
+                      :disabled? parseBoolean
+                      :collapsed? parseBoolean
+                      :width int
+                      :loading? parseBoolean}}
    :links {:api-call str
            :workflow str}
-   :result {:loading? parseBoolean
-            :collapsed? parseBoolean
-            :content str}
    :message {:content str
              :type keyword}
    :ui {:height parseBoolean

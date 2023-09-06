@@ -24,9 +24,9 @@
        {:status 500
         :body json-body}))
 
-(defn process-request [data flux fix morph uri]
+(defn process-request [flux data transformation uri]
   (try
-    (let [response (-> (process data flux fix morph)
+    (let [response (-> (process flux data transformation)
                        (response)
                        (header "Access-Control-Allow-Origin" "*"))]
       (if-let [file-name (->> flux
@@ -68,9 +68,9 @@
 
 (defroutes routes
   (GET "/" [] (resource-response "index.html" {:root "public"}))
-  (GET "/process" [data flux fix morph uri]
+  (GET "/process" [flux data transformation uri]
     (log/info "------------------ GET/PROCESS REQUEST ------------------")
-    (process-request data flux fix morph uri))
+    (process-request flux data transformation uri))
   (GET "/examples" request
     (log/info "------------------ EXAMPLES REQUEST ------------------")
     (try
@@ -92,8 +92,8 @@
   (POST "/process" request
     (log/info "------------------ POST/PROCESS REQUEST ------------------")
     (let [body (-> request :body (json/read-str :key-fn keyword))
-          {:keys [data flux fix morph]} body]
-      (process-request data flux fix morph (:uri request))))
+          {:keys [data flux transformation]} body]
+      (process-request flux data transformation (:uri request))))
   (resources "/")
   (not-found "Page not found"))
 

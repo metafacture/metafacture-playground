@@ -11,6 +11,4 @@
                          uri
                          :query
                          query-string->map)]
-    (if (:active-editor query-params)
-      (update query-params :active-editor keyword)
-      query-params)))
+     query-params))
