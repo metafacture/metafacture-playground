@@ -97,7 +97,7 @@
                   (events/load-example [:load-example example-name]))
           {:keys [data flux transformation]} (get-in db' [:db :editors])
           db'' (events/process db' [:process (:content data) (:content flux) (:content transformation)])]
-      (is (get-in db'' [:db :result :loading?])))))
+      (is (get-in db'' [:db :editors :result :loading?])))))
 
 (deftest collapse-panel-test
   (testing "Test collapse behaviour"
@@ -106,7 +106,7 @@
       (and (is (get-in db' [:db :editors :flux :collapsed?]))
            (is (not (get-in db' [:db :editors :transformation :collapsed?])))
            (is (not (get-in db' [:db :editors :data :collapsed?])))
-           (is (not (get-in db' [:db :result :collapsed?]))))))
+           (is (not (get-in db' [:db :editors :result :collapsed?]))))))
 
   (testing "Test collapsing and expanding a panel"
     (let [db' (-> empty-db

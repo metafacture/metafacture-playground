@@ -103,7 +103,7 @@
 (re-frame/reg-sub
  ::result-loading?
  (fn [db _]
-   (get-in db [:editor :result :loading?])))
+   (get-in db [:editors :result :loading?])))
 
 (re-frame/reg-sub
  ::backend-versions
