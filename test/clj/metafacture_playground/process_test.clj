@@ -1,5 +1,6 @@
 (ns metafacture-playground.process-test
   (:require [clojure.test :refer [deftest testing is]]
+            [clojure.string :refer [blank?]]
             [metafacture-playground.process :refer [process]]
             [clojure.java.io :as io]
             [lambdaisland.uri :refer [uri query-string->map]]))
@@ -47,12 +48,13 @@
         (is (= result (:result test-data)))))))
 
 (deftest process-examples-test
-  (testing "Process all examples in resources/examples without exceptions."
+  (testing "Process all examples in resources/examples and assert that the result is not blank (nil, empty, or contains only whitespace)."
      (let [examples (->> (io/resource "examples")
                         io/file
-                        .listFiles
+                        file-seq
                         (keep #(when (.isFile %)
+                                 (println "Testing example:" (.getPath %))
                                  (slurp %)))
                         (map #(-> % uri :query query-string->map)))]
        (doseq [example examples]
-         (is (process (:flux example) (:data example) (:transformation example)))))))
+         (is (not (blank? (process (:flux example) (:data example) (:transformation example)))))))))
