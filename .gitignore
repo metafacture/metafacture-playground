@@ -3,6 +3,7 @@
 /target/
 /*-init.clj
 /*.log
+/tmp
 
 # Leiningen
 /.lein-*
