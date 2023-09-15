@@ -174,6 +174,6 @@ http://localhost:3000/process?flux=inputFile%0A%7Copen-file%0A%7Cas-lines%0A%7Cd
 Beside the web application the Metafacture Playground provides a HTTP API to process workflows. All you need is to provide the workflow information as JSON parameters in your POST request.
 
 ```
-curl -X POST https://test.metafacture.org/playground/process -H 'Content-Type: application/json' -d '{"data":"1{a: Faust, b {n: Goethe, v: JW}, c: Weimar}\n2{a: Räuber, b {n: Schiller, v: F}, c: Weimar}","flux":"inputFile\n|open-file\n|as-lines\n|decode-formeta\n|fix(transformationFile)\n|encode-xml(rootTag=\"collection\")\n|print\n;","transformation":"move_field(_id, id)\nmove_field(a, title)\npaste(author, b.v, b.n, \"~aus\", c)\nretain(id, title,
+curl -X POST https://metafacture.org/playground/process -H 'Content-Type: application/json' -d '{"data":"1{a: Faust, b {n: Goethe, v: JW}, c: Weimar}\n2{a: Räuber, b {n: Schiller, v: F}, c: Weimar}","flux":"inputFile\n|open-file\n|as-lines\n|decode-formeta\n|fix(transformationFile)\n|encode-xml(rootTag=\"collection\")\n|print\n;","transformation":"move_field(_id, id)\nmove_field(a, title)\npaste(author, b.v, b.n, \"~aus\", c)\nretain(id, title,
  author)\n"}'
 ```
