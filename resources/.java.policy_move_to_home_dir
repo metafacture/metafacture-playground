@@ -79,7 +79,8 @@ grant {
         permission java.net.SocketPermission "localhost:1024-", "accept, listen, resolve";
         permission java.net.SocketPermission "*", "accept, connect, resolve";
 
-        permission java.net.URLPermission "*", "GET:Accept";
+        permission java.net.URLPermission "http:*", "GET:Accept";
+        permission java.net.URLPermission "https:*", "GET:Accept";
 
         permission java.net.NetPermission "getProxySelector";
 };
