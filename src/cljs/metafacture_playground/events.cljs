@@ -210,7 +210,7 @@
   (let [example-data (find-example-data example-name (:examples db))]
     (if example-data
         {:db (-> db
-                 (assoc :result nil)
+                 (assoc-in [:editors :result :content] nil)
                  (assoc-in [:ui :dropdown :active-item] example-name))
          :fx (mapv
               (fn [editor]
@@ -422,7 +422,7 @@
                        :body {:content (str "Response from server: " problem-message)}
                        :server (server-problem-message status status-text body))]
        {:db (-> db
-                (assoc-in [:result :loading?] false)
+                (assoc-in [:editors :result :loading?] false)
                 (assoc :message (merge message-data {:type :error})))}))
 
 (re-frame/reg-event-fx
@@ -441,7 +441,7 @@
                                       #"application/.*json" :json}
              :on-success             [::process-response]
              :on-failure             [::bad-response]}
-     :db (assoc-in db [:result :loading?] true)})
+     :db (assoc-in db [:editors :result :loading?] true)})
 
 (re-frame/reg-event-fx
  ::process

@@ -407,7 +407,7 @@
      {:color color
       :stackable true}
      [title-label @label]
-     [collapse-label [:result]]]
+     [collapse-label :result]]
     [result]]]))
 
 ;;; Main panel
