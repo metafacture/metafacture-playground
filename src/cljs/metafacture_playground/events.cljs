@@ -441,7 +441,13 @@
                                       #"application/.*json" :json}
              :on-success             [::process-response]
              :on-failure             [::bad-response]}
-     :db (assoc-in db [:editors :result :loading?] true)})
+     :db (-> db
+             (assoc-in [:editors :result :content] nil)
+             (assoc-in [:editors :result :loading?] true)
+             (assoc :message {:content nil
+                              :details nil
+                              :show-details? false
+                              :type nil}))})
 
 (re-frame/reg-event-fx
  ::process
