@@ -48,7 +48,15 @@ grant {
 		
         // permissions for metafacture playground
         
-        permission java.io.FilePermission "${user.dir}/-", "write, read, delete";
+        permission java.io.FilePermission "schemata/metamorph.xsd", "read";
+        permission java.io.FilePermission "morph-functions.properties", "read";
+        permission java.io.FilePermission "morph-collectors.properties", "read";
+        permission java.io.FilePermission "morph-maps.properties", "read";
+
+        permission java.io.FilePermission "${user.dir}/project.clj", "read";
+        permission java.io.FilePermission "${user.dir}/resources/-", "read";
+        permission java.io.FilePermission "${user.dir}/tmp", "write, read, delete";
+        permission java.io.FilePermission "${user.dir}/tmp/-", "write, read, delete";
         permission java.io.FilePermission "${java.io.tmpdir}/-", "write, read, delete";
         permission java.io.FilePermission "${user.home}/.m2/-", "read";
         
