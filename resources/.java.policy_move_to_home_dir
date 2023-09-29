@@ -50,7 +50,7 @@ grant {
         
         permission java.io.FilePermission "${user.dir}/-", "write, read, delete";
         permission java.io.FilePermission "${java.io.tmpdir}/-", "write, read, delete";
-        permission java.io.FilePermission "${user.home}/-", "read";
+        permission java.io.FilePermission "${user.home}/.m2/-", "read";
         
         // Please adapt these paths to all parent paths of your user home directory
         // Some Fix Code searches a .project file to determine an encoding
@@ -79,7 +79,8 @@ grant {
         permission java.net.SocketPermission "localhost:1024-", "accept, listen, resolve";
         permission java.net.SocketPermission "*", "accept, connect, resolve";
 
-        permission java.net.URLPermission "*", "GET:Accept";
+        permission java.net.URLPermission "http:*", "GET:Accept";
+        permission java.net.URLPermission "https:*", "GET:Accept";
 
         permission java.net.NetPermission "getProxySelector";
 };
