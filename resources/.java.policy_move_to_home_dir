@@ -64,7 +64,9 @@ grant {
         // Some Fix Code searches a .project file to determine an encoding
         // It's no problem when there's no .project file, but it's a problem
         // when there's no access in generell to this file
-        permission java.io.FilePermission "/Users/.project", "read";
+        permission java.io.FilePermission "${user.dir}/.project", "read";
+        permission java.io.FilePermission "${user.home}/.project", "read";
+        permission java.io.FilePermission "${user.home}/../.project", "read";
         permission java.io.FilePermission "/.project", "read";
         
         permission java.util.PropertyPermission "*", "read";
