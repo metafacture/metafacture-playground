@@ -52,6 +52,7 @@ grant {
         permission java.io.FilePermission "morph-functions.properties", "read";
         permission java.io.FilePermission "morph-collectors.properties", "read";
         permission java.io.FilePermission "morph-maps.properties", "read";
+        permission java.io.FilePermission "ore-aggregation.properties", "read";
 
         permission java.io.FilePermission "${user.dir}/project.clj", "read";
         permission java.io.FilePermission "${user.dir}/resources/-", "read";
