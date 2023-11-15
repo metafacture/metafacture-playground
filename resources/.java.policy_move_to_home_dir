@@ -60,6 +60,8 @@ grant {
         permission java.io.FilePermission "${user.dir}/tmp/-", "write, read, delete";
         permission java.io.FilePermission "${java.io.tmpdir}/-", "write, read, delete";
         permission java.io.FilePermission "${user.home}/.m2/-", "read";
+        permission java.io.FilePermission "https://-", "read";
+        permission java.io.FilePermission "http://-", "read";
         
         // Please adapt these paths to all parent paths of your user home directory
         // Some Fix Code searches a .project file to determine an encoding
@@ -67,6 +69,7 @@ grant {
         // when there's no access in generell to this file
         permission java.io.FilePermission "${user.dir}/.project", "read";
         permission java.io.FilePermission "${user.home}/.project", "read";
+        permission java.io.FilePermission "${user.home}/git/.project", "read";
         permission java.io.FilePermission "${user.home}/../.project", "read";
         permission java.io.FilePermission "/.project", "read";
         
