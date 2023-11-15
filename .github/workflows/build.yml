@@ -13,12 +13,21 @@ jobs:
       uses: actions/setup-java@v1
       with:
         java-version: 1.8
+    - name: Checkout metafacture-core
+      uses: actions/checkout@v2
+      with:
+        path: metafacture-core
+        repository: metafacture/metafacture-core
+        ref: 5.7.0-rc1
+    - name: Install metafacture-core
+      working-directory: metafacture-core 
+      run: ./gradlew install
     - name: Checkout metafacture-fix
       uses: actions/checkout@v2
       with:
         path: metafacture-fix
         repository: metafacture/metafacture-fix
-        ref: 0.6.1
+        ref: 0.6.0-rc3
     - name: Install metafacture-fix
       working-directory: metafacture-fix 
       run: ./gradlew install
