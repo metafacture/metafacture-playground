@@ -1,0 +1,1 @@
+https://metafacture.org/playground/?flux=inputFile%0A%7C+open-file%0A%7C+as-records%0A%7Cdecode-yaml%0A%7Cencode-xml%0A%7Cprint%0A%3B&data=---%0Afield1%3A+%22a%22%0Afield2%3A+%22b%22%0A

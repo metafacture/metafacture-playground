@@ -1,0 +1,1 @@
+https://metafacture.org/playground/?flux=%22https%3A//raw.githubusercontent.com/gbv/Catmandu-Tutorial/master/data/mab2.dat%22%0A%7C+open-http%0A%7C+as-lines%0A%7C+decode-mab%0A%7C+encode-yaml%0A%7C+print%3B
