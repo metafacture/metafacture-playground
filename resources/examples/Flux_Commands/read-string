@@ -1,0 +1,1 @@
+https://metafacture.org/playground/?flux=%22Hello+World%22%0A%7C+read-string%0A%7C+as-lines%0A%7C+print%0A%3B
