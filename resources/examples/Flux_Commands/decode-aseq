@@ -1,0 +1,1 @@
+https://metafacture.org/playground/?flux=%22https%3A//raw.githubusercontent.com/LibreCat/Catmandu-MARC/dev/t/rug01.aleph%22%0A%7C+open-http%0A%7C+as-lines%0A%7C+lines-to-records%28recordmarkerregexp%3D%22.%2AFMT.%2A%22%29%0A%7C+decode-aseq%0A%7C+encode-json%28prettyprinting%3D%22true%22%29%0A%7C+print%0A%3B

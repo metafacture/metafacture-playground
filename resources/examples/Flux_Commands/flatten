@@ -1,0 +1,1 @@
+https://metafacture.org/playground/?flux=inputFile%0A%7C+open-file%0A%7C+as-records%0A%7C+decode-yaml%0A%7C+flatten%0A%7C+encode-json%28prettyPrinting+%3D+%22true%22%29%0A%7C+print%3B&data=I%3A%0A++++was%3A%0A++++++++a%3A%0A++++++++++++nested%3A%0A++++++++++++++++element
