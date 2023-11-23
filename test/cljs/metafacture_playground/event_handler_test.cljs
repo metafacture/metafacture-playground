@@ -15,9 +15,9 @@
   (->> (repeat length \a)
        (apply str)))
 
-(def example-name "Local formeta to XML (fix)")
+(def example-name "Local JSON to XML (fix)")
 
-(def example-data (-> (rc/inline "examples/Local_formeta_to_XML_(fix)")
+(def example-data (-> (rc/inline "examples/Local_JSON_to_XML_(fix)")
                      utils/parse-url))
 
 ; Initilized db = empty db
