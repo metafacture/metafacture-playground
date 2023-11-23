@@ -1,0 +1,1 @@
+https://metafacture.org/playground/?flux=inputFile%0A%7C+open-file%0A//+important+decoding+csv+need+as-lines%0A%7C+as-lines%0A%7C+decode-csv%28hasHeader%3D%22true%22%2C+separator%3D%22%2C%22%29%0A%7C+encode-yaml%0A%7C+print%0A%3B&data=%22id%22%2C%22name%22%2C%22creator%22%0A%221%22%2C%22Book+1%22%2C%22Maxi+Muster%22%0A%222%22%2C%22Book+2%22%2C%22Sandy+Sample%22
