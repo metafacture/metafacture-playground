@@ -25,6 +25,27 @@ wget -O ~/bin/lein https://raw.githubusercontent.com/technomancy/leiningen/stabl
 chmod a+x ~/bin/lein
 ```
 
+### Install Metafacture Core
+
+This project depends on [metafacture-core](https://github.com/metafacture/metafacture-core), which is work in progress.
+It is possible to display the current version of dependencies in the UI. To display the version, please read this [section](#show-dependency-versions-in-ui). This is especially reasonable when installing on a server.
+
+Clone and install metafacture-core:
+```bash
+$ git clone https://github.com/metafacture/metafacture-core.git -b 5.7.0-rc1
+$ cd metafacture-core
+```
+
+Unix:
+```bash
+$ ./gradlew install
+```
+
+Windows:
+```bash
+$ .\gradlew.bat install
+```
+
 ### Install Metafacture Fix
 
 This project depends on [metafacture-fix](https://github.com/metafacture/metafacture-fix), which is work in progress.
@@ -32,7 +53,7 @@ It is possible to display the current version of dependencies in the UI. To disp
 
 Clone and install metafacture-fix:
 ```bash
-$ git clone https://github.com/metafacture/metafacture-fix.git -b 0.6.1
+$ git clone https://github.com/metafacture/metafacture-fix.git -b 0.6.0-rc3
 $ cd metafacture-fix
 ```
 
