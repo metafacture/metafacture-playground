@@ -4,7 +4,7 @@
    [clojure.string :as clj-str]))
 
 (defn display-name [s]
-  (clj-str/replace s "_" " "))
+  (clj-str/replace s "+" " "))
 
 (defn parse-url [href]
   (let [query-params (-> href
