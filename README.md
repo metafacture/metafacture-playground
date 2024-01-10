@@ -32,7 +32,7 @@ It is possible to display the current version of dependencies in the UI. To disp
 
 Clone and install metafacture-core:
 ```bash
-$ git clone https://github.com/metafacture/metafacture-core.git -b 5.7.0-rc1
+$ git clone https://github.com/metafacture/metafacture-core.git -b 5.7.0
 $ cd metafacture-core
 ```
 
@@ -53,7 +53,7 @@ It is possible to display the current version of dependencies in the UI. To disp
 
 Clone and install metafacture-fix:
 ```bash
-$ git clone https://github.com/metafacture/metafacture-fix.git -b 0.6.0-rc3
+$ git clone https://github.com/metafacture/metafacture-fix.git -b 0.7.0
 $ cd metafacture-fix
 ```
 
