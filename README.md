@@ -32,7 +32,7 @@ It is possible to display the current version of dependencies in the UI. To disp
 
 Clone and install metafacture-core:
 ```bash
-$ git clone https://github.com/metafacture/metafacture-core.git -b 5.7.0
+$ git clone https://github.com/metafacture/metafacture-core.git -b 6.0.0
 $ cd metafacture-core
 ```
 
@@ -53,7 +53,7 @@ It is possible to display the current version of dependencies in the UI. To disp
 
 Clone and install metafacture-fix:
 ```bash
-$ git clone https://github.com/metafacture/metafacture-fix.git -b 0.7.0
+$ git clone https://github.com/metafacture/metafacture-fix.git -b 1.0.0
 $ cd metafacture-fix
 ```
 
@@ -92,7 +92,11 @@ lein watch
 Wait a bit, perhaps 20 seconds, keeping an eye out for a sign the compile has finished, then browse to http://localhost:8280.
 
 ### Start in production mode
+Set the java version to 11, like:
 
+```bash
+export JAVA_CMD=/usr/lib/jvm/java-11-openjdk-amd64/bin/java
+```
 To compile and build the frontend run:
 
 ```
