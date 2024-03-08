@@ -45,13 +45,16 @@
                  [org.metafacture/metafacture-jdom "5.7.0"]
                  [org.metafacture/metafacture-json "5.7.0"]
                  [org.metafacture/metafacture-linkeddata "5.7.0"]
-                 [org.metafacture/metafacture-flux "5.7.0"]
+                 [org.metafacture/metafacture-flux "5.7.0" :exclusions [org.eclipse.xtext/xtext-dev-bom org.eclipse.emf/org.eclipse.emf.common]]
                  [org.metafacture/metafacture-runner "5.7.0"]
                  [org.metafacture/metafacture-yaml "5.7.0"]
                  [org.metafacture/metamorph-api "5.7.0"]
                  [org.metafacture/metamorph "5.7.0"]
                  [org.metafacture/metamorph-test "5.7.0"]
-                 [org.metafacture/metafix "0.7.0" :exclusions [[org.eclipse.xtext/xtext-dev-bom]]]]
+                 [org.metafacture/metafix "0.7.0" :exclusions [org.eclipse.xtext/xtext-dev-bom]]
+                ]
+
+  :managed-dependencies [[org.antlr/antlr-runtime "3.2"]]
 
   :plugins [[lein-shadow "0.4.0"]
 
