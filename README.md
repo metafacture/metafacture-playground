@@ -13,7 +13,7 @@ Both deployments provide a web application and an HTTP API
 
 ## Installation
 
-Before starting you need to install [Leiningen](https://leiningen.org/) and a JDK (minimum Java 8).
+Before starting you need to install [Leiningen](https://leiningen.org/) and a JDK (minimum Java 11).
 
 ### Install Leiningen
 
