@@ -97,10 +97,11 @@ Set the java version to 11, like:
 ```bash
 export JAVA_CMD=/usr/lib/jvm/java-11-openjdk-amd64/bin/java
 ```
-To compile and build the frontend run:
+
+To test, compile and build the frontend run:
 
 ```
-lein release
+lein test; lein release
 ```
 
 Then start the server with:
