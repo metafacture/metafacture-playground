@@ -144,7 +144,13 @@
     (let [backend-versions (re-frame/subscribe [::subs/backend-versions])]
       (for [[version-name {:keys [version-label link]}] @backend-versions]
         ^{:key version-name}
-        [link-label (str (name version-name) " " version-label) link]))])
+        [link-label (str (name version-name) " " version-label) link]))
+   [:> image {:alt "Invertocat logo"
+              :src "images/github-mark.png"
+              :as "a"
+              :href "https://github.com/metafacture/metafacture-playground/"
+              :target "_blank"
+              :floated "right"}]])
 
 ;;; Message Panel
 
