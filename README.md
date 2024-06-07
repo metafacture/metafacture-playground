@@ -11,7 +11,7 @@ Both deployments provide a web application and an HTTP API
 
 [Here](CONTRIBUTING.md) you can read about contributing to Metafacture Playground.
 
-## Docker
+## Docker installation
 
 [Install Docker Engine](https://docs.docker.com/engine/install/) by follwing the guide for your distro.
 
@@ -32,13 +32,17 @@ cd metafacture-playground
 docker compose -f docker-compose-dev.yml up
 ```
 
+In development mode the ***local deployment*** is available at http://localhost:8280.
+
 ### Start in production mode
 
 ```bash
 docker compose up
 ```
 
-## Installation
+In production mode the ***local deployment*** is available at http://localhost:3000.
+
+## Manual installation
 
 Before starting you need to install [Leiningen](https://leiningen.org/) and a JDK (minimum Java 11).
 
