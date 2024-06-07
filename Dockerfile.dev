@@ -1,0 +1,65 @@
+FROM adoptopenjdk/openjdk11:debian
+
+# Prepare nodejs install as leiningen requires nodejs
+RUN curl -sL https://deb.nodesource.com/setup_18.x | bash 
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    software-properties-common \
+    wget \
+    gnupg \
+    leiningen \
+    git \
+    vim \
+    nodejs \
+    && \
+    apt clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Use non-root user
+ARG USERNAME=playground
+ARG USER_UID=1000
+ARG USER_GID=$USER_UID
+    
+# Create the user
+RUN groupadd --gid $USER_GID $USERNAME \
+    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME
+
+USER $USERNAME
+
+## metafacture-core
+WORKDIR /opt/metafacture-core
+RUN git clone https://github.com/metafacture/metafacture-core.git .
+# use master for now, not a specific version
+# must match dependencies in project.clj
+#RUN git checkout metafacture-core-6.0.0
+RUN ./gradlew install
+
+## metafacture-fix
+WORKDIR /opt/metafacture-fix
+RUN git clone https://github.com/metafacture/metafacture-fix.git .
+RUN git checkout 1.0.0
+RUN ./gradlew install
+
+## metafacture-playground
+WORKDIR /opt/metafacture-playground
+COPY --chown="$USERNAME:$USERNAME" ./ .
+
+COPY --chown="$USERNAME:$USERNAME" resources/.java.policy_move_to_home_dir /home/$USERNAME/.java.policy 
+
+# enable debug mode
+# by adding "-Djava.security.debug=access" option
+# RUN sed 's/:jvm-opts \[/&"-Djava.security.debug=access" /' roles/metafacture-playground/files/project.clj
+
+RUN lein release
+
+CMD ["lein", "watch"]
+
+# keep container running
+#ENTRYPOINT ["tail", "-f", "/dev/null"]
+
+# log into container:
+# sudo docker exec -it metafacture-playground-app-1 bash
+# inside the container:
+# lein run > out 2>error
+# or
+# nohup lein run &

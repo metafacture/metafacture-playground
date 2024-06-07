@@ -11,6 +11,33 @@ Both deployments provide a web application and an HTTP API
 
 [Here](CONTRIBUTING.md) you can read about contributing to Metafacture Playground.
 
+## Docker
+
+[Install Docker Engine](https://docs.docker.com/engine/install/) by follwing the guide for your distro.
+
+[Install Docker Compose](https://docs.docker.com/compose/install/linux/#install-using-the-repository) as a plugin.
+
+Alternatively, you may want to use the Docker Desktop environment which includes a GUI and all Docker components.
+
+### Clone repo
+
+```bash
+git clone https://github.com/metafacture/metafacture-playground.git
+cd metafacture-playground
+```
+
+### Start in development mode
+
+```bash
+docker compose -f docker-compose-dev.yml up
+```
+
+### Start in production mode
+
+```bash
+docker compose up
+```
+
 ## Installation
 
 Before starting you need to install [Leiningen](https://leiningen.org/) and a JDK (minimum Java 11).

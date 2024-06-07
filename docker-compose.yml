@@ -1,0 +1,11 @@
+version: "2"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    ports:
+      - 3000:3000
+    mem_limit: 8192m
+    cpus: 0.5
