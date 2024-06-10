@@ -8,7 +8,7 @@ services:
       context: .
       dockerfile: Dockerfile.dev
     volumes:
-      - .:/opt/metafacture-playground
+      - .:/home/playground/metafacture-playground
     ports:
       - 8280:8280
       - 9630:9630

@@ -26,8 +26,10 @@ RUN groupadd --gid $USER_GID $USERNAME \
 
 USER $USERNAME
 
+ARG INSTALL_DIR=/home/$USERNAME
+
 ## metafacture-core
-WORKDIR /opt/metafacture-core
+WORKDIR $INSTALL_DIR/metafacture-core
 RUN git clone https://github.com/metafacture/metafacture-core.git .
 # use master for now, not a specific version
 # must match dependencies in project.clj
@@ -35,13 +37,13 @@ RUN git clone https://github.com/metafacture/metafacture-core.git .
 RUN ./gradlew install
 
 ## metafacture-fix
-WORKDIR /opt/metafacture-fix
+WORKDIR $INSTALL_DIR/metafacture-fix
 RUN git clone https://github.com/metafacture/metafacture-fix.git .
 RUN git checkout 1.0.0
 RUN ./gradlew install
 
 ## metafacture-playground
-WORKDIR /opt/metafacture-playground
+WORKDIR $INSTALL_DIR/metafacture-playground
 RUN git clone https://github.com/metafacture/metafacture-playground.git .
 
 COPY --chown="$USERNAME:$USERNAME" resources/.java.policy_move_to_home_dir /home/$USERNAME/.java.policy 
