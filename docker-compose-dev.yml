@@ -1,5 +1,7 @@
 version: "2"
 
+name: playground-dev
+
 services:
   app:
     build:
