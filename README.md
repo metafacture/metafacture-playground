@@ -63,7 +63,7 @@ It is possible to display the current version of dependencies in the UI. To disp
 
 Clone and install metafacture-core:
 ```bash
-$ git clone https://github.com/metafacture/metafacture-core.git -b 6.0.0
+$ git clone https://github.com/metafacture/metafacture-core.git
 $ cd metafacture-core
 ```
 
