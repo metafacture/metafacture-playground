@@ -40,7 +40,9 @@ In development mode the ***local deployment*** is available at http://localhost:
 docker compose up
 ```
 
-In production mode the ***local deployment*** is available at http://localhost:3000.
+In production mode the ***local deployment*** is available at http://localhost:3000. 
+
+Use the `--detach` option to run containers in the background, recommended when deploy on servers.
 
 ### View output (logs) from Docker container
 
