@@ -42,6 +42,14 @@ docker compose up
 
 In production mode the ***local deployment*** is available at http://localhost:3000.
 
+### View output (logs) from Docker container
+
+```bash
+docker compose logs --timestamps
+```
+
+For more options see https://docs.docker.com/reference/cli/docker/compose/logs/
+
 ## Manual installation
 
 Before starting you need to install [Leiningen](https://leiningen.org/) and a JDK (minimum Java 11).
