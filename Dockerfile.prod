@@ -44,7 +44,7 @@ RUN ./gradlew install
 
 ## metafacture-playground
 WORKDIR $INSTALL_DIR/metafacture-playground
-RUN git clone https://github.com/metafacture/metafacture-playground.git .
+COPY --chown="$USERNAME:$USERNAME" ./ .
 
 COPY --chown="$USERNAME:$USERNAME" resources/.java.policy_move_to_home_dir /home/$USERNAME/.java.policy 
 
