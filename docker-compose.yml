@@ -9,5 +9,8 @@ services:
       dockerfile: Dockerfile.prod
     ports:
       - 3000:3000
+    volumes:
+      - '/etc/timezone:/etc/timezone:ro' # Sync with host
+      - '/etc/localtime:/etc/localtime:ro' # Sync with host
     mem_limit: 8192m
     cpus: 0.5

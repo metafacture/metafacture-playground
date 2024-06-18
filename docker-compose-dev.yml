@@ -9,6 +9,8 @@ services:
       dockerfile: Dockerfile.dev
     volumes:
       - .:/home/playground/metafacture-playground
+      - '/etc/timezone:/etc/timezone:ro' # Sync with host
+      - '/etc/localtime:/etc/localtime:ro' # Sync with host
     ports:
       - 8280:8280
       - 9630:9630
