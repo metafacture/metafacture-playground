@@ -18,7 +18,7 @@ jobs:
       with:
         path: metafacture-core
         repository: metafacture/metafacture-core
-        ref: master
+        ref: metafacture-core-6.1.2
     - name: Install metafacture-core
       working-directory: metafacture-core
       run: ./gradlew install
@@ -27,7 +27,7 @@ jobs:
       with:
         path: metafacture-fix
         repository: metafacture/metafacture-fix
-        ref: 1.0.0
+        ref: 1.1.2
     - name: Install metafacture-fix
       working-directory: metafacture-fix
       run: ./gradlew install
