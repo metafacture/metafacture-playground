@@ -39,7 +39,7 @@ RUN ./gradlew install
 ## metafacture-fix
 WORKDIR $INSTALL_DIR/metafacture-fix
 RUN git clone https://github.com/metafacture/metafacture-fix.git .
-RUN git checkout 1.0.0
+RUN git checkout 1.1.2
 RUN ./gradlew install
 
 ## metafacture-playground
