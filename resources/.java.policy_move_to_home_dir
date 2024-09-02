@@ -72,6 +72,7 @@ grant {
         permission java.io.FilePermission "${user.home}/git/.project", "read";
         permission java.io.FilePermission "${user.home}/../.project", "read";
         permission java.io.FilePermission "/.project", "read";
+        permission java.io.FilePermission "/opt/.project", "read";
         
         permission java.util.PropertyPermission "*", "read";
         permission java.util.PropertyPermission "jetty.git.hash", "write";
