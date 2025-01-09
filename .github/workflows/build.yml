@@ -34,6 +34,18 @@ jobs:
     - name: Set up Node.js
       uses: actions/setup-node@v2
     - uses: actions/checkout@v2
+    # Setup Leiningen. Also supports setting up other commonly used tools.
+    - name: Install clojure tools
+      uses: DeLaGuardo/setup-clojure@12.1
+      with: lein: 2.9.1
+      # Enable cache so our actions run faster.
+    - name: Cache clojure dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.m2/repository
+        key: cljdeps-${{ hashFiles('project.clj') }}
+        restore-keys: cljdeps-
     - name: Install dependencies
       run: lein deps
     - name: Build cljs
