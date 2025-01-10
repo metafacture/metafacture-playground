@@ -17,7 +17,7 @@ jobs:
       with:
         path: metafacture-core
         repository: metafacture/metafacture-core
-        ref: metafacture-core-6.1.2
+        ref: metafacture-core-6.2.0
     - name: Install metafacture-core
       working-directory: metafacture-core
       run: ./gradlew install
@@ -26,7 +26,7 @@ jobs:
       with:
         path: metafacture-fix
         repository: metafacture/metafacture-fix
-        ref: 1.1.2
+        ref: 1.2.0
     - name: Install metafacture-fix
       working-directory: metafacture-fix
       run: ./gradlew install
@@ -37,12 +37,23 @@ jobs:
         npm install -g karma-cli
         export CHROME_BIN='/usr/bin/chromium-browser'
     - uses: actions/checkout@v2
+    # Setup Leiningen. Also supports setting up other commonly used tools.
+    - name: Install clojure tools
+      uses: DeLaGuardo/setup-clojure@12.1
+      with:
+        lein: 2.9.1
+      # Enable cache so our actions run faster.
+    - name: Cache clojure dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.m2/repository
+        key: cljdeps-${{ hashFiles('project.clj') }}
+        restore-keys: cljdeps-
     - name: Install dependencies
       run: lein deps
-
     - name: Run clojure tests
       run: lein test
-
     - name: Run clojurescript tests
       run: |
         lein shadow release karma-test
