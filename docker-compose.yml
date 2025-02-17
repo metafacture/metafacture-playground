@@ -12,5 +12,8 @@ services:
     volumes:
       - '/etc/timezone:/etc/timezone:ro' # Sync with host
       - '/etc/localtime:/etc/localtime:ro' # Sync with host
-    mem_limit: 8192m
-    cpus: 0.5
+    deploy:
+      resources:
+        limits:
+          cpus: '3.0' # number of cores
+          memory: 8GB
