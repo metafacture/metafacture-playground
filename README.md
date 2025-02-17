@@ -44,6 +44,14 @@ In production mode the ***local deployment*** is available at http://localhost:3
 
 Use the `--detach` option to run containers in the background, recommended when deploy on servers.
 
+#### Resources limits
+
+Limits for max number of CPUs and RAM usage are set in `docker-compose.yml`.
+Currently limits are set to 3 CPUs and 8GB RAM. 
+
+Java 11 processes are per default allowed to use up to 25% of the availbale RAM if Xmx is not set.
+This means that the playground process can use up to 2GB java heap space.
+
 ### View output (logs) from Docker container
 
 ```bash
