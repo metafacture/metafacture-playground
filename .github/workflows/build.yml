@@ -18,18 +18,9 @@ jobs:
       with:
         path: metafacture-core
         repository: metafacture/metafacture-core
-        ref: metafacture-core-6.2.0
+        ref: master
     - name: Install metafacture-core
       working-directory: metafacture-core
-      run: ./gradlew install
-    - name: Checkout metafacture-fix
-      uses: actions/checkout@v2
-      with:
-        path: metafacture-fix
-        repository: metafacture/metafacture-fix
-        ref: 1.2.0
-    - name: Install metafacture-fix
-      working-directory: metafacture-fix
       run: ./gradlew install
     - name: Set up Node.js
       uses: actions/setup-node@v2
