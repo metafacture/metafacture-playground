@@ -1,0 +1,1 @@
+https://metafacture.org/playground/?flux=inputFile%0A%7C+open-file%0A%7C+as-lines%0A%7C+decode-string%28%22\u001e%22%2C+mode%3D%22SPLIT%22%29%0A%7C+print%0A%3B&data=00+28585%1E20+Puissances+du+cubisme%1E40+Gleizes%2C+Albert%1E74+Chambery%1E75+Ed.+Presence%1E76+1969%1E77+357+S
