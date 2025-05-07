@@ -12,6 +12,7 @@ services:
     volumes:
       - '/etc/timezone:/etc/timezone:ro' # Sync with host
       - '/etc/localtime:/etc/localtime:ro' # Sync with host
+      - './tmp:/home/playground/metafacture-playground/tmp'
     deploy:
       resources:
         limits:
