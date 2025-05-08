@@ -44,4 +44,13 @@
           (throw (ex-info "Output file exceeds maximum allowed size (1 GB)" {:file out-path}))
           (do
             (log/info "Executed flux file with Flux/main. Result in" out-path)
-            (slurp outfile)))))))
+            (slurp outfile))))
+      (finally
+        ;; Aufräumen der temporären Dateien
+        (doseq [f [inputfile transformationFile fluxfile out-path]]
+          (try
+            (let [file (io/file f)]
+              (when (.exists file)
+                (io/delete-file file true)))
+            (catch Exception e
+              (log/warn "Could not delete temp file:" f e))))))))
