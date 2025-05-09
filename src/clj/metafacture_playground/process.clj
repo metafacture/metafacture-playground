@@ -1,6 +1,7 @@
 (ns metafacture-playground.process
   (:require
    [clojure.string :as clj-str]
+   [clojure.java.io :as io]
    [clojure.tools.logging :as log])
   (:import
    (java.io File)
@@ -30,7 +31,18 @@
                       "default transformationFile = \"" transformationFile "\";\n"
                       flux)
                  (clj-str/replace #"\|(\s*|\n*)write\(\".*\"\)(\s*|\n*);" output)
-                 (clj-str/replace #"\|(\s*|\n*)print(\s*|\n*);" output))]
-    (Flux/main (into-array [(content->tempfile-path flux ".flux")]))
-    (log/info "Executed flux file with Flux/main. Result in" out-path)
-    (slurp out-path)))
+                 (clj-str/replace #"\|(\s*|\n*)print(\s*|\n*);" output))
+        fluxfile (content->tempfile-path flux ".flux")]
+    (try
+      (Flux/main (into-array [fluxfile]))
+      (log/info "Executed flux file with Flux/main. Result in" out-path)
+      (slurp out-path)
+      (finally
+        ;; Remove temp files
+        (doseq [f [inputfile transformationFile fluxfile out-path]]
+          (try
+            (let [file (io/file f)]
+              (when (.exists file)
+                (io/delete-file file true)))
+            (catch Exception e
+              (log/warn "Could not delete temp file:" f e))))))))
