@@ -28,7 +28,8 @@ jobs:
     # Setup Leiningen. Also supports setting up other commonly used tools.
     - name: Install clojure tools
       uses: DeLaGuardo/setup-clojure@12.1
-      with: lein: 2.9.1
+      with:
+        lein: 2.9.1
       # Enable cache so our actions run faster.
     - name: Cache clojure dependencies
       uses: actions/cache@v3
