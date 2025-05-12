@@ -23,23 +23,23 @@
 
 
 (defn process [flux data transformation]
-  (let [inputfile (content->tempfile-path data ".data")
-        transformationFile (content->tempfile-path transformation ".fix")
+  (let [input-file (content->tempfile-path data ".data")
+        transformation-file (content->tempfile-path transformation ".fix")
         out-path (content->tempfile-path "" ".txt")
         output (str "|write(\"" out-path "\");")
-        flux (-> (str "default inputFile = \"" inputfile "\";\n"
-                      "default transformationFile = \"" transformationFile "\";\n"
+        flux (-> (str "default inputFile = \"" input-file "\";\n"
+                      "default transformationFile = \"" transformation-file "\";\n"
                       flux)
                  (clj-str/replace #"\|(\s*|\n*)write\(\".*\"\)(\s*|\n*);" output)
                  (clj-str/replace #"\|(\s*|\n*)print(\s*|\n*);" output))
-        fluxfile (content->tempfile-path flux ".flux")]
+        flux-file (content->tempfile-path flux ".flux")]
     (try
-      (Flux/main (into-array [fluxfile]))
+      (Flux/main (into-array [flux-file]))
       (log/info "Executed flux file with Flux/main. Result in" out-path)
       (slurp out-path)
       (finally
         ;; Remove temp files
-        (doseq [f [inputfile transformationFile fluxfile out-path]]
+        (doseq [f [input-file transformation-file flux-file out-path]]
           (try
             (let [file (io/file f)]
               (when (.exists file)
