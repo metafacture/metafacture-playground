@@ -20,8 +20,7 @@
         (log/trace "Content" content)
         file-path))))
 
-
-(defn process [flux data transformation]
+(defn process-in-timeout [flux data transformation]
   (let [inputfile (content->tempfile-path data ".data")
         transformationFile (content->tempfile-path transformation ".fix")
         out-path (content->tempfile-path "" ".txt")
@@ -34,3 +33,12 @@
     (Flux/main (into-array [(content->tempfile-path flux ".flux")]))
     (log/info "Executed flux file with Flux/main. Result in" out-path)
     (slurp out-path)))
+
+(defn process
+  "Runs process with a maximum wait of 1 min. Returns result or ::timeout."
+  [flux data transformation]
+  (let [fut (future (process-in-timeout flux data transformation))
+        result (deref fut 60000 ::timeout)]
+    (when (= result ::timeout)
+      (future-cancel fut))
+    result))

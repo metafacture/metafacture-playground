@@ -141,4 +141,5 @@
              :prep-tasks   ["compile" ["release"]]}}
 
   :prep-tasks []
+  :timeout [300000] ; after 5 minutes cancel the processing of a workflow
   :jvm-opts ["-Dclojure.tools.logging.factory=clojure.tools.logging.impl/slf4j-factory"])
