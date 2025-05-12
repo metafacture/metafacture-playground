@@ -21,6 +21,14 @@
         (log/trace "Content" content)
         file-path))))
 
+(defn- remove-temp-files [temp-files]
+  (doseq [temp-file temp-files]
+          (try
+            (let [file (io/file temp-file)]
+              (when (.exists file)
+                (io/delete-file file false)))
+            (catch Exception e
+              (log/warn "Could not delete temp file:" temp-file e)))))
 
 (defn process [flux data transformation]
   (let [input-file (content->tempfile-path data ".data")
@@ -38,11 +46,4 @@
       (log/info "Executed flux file with Flux/main. Result in" out-path)
       (slurp out-path)
       (finally
-        ;; Remove temp files
-        (doseq [f [input-file transformation-file flux-file out-path]]
-          (try
-            (let [file (io/file f)]
-              (when (.exists file)
-                (io/delete-file file false)))
-            (catch Exception e
-              (log/warn "Could not delete temp file:" f e))))))))
+        (remove-temp-files [input-file transformation-file flux-file out-path])))))
