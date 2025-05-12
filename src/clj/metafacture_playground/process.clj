@@ -43,6 +43,6 @@
           (try
             (let [file (io/file f)]
               (when (.exists file)
-                (io/delete-file file true)))
+                (io/delete-file file false)))
             (catch Exception e
               (log/warn "Could not delete temp file:" f e))))))))
