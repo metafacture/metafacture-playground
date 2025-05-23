@@ -1,0 +1,1 @@
+https://metafacture.org/playground/?flux=%22https%3A//services.dnb.de/oai/repository%22%0A%7C+open-oaipmh%28metadataPrefix%3D%22oai_dc%22%2C+dateFrom%3D%222025-05-01%22%2C+dateUntil%3D%222025-05-05%22%2C+setSpec%3D%22dnb-all%3Aonline%3Adissertations%3Asg300%22%29%0A%7C+decode-xml%0A%7C+handle-generic-xml%0A%7C+encode-yaml%0A%7C+print%3B%0A
