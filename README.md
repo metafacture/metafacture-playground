@@ -95,27 +95,6 @@ Windows:
 $ .\gradlew.bat install
 ```
 
-### Install Metafacture Fix
-
-This project depends on [metafacture-fix](https://github.com/metafacture/metafacture-fix), which is work in progress.
-It is possible to display the current version of dependencies in the UI. To display the version, please read this [section](#show-dependency-versions-in-ui). This is especially reasonable when installing on a server.
-
-Clone and install metafacture-fix:
-```bash
-$ git clone https://github.com/metafacture/metafacture-fix.git -b 1.0.0
-$ cd metafacture-fix
-```
-
-Unix:
-```bash
-$ ./gradlew install
-```
-
-Windows:
-```bash
-$ .\gradlew.bat install
-```
-
 ### Clone the metafacture-playground project
 
 ```bash
