@@ -13,15 +13,15 @@ jobs:
       uses: actions/setup-java@v1
       with:
         java-version: 11
-    - name: Checkout metafacture-core
-      uses: actions/checkout@v2
-      with:
-        path: metafacture-core
-        repository: metafacture/metafacture-core
-        ref: master
-    - name: Install metafacture-core
-      working-directory: metafacture-core
-      run: ./gradlew install
+    #- name: Checkout metafacture-core
+    #  uses: actions/checkout@v2
+    #  with:
+    #    path: metafacture-core
+    #    repository: metafacture/metafacture-core
+    #    ref: master
+   # - name: Install metafacture-core
+   #   working-directory: metafacture-core
+   #   run: ./gradlew install
     - name: Set up Node.js
       uses: actions/setup-node@v2
     - uses: actions/checkout@v2
