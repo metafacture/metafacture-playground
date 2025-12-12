@@ -45,7 +45,7 @@
    []
    db))
 
-(defn- restore-db [web-storage]
+(defn- restore-from-webstorage [web-storage]
   (reduce
    (fn [result [key val]]
      (let [restored-key (->key key)
@@ -56,6 +56,18 @@
        (assoc-in result restored-key restored-val)))
    {}
    web-storage))
+
+(defn- ->shadow-content [db]
+  (reduce
+   (fn [result editor]
+     (let [content (get-in db [:editors editor :content])]
+       (assoc-in result [:editors editor :shadow-content] content)))
+   db
+   (-> db :editors keys )))
+
+(defn- restore-db [web-storage]
+  (-> (restore-from-webstorage web-storage)
+      ->shadow-content))
 
 ;;; Size of editors
 
@@ -73,18 +85,18 @@
                 16
                 (or (get-in db [:editors editor :default-width])
                     (get-in db [:editors editor :width])))]
-      {:db (cond->
-            (assoc-in db [:editors editor :width] width)
-             (= editor :flux) (assoc-in [:editors :transformation :width] width)
-             (= editor :transformation) (assoc-in [:editors :flux :width] width))
-       :storage/set {:session? true
-                     :pairs (cond->
-                             [{:name (->storage-key [:editors editor :width])
-                              :value width}]
-                              (= editor :flux) (conj {:name (->storage-key [:editors :transformation :width])
-                                                      :value width})
-                              (= editor :transformation) (conj {:name (->storage-key [:editors :flux :width])
-                                                                :value width}))}}))
+    {:db (cond->
+          (assoc-in db [:editors editor :width] width)
+           (= editor :flux) (assoc-in [:editors :transformation :width] width)
+           (= editor :transformation) (assoc-in [:editors :flux :width] width))
+     :storage/set {:session? true
+                   :pairs (cond->
+                           [{:name (->storage-key [:editors editor :width])
+                             :value width}]
+                            (= editor :flux) (conj {:name (->storage-key [:editors :transformation :width])
+                                                    :value width})
+                            (= editor :transformation) (conj {:name (->storage-key [:editors :flux :width])
+                                                              :value width}))}}))
 
 (re-frame/reg-event-fx
  ::update-width
@@ -153,12 +165,14 @@
                    db
                    disable-editors)
             
-            true
-            (assoc-in [:editors editor :content] new-value)
-            
             code-trigger
-            (update-in [:editors editor :key-count] inc)
-            
+            (->  (assoc-in [:editors editor :content] new-value)
+                 (assoc-in [:editors editor :shadow-content] new-value)
+                 (update-in [:editors editor :key-count] inc))
+
+            (not code-trigger)
+            (assoc-in [:editors editor :shadow-content] new-value)
+
             (or (= code-trigger :other)
                 (not code-trigger))
             (assoc-in [:ui :dropdown :active-item] nil))}
@@ -167,17 +181,17 @@
                          :names [(->storage-key [:editors editor :content])
                                  (->storage-key [:ui :dropdown :active-item])]}}
        {:storage/set {:session? true
-                     :pairs (conj
-                             (mapv
-                              (fn [[editor v]]
-                                {:name (->storage-key [:editors editor :disabled?]) :value v})
-                              disable-editors)
-                             {:name (->storage-key [:editors editor :content]) :value new-value}
-                             (when-not code-trigger {:name (->storage-key [:ui :dropdown :active-item]) :value nil}))}})
+                      :pairs (conj
+                              (mapv
+                               (fn [[editor v]]
+                                 {:name (->storage-key [:editors editor :disabled?]) :value v})
+                               disable-editors)
+                              {:name (->storage-key [:editors editor :content]) :value new-value}
+                              (when-not code-trigger {:name (->storage-key [:ui :dropdown :active-item]) :value nil}))}})
      (when-not (= editor :result)
        {:dispatch [::update-width editor new-value]})
      (when (or (= code-trigger :other)
-               (not code-trigger)) 
+               (not code-trigger))
        {::effects/unset-url-query-params nil}))))
 
 (re-frame/reg-event-fx
@@ -209,24 +223,24 @@
   [{db :db} [_ example-name]]
   (let [example-data (find-example-data example-name (:examples db))]
     (if example-data
-        {:db (-> db
-                 (assoc-in [:editors :result :content] nil)
-                 (assoc-in [:ui :dropdown :active-item] example-name))
-         :fx (mapv
-              (fn [editor]
-                [:dispatch [::edit-editor-content editor (get example-data editor "") :example]])
-              [:data :flux :transformation])
-         :storage/set {:session? true
-                       :name (->storage-key [:ui :dropdown :active-item])
-                       :value example-name}
-         ::effects/set-url-query-params example-name}
-        {:db (assoc db :message {:content (str "Could not find example with name \"" example-name "\".")
-                                 :type :warning})
-         ::effects/unset-url-query-params nil})))
+      {:db (-> db
+               (assoc-in [:editors :result :content] nil)
+               (assoc-in [:ui :dropdown :active-item] example-name))
+       :fx (mapv
+            (fn [editor]
+              [:dispatch [::edit-editor-content editor (get example-data editor "") :example]])
+            [:data :flux :transformation])
+       :storage/set {:session? true
+                     :name (->storage-key [:ui :dropdown :active-item])
+                     :value example-name}
+       ::effects/set-url-query-params example-name}
+      {:db (assoc db :message {:content (str "Could not find example with name \"" example-name "\".")
+                               :type :warning})
+       ::effects/unset-url-query-params nil})))
 
 (re-frame/reg-event-fx
-  ::load-example
-  load-example)
+ ::load-example
+ load-example)
 
 ;;; Copy to clipboard
 
@@ -271,7 +285,7 @@
 
 (defn add-error-message [result name url]
   (if (:error url)
-    (conj result (str "It occured an JS Error generating the " name"."))
+    (conj result (str "It occured an JS Error generating the " name "."))
     (conj result (str "The " name " is "
                       (- max-url-string (count url))
                       " characters too long (Maximum: " max-url-string ")"))))
@@ -321,11 +335,11 @@
                       (#{".fix" ".morph" ".xml"} file-extension) (update result :fx conj [:dispatch [::edit-editor-content :transformation content :other]])
                       :else (update result :fx conj [:dispatch [::edit-editor-content :data content :other]]))))
                 {:fx []} files)]
-     {:db (assoc db :message {:content (concat [(:message result)]
-                                               ["Imported workflow with files: "]
-                                               (map :name files))
-                              :type :info})
-      :fx (:fx result)}))
+    {:db (assoc db :message {:content (concat [(:message result)]
+                                              ["Imported workflow with files: "]
+                                              (map :name files))
+                             :type :info})
+     :fx (:fx result)}))
 
 (re-frame/reg-event-fx
  ::import-editor-content
@@ -371,8 +385,7 @@
     (not (clj-str/blank? (:content flux))) (#(let [flux (playground-flux->export-flux
                                                          (:content flux)
                                                          [(:variable data) "playground.data"]
-                                                         [(:variable transformation)"playground.fix"])]
-                                    (update % ::effects/export-files conj [flux "playground.flux"])))
+                                                         [(:variable transformation) "playground.fix"])] (update % ::effects/export-files conj [flux "playground.flux"])))
     (not (clj-str/blank? (:content transformation))) (update ::effects/export-files conj [(:content transformation) "playground.fix"])))
 
 (re-frame/reg-event-fx
@@ -421,9 +434,9 @@
                        :timeout {:content (str "Response from server: " problem-message)}
                        :body {:content (str "Response from server: " problem-message)}
                        :server (server-problem-message status status-text body))]
-       {:db (-> db
-                (assoc-in [:editors :result :loading?] false)
-                (assoc :message (merge message-data {:type :error})))}))
+    {:db (-> db
+             (assoc-in [:editors :result :loading?] false)
+             (assoc :message (merge message-data {:type :error})))}))
 
 (re-frame/reg-event-fx
  ::bad-response
@@ -431,23 +444,23 @@
 
 (defn process
   [{db :db} [_ data flux transformation]]
-    {:fetch {:method                 :post
-             :url                    "process"
-             :body                   (.stringify js/JSON (clj->js {:data data
-                                                                   :flux flux
-                                                                   :transformation transformation}))
-             :timeout                100000
-             :response-content-types {"text/plain" :text
-                                      #"application/.*json" :json}
-             :on-success             [::process-response]
-             :on-failure             [::bad-response]}
-     :db (-> db
-             (assoc-in [:editors :result :content] nil)
-             (assoc-in [:editors :result :loading?] true)
-             (assoc :message {:content nil
-                              :details nil
-                              :show-details? false
-                              :type nil}))})
+  {:fetch {:method                 :post
+           :url                    "process"
+           :body                   (.stringify js/JSON (clj->js {:data data
+                                                                 :flux flux
+                                                                 :transformation transformation}))
+           :timeout                100000
+           :response-content-types {"text/plain" :text
+                                    #"application/.*json" :json}
+           :on-success             [::process-response]
+           :on-failure             [::bad-response]}
+   :db (-> db
+           (assoc-in [:editors :result :content] nil)
+           (assoc-in [:editors :result :loading?] true)
+           (assoc :message {:content nil
+                            :details nil
+                            :show-details? false
+                            :type nil}))})
 
 (re-frame/reg-event-fx
  ::process
@@ -497,7 +510,7 @@
 (defn versions-response
   [{db :db} [_ {:keys [body]}]]
   (let [body (-> (transit/read (transit/reader :json) body)
-                  walk/keywordize-keys)]
+                 walk/keywordize-keys)]
     {:db (assoc db :versions body)}))
 
 (re-frame/reg-event-fx
@@ -527,7 +540,7 @@
   (cond-> start-db
     data (assoc-in [:editors :data :content] data)
     flux (assoc-in [:editors :flux :content] flux)
-    transformation (assoc-in [:editors :morph :content] transformation)))
+    transformation (assoc-in [:editors :transformation :content] transformation)))
 
 (defn initialize-db
   [{[_ href window-height] :event
@@ -549,11 +562,11 @@
       :else {:db (-> db/default-db
                      (assoc-in [:ui :height] window-height))
              :fx (concat fx
-                     [[:dispatch [::load-examples]]]
-                     (mapv
-                      (fn [editor]
-                        [:dispatch [::edit-editor-content editor (get query-params editor "")]])
-                      [:data :flux :transformation]))
+                         [[:dispatch [::load-examples]]]
+                         (mapv
+                          (fn [editor]
+                            [:dispatch [::edit-editor-content editor (get query-params editor "") :other]])
+                          [:data :flux :transformation]))
              :storage/set {:session? true
                            :pairs (-> (assoc-query-params {} query-params)
                                       generate-pairs)}
@@ -561,5 +574,5 @@
 
 (re-frame/reg-event-fx
  ::initialize-db
-[(re-frame/inject-cofx :storage/all {:session? true})]
+ [(re-frame/inject-cofx :storage/all {:session? true})]
  initialize-db)

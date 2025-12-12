@@ -53,7 +53,16 @@
 (re-frame/reg-sub
  ::editor-content
  (fn [db [_ editor]]
-   (get-in db [:editors editor :content])))
+   (if-let [content (get-in db [:editors editor :content])]
+     content
+     "")))
+
+(re-frame/reg-sub
+ ::editor-shadow-content
+ (fn [db [_ editor]]
+   (if-let [shadow-content (get-in db [:editors editor :shadow-content])]
+     shadow-content
+     "")))
 
 (defn- editor-height-maximum [height font-size height-divider]
   (-> height
