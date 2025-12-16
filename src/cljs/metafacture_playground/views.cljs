@@ -228,9 +228,9 @@
       (dropdown-entries @(re-frame/subscribe [::subs/examples]))])])
 
 (defn process-button []
-  (let [data (re-frame/subscribe [::subs/editor-content :data])
-        flux (re-frame/subscribe [::subs/editor-content :flux])
-        transformation  (re-frame/subscribe [::subs/editor-content :transformation])]
+  (let [data (re-frame/subscribe [::subs/editor-shadow-content :data])
+        flux (re-frame/subscribe [::subs/editor-shadow-content :flux])
+        transformation  (re-frame/subscribe [::subs/editor-shadow-content :transformation])]
     [:> popup
      {:content (reagent/as-element [:div
                                     "Shortcut: "
@@ -269,8 +269,8 @@
   (let [uri (-> js/window .-location .-href uri (assoc :query nil))
         data (re-frame/subscribe [::subs/editor-content :data])
         data-variable (re-frame/subscribe [::subs/file-variable :data])
-        flux (re-frame/subscribe [::subs/editor-content :flux])
-        transformation (re-frame/subscribe [::subs/editor-content :transformation])
+        flux (re-frame/subscribe [::subs/editor-shadow-content :flux])
+        transformation (re-frame/subscribe [::subs/editor-shadow-content :transformation])
         transformation-variable (re-frame/subscribe [::subs/file-variable :transformation])]
     [:> popup
      {:children (reagent/as-element [share-links])
@@ -311,10 +311,10 @@
               :on-change #(re-frame/dispatch [::events/on-read-file-list (g/getValueByKeys % "target" "files")])}]
    [simple-button {:content "Export Workflow"
                    :dispatch-fns [[::events/export-workflow
-                                   {:data {:content @(re-frame/subscribe [::subs/editor-content :data])
+                                   {:data {:content @(re-frame/subscribe [::subs/editor-shadow-content :data])
                                            :variable @(re-frame/subscribe [::subs/file-variable :data])}
-                                    :flux {:content @(re-frame/subscribe [::subs/editor-content :flux])}
-                                    :transformation {:content @(re-frame/subscribe [::subs/editor-content :transformation])
+                                    :flux {:content @(re-frame/subscribe [::subs/editor-shadow-content :flux])}
+                                    :transformation {:content @(re-frame/subscribe [::subs/editor-shadow-content :transformation])
                                                      :variable @(re-frame/subscribe [::subs/file-variable :transformation])}}]]
                    :icon-name "download"}]])
 
@@ -332,9 +332,9 @@
     (js-invoke editor "addAction" (clj->js {:id "process"
                                             :label "Process Workflow"
                                             :run  #(re-frame/dispatch [::events/process
-                                                                       @(re-frame/subscribe [::subs/editor-content :data])
-                                                                       @(re-frame/subscribe [::subs/editor-content :flux])
-                                                                       @(re-frame/subscribe [::subs/editor-content :transformation])])
+                                                                       @(re-frame/subscribe [::subs/editor-shadow-content :data])
+                                                                       @(re-frame/subscribe [::subs/editor-shadow-content :flux])
+                                                                       @(re-frame/subscribe [::subs/editor-shadow-content :transformation])])
                                             :keybindings [(bit-or control-command enter)
                                                           (chord-fn (bit-or control-command enter))]}))))
 
@@ -352,7 +352,7 @@
     [:> monaco-editor
      {:key @k
       :className (str (name editor-k) "-editor")
-      :default-value (or @value "")
+      :value @value
       :on-mount (partial set-up-editor (= editor-k focused-editor))
       :language @language
       :height @height
