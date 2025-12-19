@@ -37,15 +37,15 @@
        (and (is @(re-frame/subscribe [::subs/editor-content :data]))
             (is @(re-frame/subscribe [::subs/editor-content :flux]))
             (is @(re-frame/subscribe [::subs/editor-content :transformation]))
-            (is (not @(re-frame/subscribe [::subs/editor-content :result])))
+            (is (= "" @(re-frame/subscribe [::subs/editor-content :result])))
             (is (not @(re-frame/subscribe [::subs/link :api-call])))
             (is (not @(re-frame/subscribe [::subs/link :workflow]))))))))
 
 (deftest edit-value-test
-  (testing "Test editing values."
+  (testing "Test editing values by button click."
     (let [new-value "I am a new value"
           db' (-> empty-db
-                  (events/edit-editor-content [:edit-editor-content :transformation new-value])
+                  (events/edit-editor-content [:edit-editor-content :transformation new-value :example])
                   (update-in [:db :editors] dissoc :result)
                   (dissoc :storage/set))]
       (and (is (not= db' empty-db))
@@ -54,10 +54,24 @@
            (is (true? (get-in db' [:db :editors :data :disabled?])))
            (is (true? (get-in db' [:db :editors :transformation :disabled?]))))))
   
+  
+  (testing "Test editing values in editor."
+    (let [new-value "I am a new value"
+          db' (-> empty-db
+                  (events/edit-editor-content [:edit-editor-content :transformation new-value])
+                  (update-in [:db :editors] dissoc :result)
+                  (dissoc :storage/set))]
+      (and (is (not= db' empty-db))
+           (is (= (get-in db' [:db :editors :transformation :shadow-content])
+                  new-value))
+           (is (true? (get-in db' [:db :editors :data :disabled?])))
+           (is (true? (get-in db' [:db :editors :transformation :disabled?]))))))
+
+  
 (testing "Test disabling editor depending on editing values")
   (let [new-value "I only use the inputFile"
         db' (-> empty-db
-                (events/edit-editor-content [:edit-editor-content :flux new-value])
+                (events/edit-editor-content [:edit-editor-content :flux new-value :examples])
                 (update-in [:db :editors] dissoc :result)
                 (dissoc :storage/set))]
     (and (is (not= db' empty-db))
@@ -138,12 +152,12 @@
 (deftest generate-links-test
   (testing "Test generating share links"
     (let [db' (-> empty-db
-                  (events/edit-editor-content [:edit-editor-content :data (:data example-data)])
-                  (events/edit-editor-content [:edit-editor-content :transformation (:transformation example-data)])
-                  (events/edit-editor-content [:edit-editor-content :flux (:flux example-data)]))
+                  (events/edit-editor-content [:edit-editor-content :data (:data example-data) :other])
+                  (events/edit-editor-content [:edit-editor-content :transformation (:transformation example-data) :other])
+                  (events/edit-editor-content [:edit-editor-content :flux (:flux example-data) :other]))
           data (get-in db' [:db :editors :data :content])
           flux (get-in db' [:db :editors :flux :content])
-          transformation (get-in db' [:db :editors :transformation :content])
+          transformation (get-in db' [:db :editors :transformation :shadow-content])
           test-url "http://test.metafacture.org/playground/"
           db'' (events/generate-links db' [:generate-links test-url {:data {:content data
                                                                             :variable (get-in db/default-db [:editors :data :file-variable])}

@@ -3,6 +3,7 @@
 (def default-db
   {:editors {:data {:key-count 0
                     :content nil
+                    :shadow-content nil
                     :collapsed? false
                     :disabled? true
                     :label "inputFile-content"
@@ -12,6 +13,7 @@
                     :height-divider 3}
              :flux {:key-count 0
                     :content nil
+                    :shadow-content nil
                     :collapsed? false
                     :default-width 8
                     :width 8
@@ -19,6 +21,7 @@
                     :language "text/plain"}
              :transformation {:key-count 0
                               :content nil
+                              :shadow-content nil
                               :collapsed? false
                               :default-width 8
                               :width 8
@@ -49,13 +52,16 @@
 
 (def db-parse-fns
   {:editors {:data {:content str
+                    :shadow-content str
                     :collapsed? parseBoolean
                     :width int
                     :disabled? parseBoolean}
              :flux {:content str
+                    :shadow-content str
                     :collapsed? parseBoolean
                     :width int}
              :transformation {:content str
+                              :shadow-content str
                               :disabled? parseBoolean
                               :collapsed? parseBoolean
                               :width int}
