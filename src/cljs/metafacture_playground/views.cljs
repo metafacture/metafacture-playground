@@ -267,7 +267,7 @@
 
 (defn share-button []
   (let [uri (-> js/window .-location .-href uri (assoc :query nil))
-        data (re-frame/subscribe [::subs/editor-content :data])
+        data (re-frame/subscribe [::subs/editor-shadow-content :data])
         data-variable (re-frame/subscribe [::subs/file-variable :data])
         flux (re-frame/subscribe [::subs/editor-shadow-content :flux])
         transformation (re-frame/subscribe [::subs/editor-shadow-content :transformation])
