@@ -1,7 +1,4 @@
-FROM adoptopenjdk/openjdk11:debian
-
-# Prepare nodejs install as leiningen requires nodejs
-RUN curl -sL https://deb.nodesource.com/setup_18.x | bash 
+FROM debian:bookworm-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     software-properties-common \
@@ -10,10 +7,23 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     leiningen \
     git \
     vim \
-    nodejs \
-    && \
-    apt clean && \
-    rm -rf /var/lib/apt/lists/*
+    curl \
+    unzip \
+    ca-certificates \
+    && apt clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# OpenJDK 11 manuell installieren
+RUN wget https://download.java.net/java/GA/jdk11/9/GPL/openjdk-11.0.2_linux-x64_bin.tar.gz \
+ && tar xzf openjdk-11.0.2_linux-x64_bin.tar.gz -C /opt \
+ && rm openjdk-11.0.2_linux-x64_bin.tar.gz \
+ && update-alternatives --install /usr/bin/java java /opt/jdk-11.0.2/bin/java 1 \
+ && update-alternatives --install /usr/bin/javac javac /opt/jdk-11.0.2/bin/javac 1
+
+# Node.js 18 installieren über Nodesource
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+    && apt-get install -y nodejs \
+    && rm -rf /var/lib/apt/lists/*
 
 # Use non-root user
 ARG USERNAME=playground
