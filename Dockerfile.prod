@@ -1,19 +1,13 @@
-FROM adoptopenjdk/openjdk11:debian
+FROM eclipse-temurin:11-jdk-jammy
 
-# Prepare nodejs install as leiningen requires nodejs
-RUN curl -sL https://deb.nodesource.com/setup_18.x | bash 
-
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    software-properties-common \
-    wget \
-    gnupg \
+RUN apt-get update && apt-get install -y \
     leiningen \
     git \
-    vim \
+    curl \
+    unzip \
     nodejs \
-    && \
-    apt clean && \
-    rm -rf /var/lib/apt/lists/*
+    npm \
+    && rm -rf /var/lib/apt/lists/*
 
 # Use non-root user
 ARG USERNAME=playground
