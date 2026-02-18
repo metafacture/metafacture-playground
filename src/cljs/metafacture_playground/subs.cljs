@@ -76,7 +76,8 @@
    (let [height-divider (get-in db [:editors editor :height-divider])
          max-editor-size (-> (get-in db [:ui :height])
                              (editor-height-maximum font-size height-divider))
-         calculated-size (-> (get-in db [:editors editor :content])
+         calculated-size (-> (or (get-in db [:editors editor :shadow-content])
+                                 (get-in db [:editors editor :content]))
                              (clj-str/split #"\r?\n" -1)
                              count
                              (+ 3))]
