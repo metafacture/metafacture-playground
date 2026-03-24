@@ -34,6 +34,11 @@ docker compose -f docker-compose-dev.yml up
 
 In development mode the ***local deployment*** is available at http://localhost:8280.
 
+**Windows/Docker Desktop users:**
+- Prefer running this project from WSL2 filesystem (for example `\wsl$\Ubuntu\home\<you>\metafacture-playground`).
+- Ensure WSL integration is enabled in Docker Desktop (Settings → Resources → WSL Integration).
+- Avoid hosting the project on Windows `C:\` path if hot reload does not detect file updates.
+
 ### Start in production mode
 
 ```bash
