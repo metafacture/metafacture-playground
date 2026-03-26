@@ -34,11 +34,11 @@ docker compose -f docker-compose-dev.yml up
 
 In development mode the ***local deployment*** is available at http://localhost:8280.
 
-**Windows/Docker Desktop users:**
+**Windows/Docker Desktop/VS Code users:**
 - Prefer running this project from WSL2 filesystem (for example `\wsl$\Ubuntu\home\<you>\metafacture-playground`).
 - Ensure WSL integration is enabled in Docker Desktop (Settings → Resources → WSL Integration).
-- Start the WSL, clone the project and than execute "code .". This will install and opens  new VS Code window connected remotely to your default Linux distribution which you can check in the bottom corner of the screen.
-- Than execute the docker compose command in the wsl. Now you can develop in the vs code windows and will see your changes hot reloaded in localhost:8280 
+- Start the WSL, clone the project and then execute "code .". This will install and opens new VS Code window connected remotely to your default Linux distribution which you can check in the bottom corner of the screen.
+- Then execute the docker compose command in the WSL. Now you can develop in the VS Code windows and will see your changes hot reloaded in localhost:8280 
 
 - Avoid hosting the project on Windows `C:\` path if hot reload does not detect file updates.
 
