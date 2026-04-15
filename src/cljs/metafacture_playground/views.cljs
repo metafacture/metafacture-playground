@@ -10,7 +10,8 @@
    [goog.object :as g]
    [re-pressed.core :as rp]
    ["@monaco-editor/react" :as monaco-react]
-   [metafacture-playground.utils :as utils]))
+   [metafacture-playground.utils :as utils]
+   [ls-client.languageclient :as languageclient]))
 
 ;;; Using semantic ui react components
 
@@ -322,6 +323,7 @@
 
 (defn set-end-of-line [editor]
   (let [lf 0]
+    (languageclient/connect-language-client)
     (-> (js-invoke editor "getModel")
         (js-invoke "setEOL" lf))))
 
