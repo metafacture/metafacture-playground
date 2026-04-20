@@ -6,9 +6,9 @@
 		"react-dom": "16.13.0",
 		"semantic-ui-css": "^2.4.1",
 		"semantic-ui-react": "^2.0.3",
-		"vscode-ws-jsonrpc":"3.5.0",
-        "vscode-languageclient": "8.0.2",
-        "monaco-languageclient": "5.0.1"
+		"vscode-ws-jsonrpc": "3.5.0",
+		"vscode-languageclient": "8.1.0",
+		"monaco-languageclient": "5.0.1"
 	},
 	"devDependencies": {
 		"karma": "5.2.3",
@@ -16,6 +16,6 @@
 		"karma-cli": "^2.0.0",
 		"karma-cljs-test": "0.1.0",
 		"karma-junit-reporter": "2.0.1",
-		"shadow-cljs": "2.16.7"
+		"shadow-cljs": "3.4.4"
 	}
 }

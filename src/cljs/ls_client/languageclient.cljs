@@ -18,17 +18,17 @@
 
          (set! (.-onopen ws)
                (fn []
-                 (js/console.log "LS WebSocket connection Open")
+                 (js/console.log "LS WebSocket connection Open:" ws)
                  (try
                    ;; Convert WebSocket to a language server socket
-                   (let [socket (vscode-jsonrpc/toSocket ws)
+                   (let [socket (vscode-jsonrpc/toSocket ^js ws)
 
                          ;; Create message reader/writer
-                         reader (new (vscode-jsonrpc/WebSocketMessageReader) socket)
-                         writer (new (vscode-jsonrpc/WebSocketMessageWriter) socket)
+                         reader (vscode-jsonrpc/WebSocketMessageReader. ^js socket)
+                         writer (vscode-jsonrpc/WebSocketMessageWriter. ^js socket)
 
                          ;; Create and configure the Monaco language client
-                         language-client (new mc/MonacoLanguageClient
+                         language-client (mc/MonacoLanguageClient.
                                               #js {:name (str lang-id " Language Client")
                                                    :clientOptions #js {:documentSelector #js [lang-id]
                                                                        :errorHandler #js {:error (fn [] #js {:action (vscode-lc/ErrorAction.Continue)})

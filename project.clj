@@ -1,20 +1,20 @@
 (defproject metafacture-playground "1.2.0-SNAPSHOT"
   :description "Web application to play around with workflows using Metafacture languages Fix and Flux"
-  :dependencies [[org.clojure/clojure "1.10.1"]
-                 [org.clojure/clojurescript "1.10.773"
+  :dependencies [[org.clojure/clojure "1.12.1"]
+                 [org.clojure/clojurescript "1.12.134"
                   :exclusions [com.google.javascript/closure-compiler-unshaded
                                org.clojure/google-closure-library
                                org.clojure/google-closure-library-third-party]]
                  [org.clojure/tools.logging "1.2.4"]
                  [org.slf4j/slf4j-simple "2.0.7"]
                  [cljsjs/semantic-ui-react "0.88.1-0"]
-                 [thheller/shadow-cljs "2.11.7"]
+                 [thheller/shadow-cljs "3.4.4"]
                  [reagent "0.10.0"]
                  [re-frame "1.1.2"]
                  [day8.re-frame/test "0.1.5"]
                  [yogthos/config "1.1.7"]
                  [ring "1.9.0"]
-                 [compojure "1.6.2"]
+                 [compojure "1.7.2"]
                  [lambdaisland/uri "1.4.54"]
                  [day8.re-frame/fetch-fx "0.0.1"]
                  [re-pressed "0.3.1"]
