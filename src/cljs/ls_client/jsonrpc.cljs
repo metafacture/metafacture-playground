@@ -259,7 +259,7 @@
 
                :disconnect (fn []
                              "Close the connection."
-                             (ws/close stream))
+                             (.close (:ws stream)))
 
                :stream stream
                :registry registry})))))
