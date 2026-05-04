@@ -18,7 +18,7 @@
                     :default-width 8
                     :width 8
                     :label "Flux File"
-                    :language "text/plain"}
+                    :language "metafacture-flux"}
              :transformation {:key-count 0
                               :content nil
                               :shadow-content nil

@@ -61,6 +61,7 @@
 ; Config of input fields
 
 (def focused-editor :data)
+(def ls-sockets {:flux "ws://localhost:8080/ls"})
 
 ;;; Utils
 
@@ -323,7 +324,6 @@
 
 (defn set-end-of-line [editor]
   (let [lf 0]
-    (languageclient/connect-language-client)
     (-> (js-invoke editor "getModel")
         (js-invoke "setEOL" lf))))
 
@@ -340,10 +340,12 @@
                                             :keybindings [(bit-or control-command enter)
                                                           (chord-fn (bit-or control-command enter))]}))))
 
-(defn set-up-editor [focus-on-load editor monaco]
+(defn set-up-editor [editor-k language editor monaco]
+  (when-let [ls-socket (get ls-sockets editor-k)]
+    (languageclient/connect-language-client monaco editor ls-socket language))
   (set-end-of-line editor)
   (add-keydown-rules monaco editor)
-  (when focus-on-load (js-invoke editor "focus")))
+  (when (= editor-k focused-editor) (js-invoke editor "focus")))
 
 (defn editor [editor-k]
   (let [value (re-frame/subscribe [::subs/editor-content editor-k])
@@ -355,7 +357,7 @@
      {:key @k
       :className (str (name editor-k) "-editor")
       :value @value
-      :on-mount (partial set-up-editor (= editor-k focused-editor))
+      :on-mount (partial set-up-editor editor-k @language)
       :language @language
       :height @height
       :theme "light"
@@ -423,6 +425,12 @@
 (defn main-panel []
 
   (register-keydown-rules) ;; Attention: keydown rules don't work in the monaco editors so they need to be defined in the editors again
+
+  ;; Register metafacture-flux language with Monaco BEFORE editors are created
+  (when (.-monaco js/window)
+    (js/console.log "[App] Registering metafacture-flux language with Monaco")
+    (.. js/window.monaco -languages (register #js {:id "metafacture-flux"}))
+    (js/console.log "[App] Available languages:" (js->clj (.. js/window.monaco -languages (getLanguages)))))
 
   (.addEventListener js/window "resize"
                      #(re-frame/dispatch [::events/window-resize (.-innerHeight js/window)]))

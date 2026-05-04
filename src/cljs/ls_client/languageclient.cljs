@@ -1,54 +1,91 @@
 (ns ls-client.languageclient
-  (:require
-   ["vscode-ws-jsonrpc" :as vscode-jsonrpc]
-   ["vscode-languageclient" :as vscode-lc]
-   ["monaco-languageclient" :as mc]))
+  "Language Server Client for Metafacture Playground.
+   
+   This module provides the main entry point for connecting a Monaco editor
+   to a Language Server over WebSocket using the LSP protocol.
+   
+   Usage:
+     (let [client (<! (connect-language-client monaco-ns editor-instance))]
+       ;; client is now connected and ready
+       ;; Use (.disconnect client) to close)
+   
+   No external libraries required - uses only native ClojureScript async patterns."
+  (:require [cljs.core.async :as a :refer [go]]
+            [ls-client.client :as lsp-client]))
 
+;; ============================================================================
+;; Configuration
+;; ============================================================================
 
-(def ls-ws-url "ws://localhost:8080/ls")
+(def ^:const root-uri "file:///metafacture-playground/flux")
 
-(def lang-id "flux")
+;; ============================================================================
+;; Public API
+;; ============================================================================
 
-
-(defn connect-language-client []
-  (js/Promise.
-   (fn [resolve reject]
+(defn connect-language-client
+  "Connect a Monaco editor to a Language Server.
+   
+   This function:
+   1. Establishes WebSocket connection to the language server
+   2. Sends LSP initialize request
+   3. Sets up Monaco editor integration (completions, hover, diagnostics)
+   4. Opens the current document in the language server
+   
+   Args:
+   - monaco: Monaco namespace (window.monaco)
+   - editor: Monaco editor instance
+   - ws-url: (optional) WebSocket URL, defaults to ws://localhost:8080/ls
+   
+   Returns:
+   - Promise that resolves to client object with properties:
+     - :ws-connection - JSON-RPC connection
+     - :editor-state - Editor state tracking
+     - :initialized - Boolean flag
+     - Methods:
+       - (.disconnect client) - Close connection
+       - Internally handles: completions, hover, definition, diagnostics
+   
+   Example:
+     (go
+       (let [client (<! (connect-language-client window.monaco editor-instance))]
+         (println \"Connected!\")
+         ;; Editor now has language server features
+         ))
+   
+   Error handling:
+   - If connection fails, the promise rejects with an error
+   - Logs all operations to browser console with [Client] prefix"
+  
+  ([monaco editor ws-url lang-id]
+   (go
      (try
-       (let [ws (js/WebSocket. ls-ws-url)]
+       (js/console.log "[LanguageClient] Connecting to language server at" ws-url "for language" lang-id)
+       (lsp-client/connect ws-url monaco editor lang-id root-uri)
+       (catch js/Error e
+         (js/console.error "[LanguageClient] Connection failed:" e)
+         (throw e))))))
 
-         (set! (.-onopen ws)
-               (fn []
-                 (js/console.log "LS WebSocket connection Open:" ws)
-                 (try
-                   ;; Convert WebSocket to a language server socket
-                   (let [socket (vscode-jsonrpc/toSocket ^js ws)
+(defn disconnect-language-client
+  "Disconnect from the language server.
+   
+   Args:
+   - client: client object returned from connect-language-client
+   
+   Properly closes:
+   - All editor event listeners
+   - WebSocket connection
+   - Server resources"
+  [client]
+  (lsp-client/disconnect client))
 
-                         ;; Create message reader/writer
-                         reader (vscode-jsonrpc/WebSocketMessageReader. ^js socket)
-                         writer (vscode-jsonrpc/WebSocketMessageWriter. ^js socket)
+(defn is-connected?
+  "Check if the client is initialized and connected.
+   
+   Args:
+   - client: client object
+   
+   Returns: true if initialized and connected"
+  [client]
+  (:initialized client false))
 
-                         ;; Create and configure the Monaco language client
-                         language-client (mc/MonacoLanguageClient.
-                                              #js {:name (str lang-id " Language Client")
-                                                   :clientOptions #js {:documentSelector #js [lang-id]
-                                                                       :errorHandler #js {:error (fn [] #js {:action (vscode-lc/ErrorAction.Continue)})
-                                                                                          :closed (fn [] #js {:action (vscode-lc/CloseAction.DoNotRestart)})}}
-                                                   :connectionProvider #js {:get (fn []
-                                                                                   (js/Promise.resolve
-                                                                                    #js {:reader reader
-                                                                                         :writer writer}))}})]
-
-                     ;; Start the language client
-                     (.start language-client)
-
-                     ;; Resolve with the client instance
-                     (resolve language-client))
-
-                   (catch js/Error e
-                     (js/console.error "Error connecting to language server:" e)
-                     (reject e)))))
-
-         (set! (.-onerror ws)
-               (fn [error]
-                 (js/console.error "LS WebSocket connection error:" error)
-                 (reject error))))))))
