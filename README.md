@@ -65,7 +65,7 @@ For more options see https://docs.docker.com/reference/cli/docker/compose/logs/
 
 ## Manual installation
 
-Before starting you need to install [Leiningen](https://leiningen.org/) and a JDK (minimum Java 21).
+Before starting you need to install [Leiningen](https://leiningen.org/) and a JDK (minimum Java 11).
 
 ### Install Leiningen
 
@@ -128,10 +128,10 @@ lein watch
 Wait a bit, perhaps 20 seconds, keeping an eye out for a sign the compile has finished, then browse to http://localhost:8280.
 
 ### Start in production mode
-Set the java version to 21, like:
+Set the java version to 11, like:
 
 ```bash
-export JAVA_CMD=/usr/lib/jvm/java-21-openjdk-amd64/bin/java
+export JAVA_CMD=/usr/lib/jvm/java-11-openjdk-amd64/bin/java
 ```
 
 To test, compile and build the frontend run:
