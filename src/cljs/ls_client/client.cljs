@@ -214,7 +214,7 @@
 
 (defn setup-editor-integration
   "Set up Monaco editor integration with language server."
-  [client monaco editor uri]
+  [client ^js monaco ^js editor uri]
   (go
     (try
       (let [;; Set up content change listener
@@ -268,7 +268,7 @@
 
 (defn setup-notification-handlers
   "Set up handlers for server-initiated notifications."
-  [client monaco editor]
+  [client ^js monaco ^js editor]
   (fn [notification]
     (let [method (:method notification)
           params (:params notification)]
@@ -291,7 +291,7 @@
 
 (defn connect
   "Connect to a language server and set up Monaco integration."
-  [ws-url monaco editor language-id root-uri]
+  [ws-url ^js monaco ^js editor language-id root-uri]
   (go
     (try
       ;; Register the language with Monaco if not already registered

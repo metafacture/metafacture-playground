@@ -26,7 +26,7 @@
 
 (defn on-content-change
   "Register handler for editor content changes."
-  [editor callback]
+  [^js editor callback]
   (let [model (.getModel editor)
         disposable (.onDidChangeModelContent editor
                      (fn [event]
@@ -37,7 +37,7 @@
 
 (defn on-cursor-move
   "Register handler for cursor movement."
-  [editor callback]
+  [^js editor callback]
   (let [disposable (.onDidChangeCursorPosition editor
                      (fn [event]
                        (callback event (-> event .-position))))]
@@ -45,7 +45,7 @@
 
 (defn on-selection-change
   "Register handler for selection changes."
-  [editor callback]
+  [^js editor callback]
   (let [disposable (.onDidChangeModelContent editor
                      (fn [event]
                        (callback event (-> editor .getSelections))))]
@@ -57,9 +57,8 @@
 
 (defn apply-diagnostics
   "Apply diagnostic markers from the language server."
-  [monaco editor diagnostics uri]
-  (let [model (.getModel editor)
-        decorations 
+  [^js monaco ^js editor diagnostics uri]
+  (let [decorations 
         (map (fn [diag]
                (let [start-line (-> diag :range :start :line inc)
                      start-col (-> diag :range :start :character inc)
@@ -78,7 +77,7 @@
 
 (defn clear-diagnostics
   "Clear all diagnostic decorations."
-  [editor]
+  [^js editor]
   (.setDecorations editor "errors" #js []))
 
 (defn show-hover
@@ -105,7 +104,7 @@
 
 (defn apply-workspace-edit
   "Apply a workspace edit from the language server."
-  [monaco editor edit]
+  [^js monaco ^js editor edit]
   (let [changes (:changes edit {})
         model (.getModel editor)]
     (doseq [[uri edits] changes]
@@ -148,12 +147,12 @@
 
 (defn register-completion-provider
   "Register LSP-based completion provider with Monaco."
-  [monaco language-id completion-handler]
+  [^js monaco language-id completion-handler]
   (let [disposable (.. monaco -languages
                        (registerCompletionItemProvider
                         language-id
                         #js {:provideCompletionItems
-                             (fn [model position context]
+                             (fn [^js model ^js position context]
                                (js/Promise.
                                 (fn [resolve reject]
                                   (let [word-info (.getWordAtPosition model position)
@@ -180,7 +179,7 @@
 
 (defn register-hover-provider
   "Register LSP-based hover provider with Monaco."
-  [monaco language-id hover-handler]
+  [^js monaco language-id hover-handler]
   (let [disposable (.. monaco -languages
                        (registerHoverProvider
                         language-id
@@ -216,7 +215,7 @@
 
 (defn register-definition-provider
   "Register LSP-based definition provider with Monaco."
-  [monaco language-id definition-handler]
+  [^js monaco language-id definition-handler]
   (let [disposable (.. monaco -languages
                        (registerDefinitionProvider
                         language-id
@@ -246,19 +245,19 @@
 
 (defn monaco-position->lsp
   "Convert Monaco position to LSP position."
-  [position]
+  [^js position]
   (let [line (max 0 (dec (.-lineNumber position)))
         character (max 0 (dec (.-column position)))]
     {:line line :character character}))
 
 (defn lsp-position->monaco
   "Convert LSP position to Monaco position."
-  [monaco position line-height]
+  [^js monaco position line-height]
   (.. monaco -Position (new (inc (:line position)) (inc (:character position)))))
 
 (defn lsp-range->monaco
   "Convert LSP range to Monaco range."
-  [monaco range]
+  [^js monaco range]
   (let [start (:start range)
         end (:end range)]
     (.. monaco -Range (new (inc (:line start)) (inc (:character start))

@@ -81,8 +81,7 @@
 
                                :devtools {:http-root "resources/public"
                                           :http-port 8280
-                                          :http-handler metafacture-playground.handler/dev-handler}
-                               :compiler-options {:infer-externs true}}
+                                          :http-handler metafacture-playground.handler/dev-handler}}
                          :browser-test
                          {:target :browser-test
                           :ns-regexp "-test$"
