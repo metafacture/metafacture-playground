@@ -78,7 +78,7 @@ chmod a+x ~/bin/lein
 ```
 ### Install and run Metafactute LSP (optional)
 
- At the moment Metafacture provides a [language server for Metafacture Flux](https://github.com/metafacture/metafacture-lsp). This language server can be connected to the Metafacture Playground to provide autocompletion for Flux commands. Follow the instrcutions of Metafacture LSP to start the language sevrver.
+ At the moment Metafacture provides a [language server for Metafacture Flux](https://github.com/metafacture/metafacture-lsp). This language server can be connected to the Metafacture Playground to provide autocompletion for Flux commands. Follow the instructions of Metafacture LSP to start the language server.
  The Metafacture Playground also runs without language server. If you don't want to connect a language server, you should change ```(def ls-sockets {:flux "ws://localhost:8080/ls"})``` to ```(def ls-sockets {})``` in ```views.cljs```. The Playground also runs when not removing this connection information but will show errors when no language server is reachable via the given websocket address.
 
 
