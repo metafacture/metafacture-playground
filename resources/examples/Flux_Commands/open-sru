@@ -1,0 +1,1 @@
+https://metafacture.org/playground/?flux=%22https%3A//eu04.alma.exlibrisgroup.com/view/sru/49HBZ_NETWORK%22%0A%7C+open-sru%28query%3D%22alma.all_for_ui%3Dzamonien%22%2C+version%3D%221.1%22%2C+maximumRecords%3D%22100%22%2C+userAgent%3D%22hbz/Metafacture-Playground%22%29%0A%7C+as-records%0A%7C+print%0A%3B

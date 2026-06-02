@@ -1,0 +1,1 @@
+https://metafacture.org/playground/?flux=inputFile%0A%7C+open-file%0A%7C+as-records%0A%7C+decode-json%0A%7C+fix%28transformationFile%29%0A%7C+encode-json%28prettyPrinting%3D%22true%22%29%0A%7C+print%0A%3B%0A&transformation=html_to_text%28%22description%22%29&data=%7B%0A++++%22description%22+%3A+%22%3Cp%3ELorem+%3Cb%3Eipsum%3C\/b%3E+dolor+sit+amet%3C\/p%3E%22%0A%7D
