@@ -320,6 +320,21 @@
                                                      :variable @(re-frame/subscribe [::subs/file-variable :transformation])}}]]
                    :icon-name "download"}]])
 
+
+(defn info-panel-v []
+  (let [hidden? (re-frame/subscribe [::subs/hints-hidden?])]
+    (when-not @hidden?
+           [:> segment {:raised true}
+            [:> message
+             {:info true
+              :on-dismiss #(re-frame/dispatch [::events/hide-hints])
+              :content (reagent/as-element [:div
+                                            [:strong "Hint: "]
+                                            "You can trigger suggestions with shortcut: "
+                                            [:> label {:size "tiny"} "Ctrl + Space"]
+                                            ". Processing can be triggered by pressing"
+                                            [:> label {:size "tiny"} "Ctrl + Enter"]])}]])))
+
 ;;; Editors
 
 (defn set-end-of-line [editor]
@@ -362,7 +377,8 @@
       :height @height
       :theme "light"
       :options {:dragAndDrop true
-                :minimap {:enabled false}}
+                :minimap {:enabled false}
+                :quickSuggestions false}
       :on-change #(re-frame/dispatch [::events/edit-editor-content editor-k %])}]))
 
 (defn editor-panel [editor-k]
@@ -443,6 +459,8 @@
     [message-panel]
 
     [control-panel]
+    
+    [info-panel-v]
 
     [:> grid {:stackable true}
 
