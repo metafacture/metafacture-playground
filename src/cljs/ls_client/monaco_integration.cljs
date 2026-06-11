@@ -155,8 +155,21 @@
                              (fn [^js model ^js position context]
                                (js/Promise.
                                 (fn [resolve reject]
-                                  (let [word-info (.getWordAtPosition model position)
-                                        partial-word (if word-info (.-word word-info) "")
+                                  (let [;; Extract partial word including hyphens and other valid identifier chars
+                                        line-number (.-lineNumber position)
+                                        column (dec (.-column position))
+                                        line-content (.getLineContent model line-number)
+                                        ;; Find the start of the word by looking backwards, including hyphens and underscores
+                                        word-start (loop [i (- column 1)]
+                                                     (if (< i 0)
+                                                       0
+                                                       (let [char (.charAt line-content i)]
+                                                         (if (re-matches #"[a-zA-Z0-9_\-]" char)
+                                                           (recur (- i 1))
+                                                           (+ i 1)))))
+                                        partial-word (if (< word-start column)
+                                                       (.substring line-content word-start (- column 1))
+                                                       "")
                                         result-promise (completion-handler position partial-word)]
                                     (.then result-promise
                                            (fn [completions]
@@ -164,12 +177,10 @@
                                                (do
                                                  (js/console.log "[Monaco] No completions, returning empty array")
                                                  (resolve #js {:suggestions #js []}))
-                                               (let [word-info (.getWordAtPosition model position)
-                                                     current-word (if word-info (.-word word-info) "")
-                                                     suggestions (->> completions
-                                                                      (filter #(begins-with-word? current-word %))
+                                               (let [suggestions (->> completions
+                                                                      (filter #(begins-with-word? partial-word %))
                                                                       (mapv ->suggestion-item)
-                                                                      (clj->js))] 
+                                                                      (clj->js))]
                                                  (resolve #js {:suggestions suggestions}))))
                                            (fn [err]
                                              (js/console.error "[Monaco] Error in completion handler:" err)
