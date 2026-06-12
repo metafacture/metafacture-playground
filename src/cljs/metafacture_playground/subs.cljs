@@ -26,6 +26,11 @@
    (get-in db [:hints :hidden?])))
 
 (re-frame/reg-sub
+ ::hints-content
+ (fn [db _]
+   (get-in db [:hints :content])))
+
+(re-frame/reg-sub
  ::dropdown-active-item
  (fn [db _]
    (get-in db [:ui :dropdown :active-item])))

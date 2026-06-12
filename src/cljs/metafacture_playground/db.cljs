@@ -41,7 +41,8 @@
              :details nil
              :show-details? false
              :type nil}
-   :hints {:hidden? false}
+   :hints {:hidden? false
+           :content []}
    :ui {:height nil
         :dropdown {:active-item nil
                    "main" {:open? false}}}})

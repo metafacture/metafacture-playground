@@ -320,20 +320,27 @@
                                                      :variable @(re-frame/subscribe [::subs/file-variable :transformation])}}]]
                    :icon-name "download"}]])
 
+(defn ->hint-list [content-list]
+  (cons (reagent/as-element [:div
+                             [:> icon {:name "info"}]
+                             "You can trigger suggestions with shortcut: "
+                             [:> label {:size "tiny"} "Ctrl + Space"]
+                             ". Processing can be triggered by pressing"
+                             [:> label {:size "tiny"} "Ctrl + Enter"]])
+        (mapv (fn [list-element]
+                (reagent/as-element [:div
+                                     [:> icon {:name "info"}]
+                                     list-element])) content-list)))
 
 (defn info-panel-v []
-  (let [hidden? (re-frame/subscribe [::subs/hints-hidden?])]
+  (let [hidden? (re-frame/subscribe [::subs/hints-hidden?])
+        content (re-frame/subscribe [::subs/hints-content])]
     (when-not @hidden?
            [:> segment {:raised true}
             [:> message
              {:info true
               :on-dismiss #(re-frame/dispatch [::events/hide-hints])
-              :content (reagent/as-element [:div
-                                            [:strong "Hint: "]
-                                            "You can trigger suggestions with shortcut: "
-                                            [:> label {:size "tiny"} "Ctrl + Space"]
-                                            ". Processing can be triggered by pressing"
-                                            [:> label {:size "tiny"} "Ctrl + Enter"]])}]])))
+              :list (->hint-list @content)}]])))
 
 ;;; Editors
 
