@@ -173,6 +173,10 @@ If a released version is used, the content of the file contains the link to the 
 #### Use Master/Main or other branch
 If the master/main or another branch is used, the content of the file should contain a link to the commit like [https://github.com/metafacture/metafacture-fix/commit/b36fcb9](https://github.com/metafacture/metafacture-fix/commit/b36fcb9) (Please use the short hash link).
 
+### Show hints
+
+When opening the playground in the browser the first time there is a hint how to use shortcuts. This hint can be dismissed and will be displayed when reloading the website. It's possible to add more hints if necessary (via metafacture_playground/db.cljs key :hints :content in the default-db). Do see changes the playground must be restartet.
+
 ### Run tests
 
 ### clj tests
