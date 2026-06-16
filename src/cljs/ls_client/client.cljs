@@ -71,19 +71,6 @@
         (js/console.error "[Client] Failed to open document:" e)
         (throw e)))))
 
-(defn close-document
-  "Close a document in the language server."
-  [client uri]
-  (go
-    (try
-      (when (:initialized client)
-        (.notify (:ws-connection client)
-                 "textDocument/didClose"
-                 (clj->js (lsp/did-close-message uri))))
-      (catch js/Error e
-        (js/console.error "[Client] Failed to close document:" e)
-        (throw e)))))
-
 (defn change-document
   "Notify the server of document changes (full text sync)."
   [client uri text]
@@ -96,24 +83,6 @@
                    (clj->js (lsp/did-change-full-message uri version text)))))
       (catch js/Error e
         (js/console.error "[Client] Failed to update document:" e)
-        (throw e)))))
-
-(defn shutdown-server
-  "Send shutdown request to the server."
-  [client]
-  (go
-    (try
-      (let [ws (:ws-connection client)
-            response-ch (.send ws "shutdown" #js {})
-            response (<! response-ch)]
-        (if (:error response)
-          (throw (js/Error. (str "Shutdown failed: " (:message response))))
-          (do
-            (.notify ws "exit" #js {})
-            (js/console.log "[Client] Server shut down")
-            client)))
-      (catch js/Error e
-        (js/console.error "[Client] Shutdown failed:" e)
         (throw e)))))
 
 (defn disconnect
@@ -191,22 +160,6 @@
       (catch js/Error e
         (js/console.log "[Client] Definition request failed:" e)
         nil))))
-
-(defn request-references
-  "Request all references to a symbol."
-  [client uri line character]
-  (go
-    (try
-      (let [ws (:ws-connection client)
-            refs-params (lsp/references-message uri line character true)
-            response-ch (.send ws "textDocument/references" (clj->js refs-params))
-            response (<! response-ch)]
-        (if (:error response)
-          []
-          (lsp/parse-references-response (:result response))))
-      (catch js/Error e
-        (js/console.log "[Client] References request failed:" e)
-        []))))
 
 ;; ============================================================================
 ;; Monaco Integration

@@ -41,16 +41,6 @@
       (swap! pending dissoc normalized-id))
     chan))
 
-(defn store-notification [registry notification]
-  "Store an unsolicited notification from the server."
-  (swap! (:notifications registry) conj notification))
-
-(defn get-notifications [registry]
-  "Get all stored notifications."
-  (let [notifs @(:notifications registry)]
-    (reset! (:notifications registry) [])
-    notifs))
-
 ;; ============================================================================
 ;; Connection Management
 ;; ============================================================================
@@ -182,22 +172,6 @@
           (.close ws)
           (>! result-ch {:error true :message "Connection timeout"}))))
     result-ch))
-
-
-;; ============================================================================
-;; Utility: Promise to Channel Conversion
-;; ============================================================================
-
-(defn ^:private promise->channel
-  "Convert a JavaScript Promise to a core.async channel."
-  [promise]
-  (let [ch (chan)]
-    (.then promise
-           (fn [result]
-             (go (>! ch {:ok true :value result})))
-           (fn [error]
-             (go (>! ch {:ok false :error error}))))
-    ch))
 
 ;; ============================================================================
 ;; Public API

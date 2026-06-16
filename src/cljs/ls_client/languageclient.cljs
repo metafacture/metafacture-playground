@@ -66,26 +66,3 @@
          (js/console.error "[LanguageClient] Connection failed:" e)
          (throw e))))))
 
-(defn disconnect-language-client
-  "Disconnect from the language server.
-   
-   Args:
-   - client: client object returned from connect-language-client
-   
-   Properly closes:
-   - All editor event listeners
-   - WebSocket connection
-   - Server resources"
-  [client]
-  (lsp-client/disconnect client))
-
-(defn is-connected?
-  "Check if the client is initialized and connected.
-   
-   Args:
-   - client: client object
-   
-   Returns: true if initialized and connected"
-  [client]
-  (:initialized client false))
-

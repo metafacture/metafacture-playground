@@ -36,30 +36,11 @@
                   :version version
                   :text text}})
 
-(defn did-change-message
-  "Build textDocument/didChange notification for incremental updates."
-  [uri version changes]
-  {:textDocument {:uri uri :version version}
-   :contentChanges changes})
-
 (defn did-change-full-message
   "Build textDocument/didChange notification for full document sync."
   [uri version text]
   {:textDocument {:uri uri :version version}
    :contentChanges [{:text text}]})
-
-(defn did-save-message
-  "Build textDocument/didSave notification."
-  ([uri]
-   {:textDocument {:uri uri}})
-  ([uri text]
-   {:textDocument {:uri uri}
-    :text text}))
-
-(defn did-close-message
-  "Build textDocument/didClose notification."
-  [uri]
-  {:textDocument {:uri uri}})
 
 (defn hover-message
   "Build textDocument/hover request."
@@ -88,30 +69,6 @@
   {:textDocument {:uri uri}
    :position {:line line :character character}})
 
-(defn code-action-message
-  "Build textDocument/codeAction request."
-  [uri range diagnostics]
-  {:textDocument {:uri uri}
-   :range range
-   :context {:diagnostics diagnostics}})
-
-(defn references-message
-  "Build textDocument/references request."
-  [uri line character include-declaration]
-  {:textDocument {:uri uri}
-   :position {:line line :character character}
-   :context {:includeDeclaration include-declaration}})
-
-(defn shutdown-message
-  "Build shutdown request."
-  []
-  nil)
-
-(defn exit-message
-  "Build exit notification."
-  []
-  nil)
-
 ;; ============================================================================
 ;; LSP Client State Management
 ;; ============================================================================
@@ -125,11 +82,6 @@
   "Initialize version tracking for a document."
   [tracker uri]
   (swap! tracker assoc uri 0))
-
-(defn get-document-version
-  "Get the current version of a document."
-  [tracker uri]
-  (get @tracker uri 0))
 
 (defn increment-document-version
   "Increment and return the new version of a document."
@@ -169,8 +121,3 @@
   "Parse textDocument/definition response."
   [response]
   response)
-
-(defn parse-references-response
-  "Parse textDocument/references response."
-  [response]
-  (if (vector? response) response [response]))

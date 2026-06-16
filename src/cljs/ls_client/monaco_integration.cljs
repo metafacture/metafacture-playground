@@ -15,11 +15,6 @@
    :version 0
    :decorations []})
 
-(defn set-editor-uri
-  "Update the document URI for this editor."
-  [state uri]
-  (assoc state :uri uri))
-
 ;; ============================================================================
 ;; Editor Event Listeners
 ;; ============================================================================
@@ -33,22 +28,6 @@
                        (let [full-text (.getValue model)
                              version (.getVersionId model)]
                          (callback event full-text version))))]
-    #(.dispose disposable)))
-
-(defn on-cursor-move
-  "Register handler for cursor movement."
-  [^js editor callback]
-  (let [disposable (.onDidChangeCursorPosition editor
-                     (fn [event]
-                       (callback event (-> event .-position))))]
-    #(.dispose disposable)))
-
-(defn on-selection-change
-  "Register handler for selection changes."
-  [^js editor callback]
-  (let [disposable (.onDidChangeModelContent editor
-                     (fn [event]
-                       (callback event (-> editor .getSelections))))]
     #(.dispose disposable)))
 
 ;; ============================================================================
@@ -74,53 +53,6 @@
                                       :position 2}}}))
              diagnostics)]
     (.setDecorations editor "errors" (clj->js decorations))))
-
-(defn clear-diagnostics
-  "Clear all diagnostic decorations."
-  [^js editor]
-  (.setDecorations editor "errors" #js []))
-
-(defn show-hover
-  "Show hover tooltip at cursor position."
-  [editor hover-response line character]
-  (when hover-response
-    (let [contents (:contents hover-response)]
-      (js/console.log "[Monaco] Showing hover:" contents))))
-
-(defn show-completion
-  "Trigger completion suggestions."
-  [editor completions]
-  (when (> (count completions) 0)
-    (js/console.log "[Monaco] Showing" (count completions) "completions")))
-
-(defn show-definition
-  "Navigate to or show definition location."
-  [editor definition]
-  (let [location (if (map? definition) 
-                   definition 
-                   (first (if (vector? definition) definition [definition])))]
-    (when location
-      (js/console.log "[Monaco] Definition at:" location))))
-
-(defn apply-workspace-edit
-  "Apply a workspace edit from the language server."
-  [^js monaco ^js editor edit]
-  (let [changes (:changes edit {})
-        model (.getModel editor)]
-    (doseq [[uri edits] changes]
-      (if (= uri (:uri (meta editor)))
-        (let [operations
-              (map (fn [edit-item]
-                     (let [start-line (-> edit-item :range :start :line inc)
-                           start-col (-> edit-item :range :start :character inc)
-                           end-line (-> edit-item :range :end :line inc)
-                           end-col (-> edit-item :range :end :character inc)
-                           new-text (:newText edit-item)]
-                       {:range (.. monaco -Range (new start-line start-col end-line end-col))
-                        :text new-text}))
-                   edits)]
-          (.executeEdits model "lsp-edit" (clj->js operations)))
-        (js/console.log "[Monaco] Skipping edit in" uri "- opening other files not implemented")))))
 
 ;; ============================================================================
 ;; Completion Popup Integration
