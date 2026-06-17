@@ -95,7 +95,7 @@ chmod a+x ~/bin/lein
 
 This project depends on [metafacture-core](https://github.com/metafacture/metafacture-core), which is work in progress.
 It is possible to display the current version of dependencies in the UI. To display the version, please read this [section](#show-dependency-versions-in-ui). This is especially reasonable when installing on a server.
-Installing Metafacture Core manually is only necessary, if you want to use a not published version.
+Installing Metafacture Core manually is only necessary if you want to use an upublished version.
 
 Clone and install metafacture-core:
 ```bash
