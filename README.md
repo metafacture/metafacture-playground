@@ -95,7 +95,7 @@ chmod a+x ~/bin/lein
 
 This project depends on [metafacture-core](https://github.com/metafacture/metafacture-core), which is work in progress.
 It is possible to display the current version of dependencies in the UI. To display the version, please read this [section](#show-dependency-versions-in-ui). This is especially reasonable when installing on a server.
-Installing Metafacture Core manually is only necessary, if you want to use a not published version.
+Installing Metafacture Core manually is only necessary if you want to use an upublished version.
 
 Clone and install metafacture-core:
 ```bash
@@ -175,7 +175,7 @@ If the master/main or another branch is used, the content of the file should con
 
 ### Show hints
 
-When opening the playground in the browser the first time there is a hint how to use shortcuts. This hint can be dismissed and will be displayed when reloading the website. It's possible to add more hints if necessary (via metafacture_playground/db.cljs key :hints :content in the default-db). Do see changes the playground must be restartet.
+When opening the playground in the browser for the first time there is a hint on how to use shortcuts. This hint can be dismissed and will be displayed when reloading the website. It's possible to add more hints if necessary (via metafacture_playground/db.cljs key :hints :content in the default-db). To see changes the playground must be restarted.
 
 ### Run tests
 
