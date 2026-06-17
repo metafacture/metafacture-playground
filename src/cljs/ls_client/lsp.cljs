@@ -116,8 +116,3 @@
   (if (map? response)
     (:items response [])
     response))
-
-(defn parse-definition-response
-  "Parse textDocument/definition response."
-  [response]
-  response)

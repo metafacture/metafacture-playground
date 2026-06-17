@@ -85,14 +85,6 @@
         (js/console.error "[Client] Failed to update document:" e)
         (throw e)))))
 
-(defn disconnect
-  "Close the connection to the server."
-  [client]
-  (doseq [dispose (:disposables client)]
-    (dispose))
-  (.disconnect (:ws-connection client))
-  (js/console.log "[Client] Disconnected from server"))
-
 ;; ============================================================================
 ;; LSP Features
 ;; ============================================================================
@@ -154,9 +146,8 @@
             def-params (lsp/definition-message uri line character)
             response-ch (.send ws "textDocument/definition" (clj->js def-params))
             response (<! response-ch)]
-        (if (:error response)
-          nil
-          (lsp/parse-definition-response (:result response))))
+        (when-not (:error response)
+          (:result response)))
       (catch js/Error e
         (js/console.log "[Client] Definition request failed:" e)
         nil))))
