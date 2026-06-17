@@ -128,6 +128,16 @@
  ::dismiss-message
  dismiss-message)
 
+;;; Hints
+
+(defn hide-hints
+  [{db :db}]
+  {:db (assoc-in db [:hints :hidden?] true)})
+
+(re-frame/reg-event-fx
+ ::hide-hints
+ hide-hints)
+
 ;;; Collapsing panels
 
 (defn collapse-panel

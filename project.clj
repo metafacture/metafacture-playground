@@ -6,7 +6,8 @@
                                org.clojure/google-closure-library
                                org.clojure/google-closure-library-third-party]]
                  [org.clojure/tools.logging "1.2.4"]
-                 [org.slf4j/slf4j-simple "2.0.7"]
+                 [org.slf4j/slf4j-simple "2.0.7"] 
+                 [org.clojure/core.async "1.9.865"]
                  [cljsjs/semantic-ui-react "0.88.1-0"]
                  [thheller/shadow-cljs "2.11.7"]
                  [reagent "0.10.0"]

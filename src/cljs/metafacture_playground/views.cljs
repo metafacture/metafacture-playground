@@ -10,7 +10,8 @@
    [goog.object :as g]
    [re-pressed.core :as rp]
    ["@monaco-editor/react" :as monaco-react]
-   [metafacture-playground.utils :as utils]))
+   [metafacture-playground.utils :as utils]
+   [ls-client.languageclient :as languageclient]))
 
 ;;; Using semantic ui react components
 
@@ -60,6 +61,7 @@
 ; Config of input fields
 
 (def focused-editor :data)
+(def ls-sockets {:flux "wss://test.metafacture.org/ls"})
 
 ;;; Utils
 
@@ -318,6 +320,28 @@
                                                      :variable @(re-frame/subscribe [::subs/file-variable :transformation])}}]]
                    :icon-name "download"}]])
 
+(defn ->hint-list [content-list]
+  (cons (reagent/as-element [:div
+                             [:> icon {:name "info"}]
+                             "You can trigger suggestions with shortcut: "
+                             [:> label {:size "tiny"} "Ctrl + Space"]
+                             ". Processing can be triggered by pressing"
+                             [:> label {:size "tiny"} "Ctrl + Enter"]])
+        (mapv (fn [list-element]
+                (reagent/as-element [:div
+                                     [:> icon {:name "info"}]
+                                     list-element])) content-list)))
+
+(defn info-panel-v []
+  (let [hidden? (re-frame/subscribe [::subs/hints-hidden?])
+        content (re-frame/subscribe [::subs/hints-content])]
+    (when-not @hidden?
+           [:> segment {:raised true}
+            [:> message
+             {:info true
+              :on-dismiss #(re-frame/dispatch [::events/hide-hints])
+              :list (->hint-list @content)}]])))
+
 ;;; Editors
 
 (defn set-end-of-line [editor]
@@ -338,10 +362,12 @@
                                             :keybindings [(bit-or control-command enter)
                                                           (chord-fn (bit-or control-command enter))]}))))
 
-(defn set-up-editor [focus-on-load editor monaco]
+(defn set-up-editor [editor-k language editor monaco]
+  (when-let [ls-socket (get ls-sockets editor-k)]
+    (languageclient/connect-language-client monaco editor ls-socket language))
   (set-end-of-line editor)
   (add-keydown-rules monaco editor)
-  (when focus-on-load (js-invoke editor "focus")))
+  (when (= editor-k focused-editor) (js-invoke editor "focus")))
 
 (defn editor [editor-k]
   (let [value (re-frame/subscribe [::subs/editor-content editor-k])
@@ -353,12 +379,13 @@
      {:key @k
       :className (str (name editor-k) "-editor")
       :value @value
-      :on-mount (partial set-up-editor (= editor-k focused-editor))
+      :on-mount (partial set-up-editor editor-k @language)
       :language @language
       :height @height
       :theme "light"
       :options {:dragAndDrop true
-                :minimap {:enabled false}}
+                :minimap {:enabled false}
+                :quickSuggestions false}
       :on-change #(re-frame/dispatch [::events/edit-editor-content editor-k %])}]))
 
 (defn editor-panel [editor-k]
@@ -422,6 +449,12 @@
 
   (register-keydown-rules) ;; Attention: keydown rules don't work in the monaco editors so they need to be defined in the editors again
 
+  ;; Register metafacture-flux language with Monaco BEFORE editors are created
+  (when (.-monaco js/window)
+    (js/console.log "[App] Registering metafacture-flux language with Monaco")
+    (.. js/window.monaco -languages (register #js {:id "metafacture-flux"}))
+    (js/console.log "[App] Available languages:" (js->clj (.. js/window.monaco -languages (getLanguages)))))
+
   (.addEventListener js/window "resize"
                      #(re-frame/dispatch [::events/window-resize (.-innerHeight js/window)]))
 
@@ -433,6 +466,8 @@
     [message-panel]
 
     [control-panel]
+    
+    [info-panel-v]
 
     [:> grid {:stackable true}
 

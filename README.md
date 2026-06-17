@@ -7,7 +7,10 @@ The ***production deployment*** is available at [https://metafacture.org/playgro
 
 The current ***test deployment*** is available at [https://test.metafacture.org/playground/](https://test.metafacture.org/playground/).
 
-Both deployments provide a web application and an HTTP API
+Both deployments provide a web application and an HTTP API.
+
+The Editors can be connected to a language server following the [Language Server Protocol](https://microsoft.github.io/language-server-protocol/) via websocket. At the moment Metafacture provides a language server for Metafacture Flux. 
+
 
 [Here](CONTRIBUTING.md) you can read about contributing to Metafacture Playground.
 
@@ -81,11 +84,18 @@ mkdir ~/bin
 wget -O ~/bin/lein https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein
 chmod a+x ~/bin/lein
 ```
+### Connect/Install and run Metafactute LSP (optional)
+
+ At the moment Metafacture provides a [language server for Metafacture Flux](https://github.com/metafacture/metafacture-lsp). This language server can be connected to the Metafacture Playground to provide autocompletion for Flux commands. Per default a flux language server is connected via `wss://test.metafacture.org/ls`.
+ Follow the instructions of Metafacture LSP if you want to start a local running language server (default websocket `ws://localhost:8080/ls`).
+ The Metafacture Playground also runs without a language server. If you don't want to connect a language server, you should change ```(def ls-sockets {:flux "ws://localhost:8080/ls"})``` to ```(def ls-sockets {})``` in ```views.cljs```. The Playground also runs when not removing this connection information but will show errors when no language server is reachable via the given websocket address.
+
 
 ### Install Metafacture Core
 
 This project depends on [metafacture-core](https://github.com/metafacture/metafacture-core), which is work in progress.
 It is possible to display the current version of dependencies in the UI. To display the version, please read this [section](#show-dependency-versions-in-ui). This is especially reasonable when installing on a server.
+Installing Metafacture Core manually is only necessary if you want to use an upublished version.
 
 Clone and install metafacture-core:
 ```bash
@@ -162,6 +172,10 @@ If a released version is used, the content of the file contains the link to the 
 
 #### Use Master/Main or other branch
 If the master/main or another branch is used, the content of the file should contain a link to the commit like [https://github.com/metafacture/metafacture-fix/commit/b36fcb9](https://github.com/metafacture/metafacture-fix/commit/b36fcb9) (Please use the short hash link).
+
+### Show hints
+
+When opening the playground in the browser for the first time there is a hint on how to use shortcuts. This hint can be dismissed and will be displayed when reloading the website. It's possible to add more hints if necessary (via metafacture_playground/db.cljs key :hints :content in the default-db). To see changes the playground must be restarted.
 
 ### Run tests
 
