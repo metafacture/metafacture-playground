@@ -72,7 +72,7 @@
     #js {:label label
          :insertText (get* "insertText" item)
          :detail detail
-         :documentation detail
+         :documentation (get* "documentation" item)
          :sortText (get* "sortText" item)
          :filterText label
          :kind (get* "kind" item)}))
