@@ -61,7 +61,7 @@
 ; Config of input fields
 
 (def focused-editor :data)
-(def ls-sockets {:flux "wss://test.metafacture.org/ls"})
+(def ls-sockets {:flux "wss://metafacture.org/ls"})
 
 ;;; Utils
 
