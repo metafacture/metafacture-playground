@@ -33,6 +33,7 @@
    :lang-id lang-id
    :editor-state editor-state
    :initialized false
+   :integration-registered false
    :doc-versions (lsp/create-document-version-tracker)
    :disposables []
    :supported-features #{}})
@@ -159,60 +160,62 @@
 (defn setup-editor-integration
   "Set up Monaco editor integration with language server."
   [client ^js monaco ^js editor uri]
-  (go
-    (try
-      (let [;; Set up content change listener
-            on-change-dispose
-            (monaco-int/on-content-change
-             editor
-             (fn [event full-text version]
-               (go (<! (change-document client uri full-text)))))
-            
-            ;; Register completion provider
-            completion-dispose
-            (monaco-int/register-completion-provider
-             monaco
-             (:lang-id client)
-             (fn [position partial-word] 
-               (let [lsp-pos (monaco-int/monaco-position->lsp position)
-                     response-ch (request-completion client uri (:line lsp-pos) (:character lsp-pos) partial-word)]
-                 ;;(js/console.log "[Client] Requested completion for:" lsp-pos "with partial-word:" partial-word)
-                 (channel->promise response-ch))))
-            
-            ;; Register hover provider
-            hover-dispose
-            (monaco-int/register-hover-provider
-             monaco
-             (:lang-id client)
-             (fn [position]
-               (let [lsp-pos (monaco-int/monaco-position->lsp position)
-                     response-ch (request-hover client uri (:line lsp-pos) (:character lsp-pos))]
-                 (channel->promise response-ch))))
-            
-            ;; Register definition provider
-            def-dispose
-            (monaco-int/register-definition-provider
-             monaco
-             (:lang-id client)
-             (fn [position]
-               (let [lsp-pos (monaco-int/monaco-position->lsp position)
-                     response-ch (request-definition client uri (:line lsp-pos) (:character lsp-pos))]
-                 (channel->promise response-ch))))
-            
-            disposables [on-change-dispose completion-dispose hover-dispose def-dispose]]
-        
-        (update client :disposables concat disposables))
-      (catch js/Error e
-        (js/console.error "[Client] Failed to set up editor integration:" e)
-        (js/console.error "[Client] Stack:" (.-stack e))
-        (throw e)))))
+  (if (:integration-registered client)
+    (go client)
+    (go
+      (try
+        (let [;; Set up content change listener
+              on-change-dispose
+              (monaco-int/on-content-change
+               editor
+               (fn [_ full-text _]
+                 (go (<! (change-document client uri full-text)))))
+
+              ;; Register completion provider
+              completion-dispose
+              (monaco-int/register-completion-provider
+               monaco
+               (:lang-id client)
+               (fn [position partial-word]
+                 (let [lsp-pos (monaco-int/monaco-position->lsp position)
+                       response-ch (request-completion client uri (:line lsp-pos) (:character lsp-pos) partial-word)]
+                   (channel->promise response-ch))))
+
+              ;; Register hover provider
+              hover-dispose
+              (monaco-int/register-hover-provider
+               monaco
+               (:lang-id client)
+               (fn [position]
+                 (let [lsp-pos (monaco-int/monaco-position->lsp position)
+                       response-ch (request-hover client uri (:line lsp-pos) (:character lsp-pos))]
+                   (channel->promise response-ch))))
+
+              ;; Register definition provider
+              def-dispose
+              (monaco-int/register-definition-provider
+               monaco
+               (:lang-id client)
+               (fn [position]
+                 (let [lsp-pos (monaco-int/monaco-position->lsp position)
+                       response-ch (request-definition client uri (:line lsp-pos) (:character lsp-pos))]
+                   (channel->promise response-ch))))
+
+              disposables [on-change-dispose completion-dispose hover-dispose def-dispose]]
+          (assoc client
+                 :integration-registered true
+                 :disposables (into (:disposables client) disposables)))
+        (catch js/Error e
+          (js/console.error "[Client] Failed to set up editor integration:" e)
+          (js/console.error "[Client] Stack:" (.-stack e))
+          (throw e))))))
 ;; ============================================================================
 ;; Server Notifications (Push from Server)
 ;; ============================================================================
 
 (defn setup-notification-handlers
   "Set up handlers for server-initiated notifications."
-  [client ^js monaco ^js editor]
+  [_ ^js monaco ^js editor]
   (fn [notification]
     (let [method (:method notification)
           params (:params notification)]
@@ -241,12 +244,12 @@
       ;; Register the language with Monaco if not already registered
       (.. monaco -languages (register #js {:id language-id}))
       
-      (let [;; Create JSON-RPC connection
-            ws-connection (<! (jsonrpc/connect
-                               ws-url
-                               {:on-notification
-                                (fn [notif]
-                                  (js/console.log "[JSONRPC Notification]" (:method notif)))}))]
+      (let [;; Create JSON-RPC connection.
+            ws-connection (jsonrpc/connect
+                           ws-url
+                           {:on-notification
+                            (fn [notif]
+                              (js/console.log "[JSONRPC Notification]" (:method notif)))})]
         
         ;; Check if connection failed
         (if (and (map? ws-connection) (:error ws-connection))

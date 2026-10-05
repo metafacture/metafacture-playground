@@ -1,7 +1,7 @@
 (ns ls-client.jsonrpc
   "JSON-RPC 2.0 protocol implementation over WebSocket.
    Handles request/response matching, async message routing, and error handling."
-  (:require [cljs.core.async :as a :refer [<! >! go go-loop chan close!]]))
+  (:require [cljs.core.async :as a :refer [<! >! go chan close!]]))
 
 ;; ============================================================================
 ;; Message ID Counter
@@ -40,10 +40,10 @@
   [registry id]
   (let [pending (:pending registry)
         normalized-id (normalize-id id)
-        chan (get @pending normalized-id)]
-    (when chan
+        ch (get @pending normalized-id)]
+    (when ch
       (swap! pending dissoc normalized-id))
-    chan))
+    ch))
 
 ;; ============================================================================
 ;; Connection Management
@@ -58,186 +58,205 @@
   "Deserialize a JSON message received from the WebSocket into Clojure data."
   [msg]
   (cond
-    ;; If it's a JS object, convert to ClojureScript with keyword keys
     (object? msg)
     (js->clj msg :keywordize-keys true)
-    
-    ;; If it's already a ClojureScript map, check if keys are strings or keywords
+
     (map? msg)
     (if (some string? (keys msg))
-      ;; String keys - convert to keywords
       (reduce-kv (fn [m k v] (assoc m (keyword k) v)) {} msg)
-      ;; Already has keyword keys
       msg)
-    
-    ;; Fallback
+
     :else
     msg))
 
 (defn- message-handler-loop
   "Continuously read messages from the server and route them appropriately."
   [stream registry notification-handler]
-  (go-loop []
-    (let [msg (<! (:in stream))]
-      (when msg
-        (try
-          (let [msg-clj (deserialize-message msg)
-                id-raw (:id msg-clj)
-                id (when id-raw (normalize-id id-raw))
-                method (:method msg-clj)]
-            (cond
-              id
-              ;; This is a response - look for matching request
-              (if-let [response-chan (get-response-chan registry id)]
-                (do
-                  (>! response-chan msg-clj)
-                  (close! response-chan))
-                (js/console.warn "[JSONRPC] ✗ Received response for unknown request ID:" id))
+  (letfn [(read-next! []
+            (a/take! (:in stream)
+                     (fn [msg]
+                       (when msg
+                         (try
+                           (let [msg-clj (deserialize-message msg)
+                                 id-raw (:id msg-clj)
+                                 id (when id-raw (normalize-id id-raw))
+                                 method (:method msg-clj)]
+                             (cond
+                               id
+                               (if-let [response-chan (get-response-chan registry id)]
+                                 (do
+                                   (a/put! response-chan msg-clj)
+                                   (close! response-chan))
+                                 (js/console.warn "[JSONRPC] Received response for unknown request ID:" id))
 
-              method
-              ;; Server push notification
-              (notification-handler msg-clj)
+                               method
+                               (notification-handler msg-clj)
 
-              :else
-              ;; Neither response nor notification
-              (js/console.warn "[JSONRPC] ⚠ Received unexpected message:" (clj->js msg-clj))))
-          (catch js/Error e
-            (js/console.error "[JSONRPC] ✗ Error processing message:" e))))
-      (recur))))
+                               :else
+                               (js/console.warn "[JSONRPC] Received unexpected message:" (clj->js msg-clj))))
+                           (catch js/Error e
+                             (js/console.error "[JSONRPC] Error processing message:" e)))
+                         (read-next!)))))]
+    (read-next!)))
 
 (defn- create-ws-stream
   "Create a stream-like object from a native WebSocket with JSON handling."
+  [ws]
   (let [in-chan (chan)
-        out-chan (chan)]
-    ;; Set up message handler - parse JSON and feed into in-chan
+        out-chan (chan)
+        drain-out! (fn drain-out! []
+                     (a/take! out-chan
+                              (fn [msg]
+                                (when msg
+                                  (try
+                                    (when (= 1 (.-readyState ws))
+                                      (.send ws (js/JSON.stringify msg)))
+                                    (catch js/Error e
+                                      (js/console.error "[JSONRPC] Failed to send message:" e)))
+                                  (drain-out!)))))]
     (set! (.-onmessage ws)
       (fn [event]
-        (go
-          (try
-            (let [json-str (.-data event)
-                  msg (js/JSON.parse json-str)]
-              (>! in-chan msg))
-            (catch js/Error e
-              (js/console.error "[JSONRPC] Failed to parse message:" e))))))
-    
-    ;; Set up output - consume from out-chan, stringify JSON, and send over WebSocket
-    (go-loop []
-      (when-let [msg (<! out-chan)]
         (try
-          (.send ws (js/JSON.stringify msg))
+          (let [json-str (.-data event)
+                msg (js/JSON.parse json-str)]
+            (a/put! in-chan msg))
           (catch js/Error e
-            (js/console.error "[JSONRPC] Failed to send message:" e)))
-        (recur)))
-    
+            (js/console.error "[JSONRPC] Failed to parse message:" e)))))
+    (drain-out!)
     {:in in-chan :out out-chan :ws ws}))
 
-(defn create-connection [url]
-  "Create a WebSocket connection using native API.
-   Returns a channel that resolves to:
-   - {:error false :stream :registry} on success
-   - {:error true :message} on failure."
-  (let [result-ch (chan)]
-    (go
-      (let [result-sent (atom false)
-            ws (js/WebSocket. url)]
-        
-        ;; Set up success handler
-        (set! (.-onopen ws)
-          (fn []
-            (when-not @result-sent
-              (reset! result-sent true)
-              (go
-                (let [stream (create-ws-stream ws)
-                      registry (create-message-registry)]
-                  (>! result-ch {:error false :stream stream :registry registry}))))))
-        
-        ;; Set up error handler
-        (set! (.-onerror ws)
-          (fn [error]
-            (when-not @result-sent
-              (reset! result-sent true)
-              (js/console.warn "[JSONRPC] WebSocket error")
-              (go
-                (>! result-ch {:error true :message "Language server unavailable"})))))
-        
-        ;; Set up close handler
-        (set! (.-onclose ws)
-          (fn []
-            (when-not @result-sent
-              (reset! result-sent true)
-              (js/console.warn "[JSONRPC] Connection closed")
-              (go
-                (>! result-ch {:error true :message "Language server unavailable"})))))
-        
-        ;; Timeout
-        (<! (a/timeout 5000))
-        (when-not @result-sent
-          (reset! result-sent true)
-          (.close ws)
-          (>! result-ch {:error true :message "Connection timeout"}))))
-    result-ch))
-
-;; ============================================================================
-;; Public API
-;; ============================================================================
+(def ^:private max-reconnect-attempts 10)
+(def ^:private initial-reconnect-delay 1000)
+(def ^:private max-reconnect-delay 30000)
 
 (defn connect
-  "Connect to a JSON-RPC server over WebSocket with error handling.
-   
-   Returns a channel that resolves to:
-   - connection map (on success): {:send, :notify, :disconnect, :registry}
-   - error map (on failure): {:error true, :message}"
+  "Connect to a JSON-RPC server over WebSocket with automatic reconnect support."
   [url & [{:keys [on-notification]
            :or {on-notification (fn [msg] (js/console.log "[JSONRPC] Notification:" msg))}}]]
-  
-  (go
-    (let [conn-result (<! (create-connection url))]
-      (if (:error conn-result)
-        ;; Connection failed
-        conn-result
-        ;; Connection succeeded - start message loop and return interface
-        (let [{:keys [stream registry]} conn-result]
-          ;; Start the message loop in the background
-          (message-handler-loop stream registry on-notification)
-          
-          ;; Return connection interface
-          #js {:send (fn [method params]
-                       "Send a request and wait for response. Returns a channel."
-                       (let [id (next-id)
-                             response-chan (chan)
-                             msg {:jsonrpc "2.0"
-                                  :id id
-                                  :method method
-                                  :params params}
-                             result-chan (chan)]
-                         (register-request registry id response-chan)
+  (let [state (atom {:ws nil
+                     :stream nil
+                     :registry nil
+                     :connected false
+                     :manual-close false
+                     :reconnect-attempt 0
+                     :reconnect-pending false})
+        backoff (fn [attempt]
+                  (min (* initial-reconnect-delay (js/Math.pow 2 attempt)) max-reconnect-delay))
+        connect! (fn connect! []
+                   (when-not (:manual-close @state)
+                     (let [current (:ws @state)]
+                       (when (or (nil? current)
+                                 (= 3 (.-readyState current)))
+                         (let [ws (js/WebSocket. url)
+                               stream (create-ws-stream ws)
+                               registry (create-message-registry)]
+                           (swap! state assoc
+                                  :ws ws
+                                  :stream stream
+                                  :registry registry
+                                  :connected false
+                                  :reconnect-attempt (max (:reconnect-attempt @state) 0))
+
+                           (message-handler-loop stream registry on-notification)
+
+                           (set! (.-onopen ws)
+                                 (fn []
+                                   (swap! state assoc :connected true :reconnect-attempt 0 :reconnect-pending false)
+                                   (js/console.info "[JSONRPC] WebSocket connected")))
+
+                           (set! (.-onerror ws)
+                                 (fn [e]
+                                   (js/console.warn "[JSONRPC] WebSocket error" e)
+                                   (swap! state assoc :connected false)))
+
+                           (set! (.-onclose ws)
+                                 (fn []
+                                   (swap! state assoc :ws nil :stream nil :registry nil :connected false)
+                                   (when-not (:manual-close @state)
+                                     (let [attempt (inc (:reconnect-attempt @state))
+                                           delay (backoff attempt)]
+                                       (when (and (< attempt max-reconnect-attempts)
+                                                  (not (:reconnect-pending @state)))
+                                         (swap! state assoc :reconnect-attempt attempt :reconnect-pending true)
+                                         (js/console.info "[JSONRPC] Reconnecting in" delay "ms")
+                                         (js/setTimeout (fn []
+                                                          (swap! state assoc :reconnect-pending false)
+                                                          (connect!))
+                                                        delay))))))
+                           ws)))))
+        wait-for-open! (fn []
                          (go
-                           (try
-                             ;; Send the message
-                             (>! (:out stream) (serialize-message msg))
-                             ;; Wait for response
-                             (let [response (<! response-chan)]
-                               (>! result-chan (if (:error response)
-                                                 {:error true :message (str (:message (:error response)))}
-                                                 {:error false :result (:result response)})))
-                             (catch js/Error e
-                               (>! result-chan {:error true :message (.-message e)}))))
-                         result-chan))
+                           (loop [elapsed 0]
+                             (let [current (:ws @state)]
+                               (cond
+                                 (and current (= 1 (.-readyState current)))
+                                 current
 
-               :notify (fn [method params]
-                         "Send a notification (no response expected)."
-                         (let [msg {:jsonrpc "2.0"
-                                    :method method
-                                    :params params}]
-                           (go
-                             (try
-                               (>! (:out stream) (serialize-message msg))
-                               (catch js/Error e
-                                 (js/console.error "[JSONRPC] Notify failed:" e))))))
+                                 (and (not (:manual-close @state)) (nil? current))
+                                 (do
+                                   (connect!)
+                                   (<! (a/timeout 100))
+                                   (recur (+ elapsed 100)))
 
-               :disconnect (fn []
-                             "Close the connection."
-                             (.close (:ws stream)))
+                                 (and (not (:manual-close @state))
+                                      (some? current)
+                                      (not= 1 (.-readyState current)))
+                                 (do
+                                   (when (> elapsed 5000)
+                                     (js/console.warn "[JSONRPC] Timed out waiting for WebSocket to open"))
+                                   (<! (a/timeout 100))
+                                   (recur (+ elapsed 100)))
 
-               :stream stream
-               :registry registry})))))
+                                 :else
+                                 nil)))))
+        send-fn (fn [method params]
+                  (let [result-chan (chan)
+                        id (next-id)
+                        response-chan (chan)
+                        msg {:jsonrpc "2.0"
+                             :id id
+                             :method method
+                             :params params}]
+                    (go
+                      (try
+                        (let [ws (<! (wait-for-open!))]
+                          (if (and ws (= 1 (.-readyState ws)))
+                            (do
+                              (when-let [registry (:registry @state)]
+                                (register-request registry id response-chan))
+                              (>! (:out (:stream @state)) (serialize-message msg))
+                              (let [response (<! response-chan)]
+                                (>! result-chan
+                                    (if (:error response)
+                                      {:error true :message (str (:message (:error response)))}
+                                      {:error false :result (:result response)}))))
+                            (>! result-chan {:error true :message "WebSocket is closed"})))
+                        (catch js/Error e
+                          (js/console.error "[JSONRPC] Send failed:" e)
+                          (>! result-chan {:error true :message (.-message e)}))))
+                    result-chan))
+        notify-fn (fn [method params]
+                    (go
+                      (try
+                        (let [ws (<! (wait-for-open!))]
+                          (when (and ws (= 1 (.-readyState ws)))
+                            (let [stream (:stream @state)
+                                  msg {:jsonrpc "2.0"
+                                       :method method
+                                       :params params}]
+                              (>! (:out stream) (serialize-message msg)))))
+                        (catch js/Error e
+                          (js/console.error "[JSONRPC] Notify failed:" e)))))
+        disconnect-fn (fn []
+                        (swap! state assoc :manual-close true :connected false)
+                        (when-let [ws (:ws @state)]
+                          (.close ws)))
+        connection (fn []
+                     #js {:send send-fn
+                          :notify notify-fn
+                          :disconnect disconnect-fn
+                          :stream (fn [] (:stream @state))
+                          :registry (fn [] (:registry @state))
+                          :state state})]
+    (connect!)
+    (connection)))
