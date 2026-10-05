@@ -16,24 +16,28 @@
 ;; Request/Response Registry
 ;; ============================================================================
 
-(defn ^:private normalize-id [id]
+(defn ^:private normalize-id
   "Ensure ID is a number for consistent lookup."
+  [id]
   (if (string? id)
     (js/parseInt id)
     id))
 
-(defn create-message-registry []
-  "Create a registry to track pending requests and match responses."
+(defn create-message-registry
+  "Create a registry for tracking pending request/response pairs."
+  []
   {:pending (atom {})
    :notifications (atom [])})
 
-(defn register-request [registry id response-chan]
-  "Register a pending request with its response channel."
+(defn register-request
+  "Register a pending JSON-RPC request and its response channel."
+  [registry id response-chan]
   (let [normalized-id (normalize-id id)]
     (swap! (:pending registry) assoc normalized-id response-chan)))
 
-(defn get-response-chan [registry id]
-  "Get the response channel for a request ID."
+(defn get-response-chan
+  "Return the response channel for a pending request and remove it from the registry."
+  [registry id]
   (let [pending (:pending registry)
         normalized-id (normalize-id id)
         chan (get @pending normalized-id)]
@@ -45,14 +49,14 @@
 ;; Connection Management
 ;; ============================================================================
 
-(defn ^:private serialize-message [msg]
-  "Serialize a message for sending over WebSocket."
+(defn- serialize-message
+  "Serialize a Clojure map into JSON for the browser WebSocket."
+  [msg]
   (clj->js msg))
 
-(defn ^:private deserialize-message [msg]
-  "Deserialize a message received from WebSocket.
-   haslett with fmt/json gives us a ClojureScript map with string keys.
-   Always convert string keys to keywords for consistent access."
+(defn- deserialize-message
+  "Deserialize a JSON message received from the WebSocket into Clojure data."
+  [msg]
   (cond
     ;; If it's a JS object, convert to ClojureScript with keyword keys
     (object? msg)
@@ -70,7 +74,7 @@
     :else
     msg))
 
-(defn ^:private message-handler-loop
+(defn- message-handler-loop
   "Continuously read messages from the server and route them appropriately."
   [stream registry notification-handler]
   (go-loop []
@@ -101,7 +105,7 @@
             (js/console.error "[JSONRPC] ✗ Error processing message:" e))))
       (recur))))
 
-(defn ^:private create-ws-stream [ws]
+(defn- create-ws-stream
   "Create a stream-like object from a native WebSocket with JSON handling."
   (let [in-chan (chan)
         out-chan (chan)]
