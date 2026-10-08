@@ -19,6 +19,8 @@
 
 (def ^:const root-uri "file:///metafacture-playground/flux")
 
+(defonce ^:private active-clients (atom {}))
+
 ;; ============================================================================
 ;; Public API
 ;; ============================================================================
@@ -58,11 +60,16 @@
    - Logs all operations to browser console with [Client] prefix"
   
   ([monaco editor ws-url lang-id]
-   (go
-     (try
-       (js/console.log "[LanguageClient] Connecting to language server at" ws-url "for language" lang-id)
-       (lsp-client/connect ws-url monaco editor lang-id root-uri)
-       (catch js/Error e
-         (js/console.error "[LanguageClient] Connection failed:" e)
-         (throw e))))))
+   (let [key [ws-url lang-id]]
+     (if-let [existing (get @active-clients key)]
+       existing
+       (let [client-ch (go
+                         (try
+                           (js/console.log "[LanguageClient] Connecting to language server at" ws-url "for language" lang-id)
+                           (lsp-client/connect ws-url monaco editor lang-id root-uri)
+                           (catch js/Error e
+                             (js/console.error "[LanguageClient] Connection failed:" e)
+                             (throw e))))]
+         (swap! active-clients assoc key client-ch)
+         client-ch)))))
 
