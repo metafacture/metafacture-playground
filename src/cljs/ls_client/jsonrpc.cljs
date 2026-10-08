@@ -225,11 +225,17 @@
                               (when-let [registry (:registry @state)]
                                 (register-request registry id response-chan))
                               (>! (:out (:stream @state)) (serialize-message msg))
-                              (let [response (<! response-chan)]
-                                (>! result-chan
-                                    (if (:error response)
-                                      {:error true :message (str (:message (:error response)))}
-                                      {:error false :result (:result response)}))))
+                              (let [response (a/alt! response-chan ([val] val)
+                                                     (a/timeout 30000) :timed-out)]
+                                (if (= :timed-out response)
+                                  (do
+                                    (when-let [registry (:registry @state)]
+                                      (get-response-chan registry id))
+                                    (>! result-chan {:error true :message "Timed out waiting for response"}))
+                                  (>! result-chan
+                                      (if (:error response)
+                                        {:error true :message (str (:message (:error response)))}
+                                        {:error false :result (:result response)})))))
                             (>! result-chan {:error true :message "WebSocket is closed"})))
                         (catch js/Error e
                           (js/console.error "[JSONRPC] Send failed:" e)
