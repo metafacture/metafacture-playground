@@ -95,10 +95,22 @@
          (max min-editor-size)
          (str "em")))))
 
+(defn- get-dependant-width [db editor]
+  (let [dependant (case editor
+                    :transformation :flux
+                    :flux :transformation)
+        dependant-width (get-in db [:editors dependant :width])]
+    (if (= dependant-width 16)
+      16
+      (get-in db [:editors editor :width]))))
+
 (re-frame/reg-sub
  ::width
  (fn [db [_ editor]]
-   (get-in db [:editors editor :width])))
+   (if (or (= editor :transformation)
+           (= editor :flux))
+     (get-dependant-width db editor)
+     (get-in db [:editors editor :width]))))
 
 (re-frame/reg-sub
  ::monaco-language
