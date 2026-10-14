@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8"?>
+  <record xmlns="http://www.loc.gov/MARC21/slim" type="Bibliographic">
+    <leader>00000naa a2200000uc 4500</leader>
+    <controlfield tag="001">1106253078</controlfield>
+    <controlfield tag="003">DE-101</controlfield>
+    <controlfield tag="005">20250312143746.0</controlfield>
+    <controlfield tag="007">cr||||||||||||</controlfield>
+    <controlfield tag="008">160712s2016    gw |||||o|||| 00||||eng  </controlfield>
+    <datafield tag="016" ind1="7" ind2=" ">
+      <subfield code="2">DE-101</subfield>
+      <subfield code="a">1106253078</subfield>
+    </datafield>
+    <datafield tag="022" ind1=" " ind2=" ">
+      <subfield code="a">1617-9854</subfield>
+    </datafield>
+    <datafield tag="024" ind1="7" ind2=" ">
+      <subfield code="a">10.1007/s10257-016-0325-8</subfield>
+      <subfield code="2">doi</subfield>
+    </datafield>
+    <datafield tag="024" ind1="7" ind2=" ">
+      <subfield code="2">urn</subfield>
+      <subfield code="a">urn:nbn:de:1111-201607127742</subfield>
+    </datafield>
+    <datafield tag="035" ind1=" " ind2=" ">
+      <subfield code="a">(DE-599)DNB1106253078</subfield>
+    </datafield>
+    <datafield tag="035" ind1=" " ind2=" ">
+      <subfield code="a">(OCoLC)1186118606</subfield>
+    </datafield>
+    <datafield tag="040" ind1=" " ind2=" ">
+      <subfield code="a">1140</subfield>
+      <subfield code="b">ger</subfield>
+      <subfield code="c">DE-101</subfield>
+      <subfield code="d">9999</subfield>
+    </datafield>
+    <datafield tag="041" ind1=" " ind2=" ">
+      <subfield code="a">eng</subfield>
+    </datafield>
+    <datafield tag="044" ind1=" " ind2=" ">
+      <subfield code="c">XA-DE</subfield>
+    </datafield>
+    <datafield tag="084" ind1=" " ind2=" ">
+      <subfield code="a">HF54.5-54.56</subfield>
+      <subfield code="2">lcc</subfield>
+    </datafield>
+    <datafield tag="084" ind1=" " ind2=" ">
+      <subfield code="a">650</subfield>
+      <subfield code="2">ddc</subfield>
+    </datafield>
+    <datafield tag="084" ind1=" " ind2=" ">
+      <subfield code="a">658.05</subfield>
+      <subfield code="2">ddc</subfield>
+    </datafield>
+    <datafield tag="100" ind1="1" ind2=" ">
+      <subfield code="8">1\p</subfield>
+      <subfield code="0">(DE-588)1139796364</subfield>
+      <subfield code="0">https://d-nb.info/gnd/1139796364</subfield>
+      <subfield code="0">(DE-101)1139796364</subfield>
+      <subfield code="a">Petrović, Marko</subfield>
+      <subfield code="e">Verfasser</subfield>
+      <subfield code="4">aut</subfield>
+      <subfield code="2">gnd</subfield>
+    </datafield>
+    <datafield tag="245" ind1="1" ind2="0">
+      <subfield code="a">Automating ETL processes using the domain-specific modeling approach</subfield>
+      <subfield code="c">by Marko Petrović, Milica Vučković, Nina Turajlić, Slađan Babarogić, Nenad Aničić, Zoran Marjanović</subfield>
+    </datafield>
+    <datafield tag="300" ind1=" " ind2=" ">
+      <subfield code="a">Online-Ressource</subfield>
+      <subfield code="b">online resource.</subfield>
+    </datafield>
+    <datafield tag="336" ind1=" " ind2=" ">
+      <subfield code="a">Text</subfield>
+      <subfield code="b">txt</subfield>
+      <subfield code="2">rdacontent</subfield>
+    </datafield>
+    <datafield tag="337" ind1=" " ind2=" ">
+      <subfield code="a">Computermedien</subfield>
+      <subfield code="b">c</subfield>
+      <subfield code="2">rdamedia</subfield>
+    </datafield>
+    <datafield tag="338" ind1=" " ind2=" ">
+      <subfield code="a">Online-Ressource</subfield>
+      <subfield code="b">cr</subfield>
+      <subfield code="2">rdacarrier</subfield>
+    </datafield>
+    <datafield tag="583" ind1="1" ind2=" ">
+      <subfield code="a">Archivierung/Langzeitarchivierung gewährleistet</subfield>
+      <subfield code="5">DE-101</subfield>
+      <subfield code="2">pdager</subfield>
+    </datafield>
+    <datafield tag="653" ind1=" " ind2=" ">
+      <subfield code="a">(lcsh)Business.</subfield>
+    </datafield>
+    <datafield tag="653" ind1=" " ind2=" ">
+      <subfield code="a">(lcsh)Management.</subfield>
+    </datafield>
+    <datafield tag="653" ind1=" " ind2=" ">
+      <subfield code="a">(lcsh)Information technology.</subfield>
+    </datafield>
+    <datafield tag="653" ind1=" " ind2=" ">
+      <subfield code="a">(lcsh)Business--Data processing.</subfield>
+    </datafield>
+    <datafield tag="653" ind1=" " ind2=" ">
+      <subfield code="a">Business and Management.</subfield>
+    </datafield>
+    <datafield tag="653" ind1=" " ind2=" ">
+      <subfield code="a">IT in Business.</subfield>
+    </datafield>
+    <datafield tag="653" ind1=" " ind2=" ">
+      <subfield code="a">Information Systems Applications (incl. Internet).</subfield>
+    </datafield>
+    <datafield tag="653" ind1=" " ind2=" ">
+      <subfield code="a">Management.</subfield>
+    </datafield>
+    <datafield tag="700" ind1="1" ind2=" ">
+      <subfield code="8">2\p</subfield>
+      <subfield code="a">Vučković, Milica</subfield>
+      <subfield code="e">Mitwirkender</subfield>
+      <subfield code="4">ctb</subfield>
+    </datafield>
+    <datafield tag="700" ind1="1" ind2=" ">
+      <subfield code="8">3\p</subfield>
+      <subfield code="a">Turajlić, Nina</subfield>
+      <subfield code="e">Mitwirkender</subfield>
+      <subfield code="4">ctb</subfield>
+    </datafield>
+    <datafield tag="700" ind1="1" ind2=" ">
+      <subfield code="8">4\p</subfield>
+      <subfield code="a">Babarogić, Slađan</subfield>
+      <subfield code="e">Mitwirkender</subfield>
+      <subfield code="4">ctb</subfield>
+    </datafield>
+    <datafield tag="700" ind1="1" ind2=" ">
+      <subfield code="8">5\p</subfield>
+      <subfield code="a">Aničić, Nenad</subfield>
+      <subfield code="e">Mitwirkender</subfield>
+      <subfield code="4">ctb</subfield>
+    </datafield>
+    <datafield tag="700" ind1="1" ind2=" ">
+      <subfield code="8">6\p</subfield>
+      <subfield code="a">Marjanović, Zoran</subfield>
+      <subfield code="e">Mitwirkender</subfield>
+      <subfield code="4">ctb</subfield>
+    </datafield>
+    <datafield tag="710" ind1="2" ind2=" ">
+      <subfield code="a">SpringerLink (Online service)</subfield>
+      <subfield code="e">Herausgebendes Organ</subfield>
+      <subfield code="4">isb</subfield>
+    </datafield>
+    <datafield tag="773" ind1="1" ind2="8">
+      <subfield code="7">|||s</subfield>
+      <subfield code="g">day:9</subfield>
+      <subfield code="g">month:7</subfield>
+      <subfield code="g">year:2016</subfield>
+      <subfield code="g">pages:1-36</subfield>
+    </datafield>
+    <datafield tag="773" ind1="0" ind2="8">
+      <subfield code="i">Enthalten in</subfield>
+      <subfield code="t">Information systems and e-business management</subfield>
+      <subfield code="d">New York, NY [u.a.] ; Heidelberg ; Berlin : Springer, 2003-</subfield>
+      <subfield code="h">Online-Ressource</subfield>
+      <subfield code="g">(9.7.2016), 1-36</subfield>
+      <subfield code="w">(DE-600)2173306-5</subfield>
+      <subfield code="w">(DE-101)026925753</subfield>
+      <subfield code="x">1617-9854</subfield>
+    </datafield>
+    <datafield tag="850" ind1=" " ind2=" ">
+      <subfield code="a">DE-101a</subfield>
+    </datafield>
+    <datafield tag="856" ind1="4" ind2="0">
+      <subfield code="u">https://doi.org/10.1007/s10257-016-0325-8</subfield>
+      <subfield code="x">Resolving-System</subfield>
+    </datafield>
+    <datafield tag="856" ind1="4" ind2="0">
+      <subfield code="u">https://nbn-resolving.org/urn:nbn:de:1111-201607127742</subfield>
+      <subfield code="x">Resolving-System</subfield>
+    </datafield>
+    <datafield tag="856" ind1=" " ind2="0">
+      <subfield code="u">https://d-nb.info/1106253078/34</subfield>
+      <subfield code="x">Langzeitarchivierung Nationalbibliothek</subfield>
+    </datafield>
+    <datafield tag="856" ind1="4" ind2=" ">
+      <subfield code="u">http://dx.doi.org/10.1007/s10257-016-0325-8</subfield>
+    </datafield>
+    <datafield tag="883" ind1=" " ind2=" ">
+      <subfield code="8">1\p</subfield>
+      <subfield code="a">cgwrk</subfield>
+      <subfield code="d">20250201</subfield>
+      <subfield code="q">DE-101</subfield>
+      <subfield code="u">https://d-nb.info/provenance/plan#cgwrk</subfield>
+    </datafield>
+    <datafield tag="883" ind1="1" ind2=" ">
+      <subfield code="8">2\p</subfield>
+      <subfield code="a">npi</subfield>
+      <subfield code="d">20200611</subfield>
+      <subfield code="q">DE-101</subfield>
+      <subfield code="u">https://d-nb.info/provenance/plan#npi</subfield>
+    </datafield>
+    <datafield tag="883" ind1="1" ind2=" ">
+      <subfield code="8">3\p</subfield>
+      <subfield code="a">npi</subfield>
+      <subfield code="d">20200611</subfield>
+      <subfield code="q">DE-101</subfield>
+      <subfield code="u">https://d-nb.info/provenance/plan#npi</subfield>
+    </datafield>
+    <datafield tag="883" ind1="1" ind2=" ">
+      <subfield code="8">4\p</subfield>
+      <subfield code="a">npi</subfield>
+      <subfield code="d">20200611</subfield>
+      <subfield code="q">DE-101</subfield>
+      <subfield code="u">https://d-nb.info/provenance/plan#npi</subfield>
+    </datafield>
+    <datafield tag="883" ind1="1" ind2=" ">
+      <subfield code="8">5\p</subfield>
+      <subfield code="a">npi</subfield>
+      <subfield code="d">20200611</subfield>
+      <subfield code="q">DE-101</subfield>
+      <subfield code="u">https://d-nb.info/provenance/plan#npi</subfield>
+    </datafield>
+    <datafield tag="883" ind1="1" ind2=" ">
+      <subfield code="8">6\p</subfield>
+      <subfield code="a">npi</subfield>
+      <subfield code="d">20200611</subfield>
+      <subfield code="q">DE-101</subfield>
+      <subfield code="u">https://d-nb.info/provenance/plan#npi</subfield>
+    </datafield>
+    <datafield tag="927" ind1=" " ind2=" ">
+      <subfield code="a">75497475</subfield>
+    </datafield>
+  </record>

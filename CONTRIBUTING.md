@@ -94,6 +94,10 @@ As a general rule, we don't change public commit history, i.e. we don’t use ``
 
 We test the Metafacture Playground against Mozilla Firefox and Google Chrome. The behaviour in these two browsers may be different, but should be acceptable for each of them.
 
+#### Adding files for new examples
+
+If a new example file is needed for a playground example save the file in the `resources/public/examplesData`, commit and create pull request for for adding the file. After the example files are deployed you can use the url in a new example workflow and create a new separate feature branch for the new example workflow with its own pull request.
+
 ## Maintainer Guidelines
 
 ### Board and Issues
