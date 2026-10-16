@@ -114,11 +114,9 @@
       (let [ws (:ws-connection client)
             completion-params (if (empty? partial-word)
                                 (lsp/completion-message uri line character)
-                                (lsp/completion-message uri line character partial-word 1))
-            ;;_ (js/console.log "[Client] Completion params being sent:" (clj->js completion-params))
+                                (lsp/completion-message uri line character partial-word 1)) 
             response-ch (.send ws "textDocument/completion" (clj->js completion-params))
             response (<! response-ch)]
-        ;;(js/console.log "[Client] Completion response:" (clj->js response))
         (if (:error response)
           (do
             (js/console.warn "[Client] Completion error:" (:message response))
