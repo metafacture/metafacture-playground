@@ -182,6 +182,39 @@
                                              (reject err)))))))}))]
     #(.dispose disposable)))
 
+(defn register-semantic-tokens-provider
+  "Register an LSP semantic tokens provider with Monaco."
+  [^js monaco language-id token-types token-modifiers semantic-tokens-handler]
+  (let [disposable (.. monaco -languages
+                       (registerDocumentSemanticTokensProvider
+                        language-id
+                        #js {:getLegend (fn []
+                                          #js {:tokenTypes (clj->js token-types)
+                                               :tokenModifiers (clj->js token-modifiers)})
+                             :provideDocumentSemanticTokens
+                             (fn [_model _last-result-id _token]
+                               (js/Promise.
+                                (fn [resolve reject]
+                                  (let [result-promise (semantic-tokens-handler)]
+                                    (.then result-promise
+                                           (fn [semantic-tokens]
+                                             (if (nil? semantic-tokens)
+                                               (resolve #js {:data (js/Uint32Array. 0)})
+                                               (let [data (:data semantic-tokens)]
+                                                 (if (sequential? data)
+                                                   (let [result #js {:data (js/Uint32Array.
+                                                                            (clj->js data))}
+                                                         result-id (:resultId semantic-tokens)]
+                                                     (when result-id
+                                                       (aset result "resultId" result-id))
+                                                     (resolve result))
+                                                   (reject (js/Error.
+                                                            "Invalid semantic tokens response: expected data array"))))))
+                                           (fn [err]
+                                             (reject err)))))))
+                             :releaseDocumentSemanticTokens (fn [_result-id] nil)}))]
+    #(.dispose disposable)))
+
 ;; ============================================================================
 ;; Conversion Utilities
 ;; ============================================================================
