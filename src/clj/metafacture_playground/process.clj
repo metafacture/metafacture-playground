@@ -42,7 +42,7 @@
                  (clj-str/replace #"\|(\s*|\n*)print(\s*|\n*);" output))
         flux-file (content->tempfile-path flux ".flux")]
     (try
-      (Flux/main (into-array [flux-file]))
+      (.run (Flux.) (into-array String ["-f" flux-file]))
       (log/info "Executed flux file with Flux/main. Result in" out-path)
       (slurp out-path)
       (finally
