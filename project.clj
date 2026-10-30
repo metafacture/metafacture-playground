@@ -142,4 +142,4 @@
              :prep-tasks   ["compile" ["release"]]}}
 
   :prep-tasks []
-  :jvm-opts ["-Dclojure.tools.logging.factory=clojure.tools.logging.impl/slf4j-factory"])
+  :jvm-opts ["-Dclojure.tools.logging.factory=clojure.tools.logging.impl/slf4j-factory" "-Djava.security.manager=allow"])
