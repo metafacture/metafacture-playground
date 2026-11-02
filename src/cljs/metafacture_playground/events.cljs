@@ -85,10 +85,7 @@
                 16
                 (or (get-in db [:editors editor :default-width])
                     (get-in db [:editors editor :width])))]
-    {:db (cond->
-          (assoc-in db [:editors editor :width] width)
-           (= editor :flux) (assoc-in [:editors :transformation :width] width)
-           (= editor :transformation) (assoc-in [:editors :flux :width] width))
+    {:db (assoc-in db [:editors editor :width] width)
      :storage/set {:session? true
                    :pairs (cond->
                            [{:name (->storage-key [:editors editor :width])
