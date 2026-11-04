@@ -66,7 +66,7 @@
     (or (empty? current-word)
         (.startsWith (.toLowerCase label) (.toLowerCase current-word)))))
 
-(defn- ->suggestion-item [item]
+(defn- ->suggestion-item [item range]
   (let [label (get* "label" item)
         detail (get* "detail" item)]
     #js {:label label
@@ -75,6 +75,7 @@
          :documentation (get* "documentation" item)
          :sortText (get* "sortText" item)
          :filterText label
+         :range range
          :kind (get* "kind" item)}))
 
 (defn register-completion-provider
@@ -102,6 +103,10 @@
                                         partial-word (if (< word-start column)
                                                        (.substring line-content word-start (- column 1))
                                                        "")
+                                        completion-range #js {:startLineNumber line-number
+                                                             :startColumn (inc word-start)
+                                                             :endLineNumber line-number
+                                                             :endColumn (.-column position)}
                                         result-promise (completion-handler position partial-word)]
                                     (.then result-promise
                                            (fn [completions]
@@ -111,7 +116,7 @@
                                                  (resolve #js {:suggestions #js []}))
                                                (let [suggestions (->> completions
                                                                       (filter #(begins-with-word? partial-word %))
-                                                                      (mapv ->suggestion-item)
+                                                                      (mapv #(->suggestion-item % completion-range))
                                                                       (clj->js))]
                                                  (resolve #js {:suggestions suggestions}))))
                                            (fn [err]
