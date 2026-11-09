@@ -369,6 +369,16 @@
   (add-keydown-rules monaco editor)
   (when (= editor-k focused-editor) (js-invoke editor "focus")))
 
+(defn configure-monaco-theme [^js monaco]
+  (.. monaco -editor
+      (defineTheme "metafacture-flux-light"
+                   #js {:base "vs"
+                        :inherit true
+                        :rules #js [#js {:token "comment"
+                                         :foreground "008000"
+                                         :fontStyle "italic"}]
+                        :colors #js {}})))
+
 (defn editor [editor-k]
   (let [value (re-frame/subscribe [::subs/editor-content editor-k])
         height (re-frame/subscribe [::subs/height editor-k 5 (font-size)])
@@ -379,12 +389,14 @@
      {:key @k
       :className (str (name editor-k) "-editor")
       :value @value
+      :beforeMount configure-monaco-theme
+      :theme (if (= editor-k :flux) "metafacture-flux-light" "light")
       :on-mount (partial set-up-editor editor-k @language)
       :language @language
       :height @height
-      :theme "light"
       :options {:dragAndDrop true
                 :minimap {:enabled false}
+                :semanticHighlighting.enabled true
                 :quickSuggestions false}
       :on-change #(re-frame/dispatch [::events/edit-editor-content editor-k %])}]))
 
