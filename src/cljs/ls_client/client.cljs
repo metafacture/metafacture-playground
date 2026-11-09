@@ -275,6 +275,10 @@
   [ws-url ^js monaco ^js editor language-id root-uri]
   (go
     (try
+      (let [initial-model (.getModel editor)]
+        (when-not initial-model
+          (throw (js/Error. "Cannot connect language server: Monaco editor has no model")))
+        (let [initial-text (.getValue initial-model)]
       ;; Register the language with Monaco if not already registered
       (.. monaco -languages (register #js {:id language-id}))
       
@@ -301,14 +305,14 @@
                 _ (.notify (:ws-connection client) "initialized" #js {})
                 ;; Set up notification handlers
                 notification-handler (setup-notification-handlers client monaco editor)
-                ;; Open the initial document
+                ;; Use the current model if still attached, otherwise the captured initial content.
                 model (.getModel editor)
-                text (.getValue model)]
+                text (if model (.getValue model) initial-text)]
             ;; Update the WS connection's notification handler (it's a JS object, not a ClojureScript map)
             (aset ws-connection "on-notification" notification-handler)
             (<! (open-document client root-uri text))
             ;; Register providers only after the server knows the document is open.
-            (<! (setup-editor-integration client monaco editor root-uri)))))
+            (<! (setup-editor-integration client monaco editor root-uri)))))))
         (catch js/Error e
           (js/console.error "[Client] Failed to connect:" e)
           (throw e)))))
