@@ -196,15 +196,16 @@
                        response-ch (request-completion client uri (:line lsp-pos) (:character lsp-pos) partial-word)]
                    (channel->promise response-ch))))
 
-              ;; Register hover provider
+              ;; Only register hover when the server advertises support.
               hover-dispose
-              (monaco-int/register-hover-provider
-               monaco
-               (:lang-id client)
-               (fn [position]
-                 (let [lsp-pos (monaco-int/monaco-position->lsp position)
-                       response-ch (request-hover client uri (:line lsp-pos) (:character lsp-pos))]
-                   (channel->promise response-ch))))
+              (when (get-in client [:server-capabilities :hoverProvider])
+                (monaco-int/register-hover-provider
+                 monaco
+                 (:lang-id client)
+                 (fn [position]
+                   (let [lsp-pos (monaco-int/monaco-position->lsp position)
+                         response-ch (request-hover client uri (:line lsp-pos) (:character lsp-pos))]
+                     (channel->promise response-ch)))))
 
               ;; Register definition provider
               def-dispose
