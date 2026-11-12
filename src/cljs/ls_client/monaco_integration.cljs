@@ -22,12 +22,12 @@
 (defn on-content-change
   "Register handler for editor content changes."
   [^js editor callback]
-  (let [disposable (.onDidChangeModelContent editor
+  (let [model (.getModel editor)
+        disposable (.onDidChangeModelContent editor
                      (fn [event]
-                       (when-let [model (.getModel editor)]
-                         (let [full-text (.getValue model)
-                               version (.getVersionId model)]
-                           (callback event full-text version)))))]
+                       (let [full-text (.getValue model)
+                             version (.getVersionId model)]
+                         (callback event full-text version))))]
     #(.dispose disposable)))
 
 ;; ============================================================================
