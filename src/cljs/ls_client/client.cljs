@@ -53,7 +53,9 @@
             response (<! response-ch)]
         (if (:error response)
           (throw (js/Error. (str "Initialize failed: " (:message response))))
-          (assoc client :initialized true)))
+          (assoc client
+                 :initialized true
+                 :server-capabilities (get-in response [:result :capabilities]))))
       (catch js/Error e
         (js/console.error "[Client] Initialization failed:" e)
         (throw e)))))
@@ -151,6 +153,19 @@
         (js/console.log "[Client] Definition request failed:" e)
         nil))))
 
+(defn request-semantic-tokens
+  "Request full semantic tokens for a document."
+  [client uri]
+  (let [ws (:ws-connection client)
+        params (lsp/semantic-tokens-full-message uri)
+        response-ch (.send ws "textDocument/semanticTokens/full" (clj->js params))]
+    (.then (channel->promise response-ch)
+           (fn [response]
+             (if (:error response)
+               (js/Promise.reject
+                (js/Error. (str "Semantic tokens request failed: " (:message response))))
+               (:result response))))))
+
 ;; ============================================================================
 ;; Monaco Integration
 ;; ============================================================================
@@ -179,15 +194,16 @@
                        response-ch (request-completion client uri (:line lsp-pos) (:character lsp-pos) partial-word)]
                    (channel->promise response-ch))))
 
-              ;; Register hover provider
+              ;; Only register hover when the server advertises support.
               hover-dispose
-              (monaco-int/register-hover-provider
-               monaco
-               (:lang-id client)
-               (fn [position]
-                 (let [lsp-pos (monaco-int/monaco-position->lsp position)
-                       response-ch (request-hover client uri (:line lsp-pos) (:character lsp-pos))]
-                   (channel->promise response-ch))))
+              (when (get-in client [:server-capabilities :hoverProvider])
+                (monaco-int/register-hover-provider
+                 monaco
+                 (:lang-id client)
+                 (fn [position]
+                   (let [lsp-pos (monaco-int/monaco-position->lsp position)
+                         response-ch (request-hover client uri (:line lsp-pos) (:character lsp-pos))]
+                     (channel->promise response-ch)))))
 
               ;; Register definition provider
               def-dispose
@@ -199,10 +215,28 @@
                        response-ch (request-definition client uri (:line lsp-pos) (:character lsp-pos))]
                    (channel->promise response-ch))))
 
-              disposables [on-change-dispose completion-dispose hover-dispose def-dispose]]
+              semantic-token-provider (get-in client [:server-capabilities :semanticTokensProvider])
+              semantic-token-legend (:legend semantic-token-provider)
+
+              ;; Token indexes in semantic-token data refer to the server's advertised legend.
+              semantic-tokens-dispose
+              (when (and (seq (:tokenTypes semantic-token-legend))
+                         (some #{"comment"} (:tokenTypes semantic-token-legend)))
+                (monaco-int/register-semantic-tokens-provider
+                 monaco
+                 (:lang-id client)
+                 (:tokenTypes semantic-token-legend)
+                 (:tokenModifiers semantic-token-legend)
+                 (fn []
+                   (request-semantic-tokens client uri))))
+
+              disposables [on-change-dispose completion-dispose hover-dispose def-dispose
+                           semantic-tokens-dispose]]
+          (when-not semantic-tokens-dispose
+            (js/console.warn "[Client] Server did not advertise a semantic-token legend containing comment"))
           (assoc client
                  :integration-registered true
-                 :disposables (into (:disposables client) disposables)))
+                 :disposables (into (:disposables client) (filter some? disposables))))
         (catch js/Error e
           (js/console.error "[Client] Failed to set up editor integration:" e)
           (js/console.error "[Client] Stack:" (.-stack e))
@@ -262,17 +296,16 @@
                 client (create-client-state ws-connection language-id editor-state)
                 ;; Initialize server
                 client (<! (initialize-server client root-uri))
+                _ (.notify (:ws-connection client) "initialized" #js {})
                 ;; Set up notification handlers
                 notification-handler (setup-notification-handlers client monaco editor)
-                ;; Set up editor integration
-                client (<! (setup-editor-integration client monaco editor root-uri))
-                ;; Open the initial document
                 model (.getModel editor)
                 text (.getValue model)]
             ;; Update the WS connection's notification handler (it's a JS object, not a ClojureScript map)
             (aset ws-connection "on-notification" notification-handler)
             (<! (open-document client root-uri text))
-            client)))
+            ;; Register providers only after the server knows the document is open.
+            (<! (setup-editor-integration client monaco editor root-uri)))))
         (catch js/Error e
           (js/console.error "[Client] Failed to connect:" e)
           (throw e)))))

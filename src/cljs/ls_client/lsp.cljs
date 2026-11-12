@@ -10,6 +10,12 @@
   "Minimal set of client capabilities."
   {:textDocument {:synchronization {:didSave true
                                     :didChange 1}
+                 :semanticTokens {:dynamicRegistration false
+                                  :requests {:range false
+                                             :full true}
+                                  :tokenTypes ["comment"]
+                                  :tokenModifiers []
+                                  :formats ["relative"]}
                  :completion {:completionItem {}}
                  :hover {}
                  :definition {}
@@ -68,6 +74,11 @@
   [uri line character]
   {:textDocument {:uri uri}
    :position {:line line :character character}})
+
+(defn semantic-tokens-full-message
+  "Build textDocument/semanticTokens/full request."
+  [uri]
+  {:textDocument {:uri uri}})
 
 ;; ============================================================================
 ;; LSP Client State Management
