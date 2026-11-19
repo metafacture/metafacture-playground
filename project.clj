@@ -47,7 +47,7 @@
                  [org.metafacture/metafacture-json "9.0.0"]
                  [org.metafacture/metafacture-linkeddata "9.0.0"]
                  [org.metafacture/metafacture-flux "9.0.0" :exclusions [org.eclipse.xtext/xtext-dev-bom org.eclipse.emf/org.eclipse.emf.common]]
-                 [org.metafacture/metafacture-runner "9.0.0"]
+                 [org.metafacture/metafacture-runner "9.0.0" :exclusions [org.apache.logging.log4j/log4j-slf4j2-impl]]
                  [org.metafacture/metafacture-yaml "9.0.0"]
                  [org.metafacture/metamorph-api "9.0.0"]
                  [org.metafacture/metamorph "9.0.0"]
